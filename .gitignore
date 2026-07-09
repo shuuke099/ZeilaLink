@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+
+# Next.js
+.next/
+**/.next/
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+*.err
+
+# TypeScript
+*.tsbuildinfo
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# macOS
+.DS_Store

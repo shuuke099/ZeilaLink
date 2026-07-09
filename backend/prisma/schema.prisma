@@ -1,0 +1,362 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String              @id @default(cuid())
+  name                String
+  email               String              @unique
+  passwordHash        String              @map("password_hash")
+  role                UserRole            @default(worker)
+  phone               String?
+  location            String?
+  bio                 String?
+  preferredLanguage   String              @default("en") @map("preferred_language")
+  isVerified          Boolean             @default(false) @map("is_verified")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  avatarUrl           String?             @map("avatar_url")
+  verificationExpires DateTime?           @map("verification_expires")
+  verificationToken   String?             @map("verification_token")
+  applications        Application[]
+  auditLogs           AuditLog[]
+  employer            Employer?
+  sentMessages        Message[]           @relation("SentMessages")
+  receivedMessages    Message[]           @relation("ReceivedMessages")
+  provider            Provider?
+  resumes             Resume[]
+  serviceBookings     ServiceBooking[]
+  userCertifications  UserCertification[]
+  userSkills          UserSkill[]
+  workerEducations    WorkerEducation[]
+  workerExperiences   WorkerExperience[]
+  workerLanguages     WorkerLanguage[]
+  workerPreference    WorkerPreference?
+
+  @@map("users")
+}
+
+model Employer {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  name        String
+  logoUrl     String?  @map("logo_url")
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  address     String?
+  bannerUrl   String?  @map("banner_url")
+  description String?
+  website     String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs        Job[]
+
+  @@map("employers")
+}
+
+model Job {
+  id                  String        @id @default(cuid())
+  title               String
+  description         String
+  requirements        String
+  benefits            String?
+  employerId          String        @map("employer_id")
+  location            String
+  salaryMin           Int?          @map("salary_min")
+  salaryMax           Int?          @map("salary_max")
+  employmentType      String        @map("employment_type")
+  remote              Boolean       @default(false)
+  tags                String[]      @default([])
+  published           Boolean       @default(false)
+  viewsCount          Int           @default(0) @map("views_count")
+  applicationDeadline DateTime?     @map("application_deadline")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  applications        Application[]
+  employer            Employer      @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  messages            Message[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id                String             @id @default(cuid())
+  jobId             String             @map("job_id")
+  userId            String             @map("user_id")
+  resumeId          String?            @map("resume_id")
+  coverLetter       String?            @map("cover_letter")
+  status            ApplicationStatus  @default(applied)
+  statusHistory     Json               @default("[]") @map("status_history")
+  appliedAt         DateTime           @default(now()) @map("applied_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  job               Job                @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resume            Resume?            @relation(fields: [resumeId], references: [id])
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerExperiences WorkerExperience[]
+
+  @@unique([jobId, userId])
+  @@map("applications")
+}
+
+model Service {
+  id                 String           @id @default(cuid())
+  title              String
+  category           String
+  provider           String
+  rating             Float            @default(0)
+  reviews            Int              @default(0)
+  priceLabel         String           @map("price_label")
+  image              String
+  badge              String?
+  description        String
+  gallery            String[]         @default([])
+  includes           String[]         @default([])
+  highlights         String[]         @default([])
+  packageName        String?          @map("package_name")
+  packageDescription String?          @map("package_description")
+  revisions          String?
+  deliveryTime       String?          @map("delivery_time")
+  support            String?
+  expertName         String?          @map("expert_name")
+  expertRole         String?          @map("expert_role")
+  expertImage        String?          @map("expert_image")
+  published          Boolean          @default(true)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  titleSo            String?          @map("title_so")
+  descriptionSo      String?          @map("description_so")
+  availabilityMode   String           @default("instant_booking") @map("availability_mode")
+  slaResponse        String?          @map("sla_response")
+  attachments        String[]         @default([])
+  advancedConfig     Json             @default("{}") @map("advanced_config")
+  bookings           ServiceBooking[]
+
+  @@map("services")
+}
+
+model ServiceBooking {
+  id                      String    @id @default(cuid())
+  serviceId               String    @map("service_id")
+  userId                  String?   @map("user_id")
+  customerName            String    @map("customer_name")
+  customerEmail           String    @map("customer_email")
+  customerPhone           String?   @map("customer_phone")
+  notes                   String?
+  status                  String    @default("pending")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  responsibleFullName     String?   @map("responsible_full_name")
+  serviceDateTime         DateTime? @map("service_date_time")
+  isRemote                Boolean   @default(false) @map("is_remote")
+  locationAddress         String?   @map("location_address")
+  stripeCheckoutSessionId String?   @map("stripe_checkout_session_id")
+  paymentStatus           String    @default("pending") @map("payment_status")
+  service                 Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user                    User?     @relation(fields: [userId], references: [id])
+
+  @@index([serviceId, createdAt])
+  @@index([userId, createdAt])
+  @@index([paymentStatus, createdAt])
+  @@map("service_bookings")
+}
+
+model WorkerExperience {
+  id            String       @id @default(cuid())
+  userId        String       @map("user_id")
+  applicationId String?      @map("application_id")
+  jobTitle      String       @map("job_title")
+  company       String
+  startDate     DateTime     @map("start_date")
+  endDate       DateTime?    @map("end_date")
+  isCurrent     Boolean      @default(false) @map("is_current")
+  achievements  String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  application   Application? @relation(fields: [applicationId], references: [id])
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startDate])
+  @@map("worker_experiences")
+}
+
+model WorkerEducation {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  degreeLevel       String    @map("degree_level")
+  institution       String
+  fieldOfStudy      String?   @map("field_of_study")
+  certificationName String?   @map("certification_name")
+  certificateUrl    String?   @map("certificate_url")
+  isVerified        Boolean   @default(false) @map("is_verified")
+  startDate         DateTime? @map("start_date")
+  endDate           DateTime? @map("end_date")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("worker_educations")
+}
+
+model WorkerLanguage {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  language  String
+  level     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, language])
+  @@map("worker_languages")
+}
+
+model WorkerPreference {
+  id               String   @id @default(cuid())
+  userId           String   @unique @map("user_id")
+  employmentType   String?  @map("employment_type")
+  shiftPreference  String?  @map("shift_preference")
+  desiredSalaryMin Int?     @map("desired_salary_min")
+  desiredSalaryMax Int?     @map("desired_salary_max")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("worker_preferences")
+}
+
+model Resume {
+  id              String        @id @default(cuid())
+  userId          String        @map("user_id")
+  s3Url           String        @map("s3_url")
+  parsedText      String?       @map("parsed_text")
+  skillsExtracted String[]      @default([]) @map("skills_extracted")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  applications    Application[]
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("resumes")
+}
+
+model Skill {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  description        String?
+  category           String?
+  createdAt          DateTime            @default(now()) @map("created_at")
+  trainings          Training[]
+  userCertifications UserCertification[]
+  userSkills         UserSkill[]
+
+  @@map("skills")
+}
+
+model Training {
+  id                  String              @id @default(cuid())
+  name                String
+  providerId          String              @map("provider_id")
+  skillId             String?             @map("skill_id")
+  duration            String
+  cost                Float               @default(0)
+  description         String
+  certificateUrl      String?             @map("certificate_url")
+  published           Boolean             @default(false)
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  imageUrl            String?             @map("image_url")
+  providesCertificate Boolean             @default(false) @map("provides_certificate")
+  provider            Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  skill               Skill?              @relation(fields: [skillId], references: [id])
+  userCertifications  UserCertification[]
+
+  @@map("trainings")
+}
+
+model Provider {
+  id            String     @id @default(cuid())
+  name          String
+  contactUserId String     @unique @map("contact_user_id")
+  description   String?
+  logoUrl       String?    @map("logo_url")
+  rating        Float      @default(0)
+  verified      Boolean    @default(false)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  user          User       @relation(fields: [contactUserId], references: [id], onDelete: Cascade)
+  trainings     Training[]
+
+  @@map("providers")
+}
+
+model UserSkill {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  skillId   String   @map("skill_id")
+  level     String   @default("beginner")
+  createdAt DateTime @default(now()) @map("created_at")
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@map("user_skills")
+}
+
+model UserCertification {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  trainingId     String    @map("training_id")
+  skillId        String?   @map("skill_id")
+  issuedAt       DateTime  @default(now()) @map("issued_at")
+  expiryDate     DateTime? @map("expiry_date")
+  certificateUrl String?   @map("certificate_url")
+  skill          Skill?    @relation(fields: [skillId], references: [id])
+  training       Training  @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_certifications")
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  fromUserId String   @map("from_user_id")
+  toUserId   String   @map("to_user_id")
+  jobId      String?  @map("job_id")
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+  fromUser   User     @relation("SentMessages", fields: [fromUserId], references: [id], onDelete: Cascade)
+  job        Job?     @relation(fields: [jobId], references: [id])
+  toUser     User     @relation("ReceivedMessages", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  meta         Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+enum UserRole {
+  worker
+  employer
+  provider
+  admin
+}
+
+enum ApplicationStatus {
+  applied
+  reviewed
+  accepted
+  rejected
+}
