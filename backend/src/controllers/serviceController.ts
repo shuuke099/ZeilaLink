@@ -4,6 +4,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
 
 const normalizeStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -129,33 +130,41 @@ export const getServices = async (req: AuthRequest, res: Response) => {
       ];
     }
 
-    const [services, total] = await Promise.all([
-      prisma.service.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (pageNum - 1) * limitNum,
-        take: limitNum,
-      }),
-      prisma.service.count({ where }),
-    ]);
+    const loadServices = async () => {
+      const [services, total, categories] = await Promise.all([
+        prisma.service.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        prisma.service.count({ where }),
+        prisma.service.findMany({
+          where: { published: true },
+          select: { category: true },
+          distinct: ['category'],
+          orderBy: { category: 'asc' },
+        }),
+      ]);
 
-    const categories = await prisma.service.findMany({
-      where: { published: true },
-      select: { category: true },
-      distinct: ['category'],
-      orderBy: { category: 'asc' },
-    });
+      return {
+        services,
+        categories: categories.map((item) => item.category),
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
+        },
+      };
+    };
 
-    return res.json({
-      services,
-      categories: categories.map((item) => item.category),
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
+    const cacheKey = makeCacheKey('services:list', req.query as Record<string, unknown>);
+    const result = await cacheGetOrSet(cacheKey, 60, loadServices);
+
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+    res.set('X-Cache', result.hit ? 'HIT' : 'MISS');
+    return res.json(result.value);
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Failed to fetch services' });
   }
@@ -165,18 +174,22 @@ export const getServiceById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const service = await prisma.service.findFirst({
-      where: {
-        id,
-        published: true,
-      },
-    });
+    const result = await cacheGetOrSet(`services:detail:${id}`, 60, () =>
+      prisma.service.findFirst({
+        where: {
+          id,
+          published: true,
+        },
+      }),
+    );
 
-    if (!service) {
+    if (!result.value) {
       return res.status(404).json({ error: 'Service not found' });
     }
 
-    return res.json(service);
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+    res.set('X-Cache', result.hit ? 'HIT' : 'MISS');
+    return res.json(result.value);
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Failed to fetch service' });
   }
@@ -511,6 +524,7 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.status(201).json(service);
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Failed to create service' });
@@ -580,6 +594,7 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.json(updated);
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Failed to update service' });
@@ -596,6 +611,7 @@ export const deleteAdminService = async (req: AuthRequest, res: Response) => {
     }
 
     await prisma.service.delete({ where: { id } });
+    void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.json({ message: 'Service deleted successfully' });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Failed to delete service' });

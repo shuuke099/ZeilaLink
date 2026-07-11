@@ -38,6 +38,7 @@ model User {
   workerLanguages     WorkerLanguage[]
   workerPreference    WorkerPreference?
 
+  @@index([role, createdAt])
   @@map("users")
 }
 
@@ -80,6 +81,13 @@ model Job {
   employer            Employer      @relation(fields: [employerId], references: [id], onDelete: Cascade)
   messages            Message[]
 
+  @@index([published, createdAt])
+  @@index([published, employmentType])
+  @@index([published, remote])
+  @@index([employerId, createdAt])
+  @@index([location])
+  @@index([salaryMin])
+  @@index([salaryMax])
   @@map("jobs")
 }
 
@@ -99,6 +107,9 @@ model Application {
   workerExperiences WorkerExperience[]
 
   @@unique([jobId, userId])
+  @@index([userId, appliedAt])
+  @@index([jobId, appliedAt])
+  @@index([status, appliedAt])
   @@map("applications")
 }
 
@@ -135,6 +146,9 @@ model Service {
   advancedConfig     Json             @default("{}") @map("advanced_config")
   bookings           ServiceBooking[]
 
+  @@index([published, createdAt])
+  @@index([published, category])
+  @@index([category])
   @@map("services")
 }
 
@@ -239,6 +253,7 @@ model Resume {
   applications    Application[]
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
   @@map("resumes")
 }
 
@@ -273,6 +288,10 @@ model Training {
   skill               Skill?              @relation(fields: [skillId], references: [id])
   userCertifications  UserCertification[]
 
+  @@index([published, createdAt])
+  @@index([providerId, createdAt])
+  @@index([skillId, createdAt])
+  @@index([published, cost])
   @@map("trainings")
 }
 
@@ -316,6 +335,9 @@ model UserCertification {
   training       Training  @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, issuedAt])
+  @@index([trainingId, issuedAt])
+  @@index([skillId])
   @@map("user_certifications")
 }
 
@@ -331,6 +353,9 @@ model Message {
   job        Job?     @relation(fields: [jobId], references: [id])
   toUser     User     @relation("ReceivedMessages", fields: [toUserId], references: [id], onDelete: Cascade)
 
+  @@index([fromUserId, createdAt])
+  @@index([toUserId, read, createdAt])
+  @@index([jobId, createdAt])
   @@map("messages")
 }
 
@@ -344,6 +369,9 @@ model AuditLog {
   createdAt    DateTime @default(now()) @map("created_at")
   user         User?    @relation(fields: [userId], references: [id])
 
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([resourceType, createdAt])
   @@map("audit_logs")
 }
 

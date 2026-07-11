@@ -5,7 +5,7 @@ import WorkerDashboardPage from '@/components/worker/WorkerDashboardPage';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 
-type ApplicationStatus = 'applied' | 'reviewed' | 'accepted' | 'rejected';
+type ApplicationStatus = 'applied' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
 
 type ApplicationRecord = {
   id: string;
@@ -18,6 +18,7 @@ type ApplicationRecord = {
 const statusLabels: Record<ApplicationStatus, string> = {
   applied: 'Applied',
   reviewed: 'In Review',
+  interview: 'Interview',
   accepted: 'Accepted',
   rejected: 'Rejected',
 };
@@ -126,6 +127,7 @@ export default function WorkerApplicationsPage() {
               <option value="all">All applications</option>
               <option value="applied">Applied</option>
               <option value="reviewed">In Review</option>
+              <option value="interview">Interview</option>
               <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
             </select>

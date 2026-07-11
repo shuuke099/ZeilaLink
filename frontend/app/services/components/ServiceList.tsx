@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Star } from 'lucide-react';
 import Link from 'next/link';
-import api from '@/lib/api';
+import { cachedApiGet } from '@/lib/api-cache';
 import { serviceCategories, services as fallbackServices } from '../data/services';
 import type { ServiceItem } from '../data/services';
 
@@ -19,9 +19,9 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const response = await api.get('/services');
-        const apiServices = Array.isArray(response.data?.services) ? response.data.services : [];
-        const apiCategories = Array.isArray(response.data?.categories) ? response.data.categories : [];
+        const data = await cachedApiGet<any>('/services', undefined, 60_000);
+        const apiServices = Array.isArray(data?.services) ? data.services : [];
+        const apiCategories = Array.isArray(data?.categories) ? data.categories : [];
 
         if (apiServices.length > 0) {
           setServices(apiServices);
@@ -84,7 +84,7 @@ export default function ServiceList({ isEn }: ServiceListProps) {
               className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-300/40"
             >
               <div className="relative h-36 overflow-hidden">
-                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                <img src={item.image} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
                 <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[9px] tracking-wide font-bold uppercase bg-white/95 text-[#2d7df6] border border-slate-200">
                   {item.badge}

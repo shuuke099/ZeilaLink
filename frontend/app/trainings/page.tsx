@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/translations';
-import api from '@/lib/api';
+import { cachedApiGet } from '@/lib/api-cache';
 import {
   Search,
   Clock,
@@ -56,34 +56,39 @@ export default function TrainingsPage() {
   });
   const [selectedProvider, setSelectedProvider] = useState<Training['provider'] | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const { language } = useLanguage();
   const getT = (key: string) => t(key, language);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     fetchTrainings();
-  }, [search, filters.category, filters.format]);
+  }, [debouncedSearch]);
 
   const fetchTrainings = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
 
-      console.log('[TrainingsPage] Fetching trainings...');
       const queryString = params.toString();
       const endpoint = queryString ? `/trainings?${queryString}` : '/trainings';
-      const response = await api.get(endpoint);
-      console.log('[TrainingsPage] Response:', response.data);
-      const trainingsData: Training[] = response.data.trainings || [];
-      console.log('[TrainingsPage] Trainings count before dedup:', trainingsData.length);
+      const data = await cachedApiGet<{ trainings?: Training[] }>(endpoint, undefined, 30_000);
+      const trainingsData: Training[] = data.trainings || [];
 
       // Deduplicate trainings by ID
       const uniqueTrainingsMap = new Map();
       trainingsData.forEach(t => uniqueTrainingsMap.set(t.id, t));
       const uniqueTrainings = Array.from(uniqueTrainingsMap.values());
 
-      console.log('[TrainingsPage] Trainings count after dedup:', uniqueTrainings.length);
       setTrainings(uniqueTrainings);
     } catch (error: any) {
       console.error('[TrainingsPage] Error fetching trainings:', error);
@@ -284,7 +289,7 @@ export default function TrainingsPage() {
                         {/* Image/Icon */}
                         <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-50 p-2.5 mx-auto mb-4 group-hover:scale-110 transition-transform duration-500 overflow-hidden flex items-center justify-center">
                           {training.imageUrl ? (
-                            <img src={training.imageUrl} alt={training.name} className="w-full h-full object-cover rounded-xl" />
+                            <img src={training.imageUrl} alt={training.name} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-xl" />
                           ) : (
                             <div className="w-full h-full rounded-xl text-primary flex items-center justify-center">
                               <GraduationCap size={32} strokeWidth={2.5} />
@@ -387,6 +392,8 @@ function ProviderProfileModal({
               <img
                 src={provider.logoUrl}
                 alt={`${provider.name} logo`}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain p-1"
               />
             ) : (

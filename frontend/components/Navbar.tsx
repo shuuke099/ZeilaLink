@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { t } from "@/lib/translations";
+import { prefetchPublicRouteData } from "@/lib/api-cache";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -97,6 +98,8 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    onMouseEnter={() => prefetchPublicRouteData(link.href)}
+                    onFocus={() => prefetchPublicRouteData(link.href)}
                     className={`px-4 py-2 text-sm font-medium transition-all rounded-lg relative group ${
                       isActive
                         ? "text-primary"
@@ -253,6 +256,8 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onMouseEnter={() => prefetchPublicRouteData(link.href)}
+                  onFocus={() => prefetchPublicRouteData(link.href)}
                   className="block text-lg font-medium text-foreground py-2 border-b border-border/50"
                   onClick={() => setMobileMenuOpen(false)}
                 >

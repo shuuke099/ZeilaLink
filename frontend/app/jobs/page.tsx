@@ -17,7 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
-import api from "@/lib/api";
+import { cachedApiGet } from "@/lib/api-cache";
 
 interface Job {
   id: string;
@@ -82,8 +82,8 @@ export default function JobsPage() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/jobs");
-      const jobsData: Job[] = response.data.jobs || [];
+      const data = await cachedApiGet<{ jobs?: Job[] }>("/jobs", undefined, 30_000);
+      const jobsData: Job[] = data.jobs || [];
 
       const uniqueJobsMap = new Map();
       jobsData.forEach((job) => uniqueJobsMap.set(job.id, job));
@@ -376,6 +376,8 @@ export default function JobsPage() {
                                   undefined
                                 }
                                 alt={job.employer.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="h-full w-full object-cover"
                               />
                             ) : (

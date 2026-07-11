@@ -7,7 +7,7 @@ import { t } from '@/lib/translations';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Users, GraduationCap, Briefcase, Star, Search, ShieldCheck, Zap, Globe, Rocket, Landmark } from 'lucide-react';
-import api from '@/lib/api';
+import { cachedApiGet } from '@/lib/api-cache';
 
 export default function AboutPage() {
   const { language } = useLanguage();
@@ -22,11 +22,11 @@ export default function AboutPage() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const res = await api.get('/public/stats');
+        const data = await cachedApiGet<any>('/public/stats', undefined, 60_000);
         setStats(prev => ({
           ...prev,
-          workers: res.data.formatted.workers,
-          successRate: res.data.successRate,
+          workers: data.formatted.workers,
+          successRate: data.successRate,
         }));
       } catch (e) {
         // keep defaults
@@ -121,6 +121,8 @@ export default function AboutPage() {
                 <img
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=1200&fit=crop"
                   alt="Vision"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover grayscale opacity-80"
                 />
                 <div className="absolute inset-0 bg-primary/10 mix-blend-multiply" />

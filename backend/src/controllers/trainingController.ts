@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
 
 export const getTrainings = async (req: AuthRequest, res: Response) => {
   try {
@@ -81,54 +82,65 @@ export const getTrainings = async (req: AuthRequest, res: Response) => {
       where.skillId = skillId;
     }
 
-    const [trainings, total] = await Promise.all([
-      prisma.training.findMany({
-        where,
-        include: {
-          provider: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  email: true,
+    const loadTrainings = async () => {
+      const [trainings, total] = await Promise.all([
+        prisma.training.findMany({
+          where,
+          include: {
+            provider: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                    email: true,
+                  },
                 },
               },
             },
+            skill: true,
+            _count: {
+              select: { userCertifications: true },
+            },
           },
-          skill: true,
-          _count: {
-            select: { userCertifications: true },
-          },
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.training.count({ where }),
+      ]);
+
+      const transformedTrainings = trainings.map((training) => ({
+        ...training,
+        provider: {
+          id: training.provider.id,
+          name: training.provider.name,
+          logoUrl: training.provider.logoUrl,
+          description: training.provider.description,
+          rating: training.provider.rating,
+          verified: training.provider.verified,
         },
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.training.count({ where }),
-    ]);
+      }));
 
-    // Transform trainings to match frontend expectations
-    const transformedTrainings = trainings.map((training) => ({
-      ...training,
-      provider: {
-        id: training.provider.id,
-        name: training.provider.name,
-        logoUrl: training.provider.logoUrl,
-        description: training.provider.description,
-        rating: training.provider.rating,
-        verified: training.provider.verified,
-      },
-    }));
+      return {
+        trainings: transformedTrainings,
+        pagination: {
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          pages: Math.ceil(total / Number(limit)),
+        },
+      };
+    };
 
-    res.json({
-      trainings: transformedTrainings,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
+    const publicCacheable = requirePublished && !mine && !all;
+    const cacheKey = makeCacheKey('trainings:list', req.query as Record<string, unknown>);
+    const result = publicCacheable
+      ? await cacheGetOrSet(cacheKey, 30, loadTrainings)
+      : { value: await loadTrainings(), hit: false };
+
+    res.set('Cache-Control', publicCacheable ? 'public, max-age=15, stale-while-revalidate=60' : 'private, no-store');
+    res.set('X-Cache', publicCacheable ? (result.hit ? 'HIT' : 'MISS') : 'BYPASS');
+    res.json(result.value);
   } catch (error: any) {
     console.error('[getTrainings] Error:', error);
     res.status(500).json({ error: error.message });
@@ -248,6 +260,7 @@ export const createTraining = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    void invalidateCacheByPrefix(['trainings:list', 'public:stats']);
     res.status(201).json(training);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -290,6 +303,7 @@ export const updateTraining = async (req: AuthRequest, res: Response) => {
     }
 
     const updated = await prisma.training.update({ where: { id }, data: updates });
+    void invalidateCacheByPrefix(['trainings:list', 'public:stats']);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -312,6 +326,7 @@ export const deleteTraining = async (req: AuthRequest, res: Response) => {
     }
 
     await prisma.training.delete({ where: { id } });
+    void invalidateCacheByPrefix(['trainings:list', 'public:stats']);
     res.json({ message: 'Training deleted' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

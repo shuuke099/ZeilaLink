@@ -30,7 +30,7 @@ type FormField =
   | "postalCode"
   | "country";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -403,5 +403,13 @@ export default function RegisterPage() {
         </motion.div>
       </div>
     </>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <RegisterContent />
+    </React.Suspense>
   );
 }

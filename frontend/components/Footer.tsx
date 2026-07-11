@@ -17,6 +17,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { prefetchPublicRouteData } from "@/lib/api-cache";
 import { usePathname } from "next/navigation";
 
 export default function Footer() {
@@ -98,6 +99,8 @@ export default function Footer() {
                 <li key={idx}>
                   <Link
                     href={link.href}
+                    onMouseEnter={() => prefetchPublicRouteData(link.href)}
+                    onFocus={() => prefetchPublicRouteData(link.href)}
                     className="hover:text-blue-500 transition-colors flex items-center group"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
@@ -148,10 +151,10 @@ export default function Footer() {
             <Link href="/about" className="hover:text-blue-500">
               Terms
             </Link>
-            <Link href="/about" className="hover:text-blue-500">
+            <Link href="/about" onMouseEnter={() => prefetchPublicRouteData("/about")} onFocus={() => prefetchPublicRouteData("/about")} className="hover:text-blue-500">
               Privacy
             </Link>
-            <Link href="/about" className="hover:text-blue-500">
+            <Link href="/about" onMouseEnter={() => prefetchPublicRouteData("/about")} onFocus={() => prefetchPublicRouteData("/about")} className="hover:text-blue-500">
               Cookies
             </Link>
           </div>

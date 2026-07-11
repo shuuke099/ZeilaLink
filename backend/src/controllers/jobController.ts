@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
 
 const toBoolean = (value: any): boolean =>
   value === true || value === 'true' || value === '1';
@@ -80,51 +81,62 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       where.tags = { hasSome: tagArray };
     }
 
-    const [jobs, total] = await Promise.all([
-      prisma.job.findMany({
-        where,
-        include: {
-          employer: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  email: true,
-                  avatarUrl: true,
+    const loadJobs = async () => {
+      const [jobs, total] = await Promise.all([
+        prisma.job.findMany({
+          where,
+          include: {
+            employer: {
+              include: {
+                user: {
+                  select: {
+                    name: true,
+                    email: true,
+                    avatarUrl: true,
+                  },
                 },
               },
             },
+            _count: {
+              select: { applications: true },
+            },
           },
-          _count: {
-            select: { applications: true },
-          },
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.job.count({ where }),
+      ]);
+
+      const transformedJobs = jobs.map((job) => ({
+        ...job,
+        employer: {
+          name: job.employer.name,
+          logoUrl: job.employer.logoUrl,
+          avatarUrl: job.employer.user?.avatarUrl,
         },
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.job.count({ where }),
-    ]);
+      }));
 
-    // Transform jobs to match frontend expectations
-    const transformedJobs = jobs.map((job) => ({
-      ...job,
-      employer: {
-        name: job.employer.name,
-        logoUrl: job.employer.logoUrl,
-        avatarUrl: job.employer.user?.avatarUrl,
-      },
-    }));
+      return {
+        jobs: transformedJobs,
+        pagination: {
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          pages: Math.ceil(total / Number(limit)),
+        },
+      };
+    };
 
-    res.json({
-      jobs: transformedJobs,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
-      },
-    });
+    const publicCacheable = !toBoolean(mine) && !employerId;
+    const cacheKey = makeCacheKey('jobs:list', req.query as Record<string, unknown>);
+    const result = publicCacheable
+      ? await cacheGetOrSet(cacheKey, 30, loadJobs)
+      : { value: await loadJobs(), hit: false };
+
+    res.set('Cache-Control', publicCacheable ? 'public, max-age=15, stale-while-revalidate=60' : 'private, no-store');
+    res.set('X-Cache', publicCacheable ? (result.hit ? 'HIT' : 'MISS') : 'BYPASS');
+    res.json(result.value);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -257,6 +269,7 @@ export const createJob = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
     res.status(201).json(job);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -287,6 +300,7 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
       data: updateData,
     });
 
+    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -312,6 +326,7 @@ export const deleteJob = async (req: AuthRequest, res: Response) => {
 
     await prisma.job.delete({ where: { id } });
 
+    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
     res.json({ message: 'Job deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -346,6 +361,7 @@ export const publishJob = async (req: AuthRequest, res: Response) => {
       data: { published: true },
     });
 
+    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

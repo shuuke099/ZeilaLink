@@ -30,7 +30,7 @@ import {
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
-import api from "@/lib/api";
+import { cachedApiGet } from "@/lib/api-cache";
 
 interface HomeJob {
   id: string;
@@ -67,12 +67,12 @@ export default function Home() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [jobsRes, trainingsRes] = await Promise.all([
-          api.get("/jobs?limit=3"),
-          api.get("/trainings?limit=2"),
+        const [jobsData, trainingsData] = await Promise.all([
+          cachedApiGet<{ jobs?: HomeJob[] }>("/jobs?limit=3"),
+          cachedApiGet<{ trainings?: HomeTraining[] }>("/trainings?limit=2"),
         ]);
-        setFeaturedJobs((jobsRes.data.jobs || []).slice(0, 3));
-        setFeaturedTrainings((trainingsRes.data.trainings || []).slice(0, 2));
+        setFeaturedJobs((jobsData.jobs || []).slice(0, 3));
+        setFeaturedTrainings((trainingsData.trainings || []).slice(0, 2));
       } catch (e) {
         // best-effort; ignore
       }
@@ -80,12 +80,12 @@ export default function Home() {
 
     const loadStats = async () => {
       try {
-        const res = await api.get("/public/stats");
+        const data = await cachedApiGet<any>("/public/stats", undefined, 60_000);
         setStats({
-          jobs: res.data.formatted.jobs,
-          trainings: res.data.formatted.trainings,
-          workers: res.data.formatted.workers,
-          successRate: res.data.successRate,
+          jobs: data.formatted.jobs,
+          trainings: data.formatted.trainings,
+          workers: data.formatted.workers,
+          successRate: data.successRate,
         });
       } catch (e) {
         // keep defaults
@@ -351,6 +351,8 @@ export default function Home() {
                 <img
                   src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=1200&fit=crop"
                   alt="Team working together"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover aspect-square"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent" />
@@ -572,13 +574,15 @@ export default function Home() {
                       <div className="bg-[#0a1f49] rounded-[2rem] border border-[#15356a] group-hover:border-sky-400/40 shadow-xl shadow-black/25 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
                         <div className="w-20 h-20 rounded-2xl bg-[#0b244f] border border-[#1a3d78] p-3 mx-auto mb-5 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center">
                           {job.employer.avatarUrl || job.employer.logoUrl ? (
-                            <img
-                              src={
-                                job.employer.avatarUrl || job.employer.logoUrl
-                              }
-                              alt={job.employer.name}
-                              className="w-full h-full object-contain"
-                            />
+                              <img
+                                src={
+                                  job.employer.avatarUrl || job.employer.logoUrl
+                                }
+                                alt={job.employer.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-contain"
+                              />
                           ) : (
                             <div className="text-2xl font-black text-primary uppercase">
                               {job.employer.name?.charAt(0)}
@@ -644,6 +648,8 @@ export default function Home() {
                               <img
                                 src={training.provider.logoUrl}
                                 alt={training.provider.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-full h-full object-contain"
                               />
                             ) : (

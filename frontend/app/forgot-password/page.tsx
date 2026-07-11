@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -11,7 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import api from '@/lib/api';
 import { extractErrorMessage } from '@/lib/error-utils';
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const { language } = useLanguage();
   const isEn = language === 'en';
   const router = useRouter();
@@ -247,5 +247,13 @@ export default function ForgotPasswordPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }

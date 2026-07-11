@@ -18,7 +18,7 @@ type JobFormState = {
   tags: string;
 };
 
-export default function EmployerPostJobPage() {
+function EmployerPostJobContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -380,6 +380,14 @@ export default function EmployerPostJobPage() {
       </section>
       )}
     </EmployerDashboardPage>
+  );
+}
+
+export default function EmployerPostJobPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <EmployerPostJobContent />
+    </React.Suspense>
   );
 }
 

@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
+import { cacheGetOrSet } from '../utils/cache';
 
 export const getPublicStats = async (req: Request, res: Response) => {
     try {
+        const result = await cacheGetOrSet('public:stats', 60, async () => {
         const [jobsCount, trainingsCount, workersCount, applicationsCount, acceptedApplicationsCount] = await Promise.all([
             prisma.job.count({ where: { published: true } }),
             prisma.training.count({ where: { published: true } }),
@@ -22,7 +24,7 @@ export const getPublicStats = async (req: Request, res: Response) => {
             // But user said "true data".
         }
 
-        res.json({
+        return {
             jobsCount,
             trainingsCount,
             workersCount,
@@ -33,7 +35,12 @@ export const getPublicStats = async (req: Request, res: Response) => {
                 trainings: trainingsCount > 100 ? `${trainingsCount}+` : `${trainingsCount}+`,
                 workers: workersCount > 1000 ? `${(workersCount / 1000).toFixed(1)}k+` : `${workersCount}+`,
             }
+        };
         });
+
+        res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+        res.set('X-Cache', result.hit ? 'HIT' : 'MISS');
+        res.json(result.value);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
