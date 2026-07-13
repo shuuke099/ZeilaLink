@@ -33,14 +33,18 @@ import { localUploadsPath } from "./config/aws";
 const app = express();
 const PORT = process.env.PORT || 7000;
 
-const parseAllowedOrigins = () => {
-  const fromSingle = process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL]
-    : [];
-  const fromList = (process.env.FRONTEND_URLS || "")
+const splitOriginList = (value?: string) =>
+  (value || "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+const parseAllowedOrigins = () => {
+  const fromEnv = [
+    ...splitOriginList(process.env.FRONTEND_URL),
+    ...splitOriginList(process.env.FRONTEND_URLS),
+    ...splitOriginList(process.env.ALLOWED_ORIGINS),
+  ];
 
   const devDefaults = [
     "http://localhost:3000",
@@ -49,7 +53,21 @@ const parseAllowedOrigins = () => {
     "http://127.0.0.1:3001",
   ];
 
-  return Array.from(new Set([...fromSingle, ...fromList, ...devDefaults]));
+  return Array.from(new Set([...fromEnv, ...devDefaults]));
+};
+
+const isAllowedDevTunnelOrigin = (origin: string) => {
+  if (process.env.NODE_ENV === "production") return false;
+
+  try {
+    const parsedOrigin = new URL(origin);
+    return (
+      parsedOrigin.protocol === "https:" &&
+      parsedOrigin.hostname.endsWith(".devtunnels.ms")
+    );
+  } catch {
+    return false;
+  }
 };
 
 const allowedOrigins = parseAllowedOrigins();
@@ -68,7 +86,7 @@ app.use(
       // Allow server-to-server and curl/postman requests with no Origin header.
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin) || isAllowedDevTunnelOrigin(origin)) {
         return callback(null, true);
       }
 

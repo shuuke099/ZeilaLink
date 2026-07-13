@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Star } from 'lucide-react';
+import { ChevronDown, Star } from 'lucide-react';
 import Link from 'next/link';
 import { cachedApiGet } from '@/lib/api-cache';
 import { serviceCategories, services as fallbackServices } from '../data/services';
@@ -15,6 +15,7 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   const [activeCategory, setActiveCategory] = useState('All Services');
   const [services, setServices] = useState<ServiceItem[]>(fallbackServices);
   const [categories, setCategories] = useState<string[]>(serviceCategories);
+  const [showAllMobileFilters, setShowAllMobileFilters] = useState(false);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -48,19 +49,22 @@ export default function ServiceList({ isEn }: ServiceListProps) {
     return services.filter((item) => item.category === activeCategory);
   }, [activeCategory, services]);
 
+  const mobileCategories = showAllMobileFilters ? categories : categories.slice(0, 4);
+  const hasMoreMobileFilters = categories.length > mobileCategories.length;
+
   return (
     <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen transition-colors">
       <div className="max-w-[1320px] mx-auto">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex flex-wrap gap-2.5">
-            {categories.map((category) => {
+        <div className="mb-6 space-y-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:hidden">
+            {mobileCategories.map((category) => {
               const active = category === activeCategory;
               return (
                 <button
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                     active ? 'bg-[#2d7df6] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
@@ -68,15 +72,50 @@ export default function ServiceList({ isEn }: ServiceListProps) {
                 </button>
               );
             })}
+            {(hasMoreMobileFilters || showAllMobileFilters) && (
+              <button
+                type="button"
+                onClick={() => setShowAllMobileFilters((prev) => !prev)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#2d7df6] transition hover:bg-slate-100"
+              >
+                {showAllMobileFilters ? (isEn ? 'Less' : 'Yaree') : (isEn ? 'More' : 'Dheeraad')}
+                <ChevronDown className={`h-3.5 w-3.5 transition ${showAllMobileFilters ? 'rotate-180' : ''}`} />
+              </button>
+            )}
           </div>
 
-          <p className="text-xs text-slate-500">
+          <div className="hidden flex-wrap items-center justify-between gap-4 md:flex">
+            <div className="flex flex-wrap gap-2.5">
+              {categories.map((category) => {
+                const active = category === activeCategory;
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveCategory(category)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
+                      active ? 'bg-[#2d7df6] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-slate-500">
+              {isEn ? 'Sort by:' : 'Kala sooc:'}{' '}
+              <span className="font-semibold text-slate-700">{isEn ? 'Recommended' : 'La taliyay'}</span>
+            </p>
+          </div>
+
+          <p className="text-xs text-slate-500 md:hidden">
             {isEn ? 'Sort by:' : 'Kala sooc:'}{' '}
             <span className="font-semibold text-slate-700">{isEn ? 'Recommended' : 'La taliyay'}</span>
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           {filteredServices.map((item) => (
             <Link
               key={item.id}

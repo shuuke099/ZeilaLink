@@ -30,7 +30,7 @@ import {
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
-import { cachedApiGet } from "@/lib/api-cache";
+import { cachedApiGet, prefetchPublicRouteData } from "@/lib/api-cache";
 
 interface HomeJob {
   id: string;
@@ -191,25 +191,33 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-4 sm:justify-center"
             >
               <Link
                 href="/jobs"
-                className="group btn-primary px-8 py-4 rounded-xl text-base font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center"
+                prefetch
+                onMouseEnter={() => prefetchPublicRouteData("/jobs")}
+                onFocus={() => prefetchPublicRouteData("/jobs")}
+                onTouchStart={() => prefetchPublicRouteData("/jobs")}
+                className="group btn-primary min-w-0 px-3 py-3 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center sm:px-8 sm:py-4 sm:text-base"
               >
-                <Search className="mr-2" size={20} />
-                {getT("searchJobs")}
+                <Search className="mr-1.5 h-4 w-4 shrink-0 sm:mr-2 sm:h-5 sm:w-5" />
+                <span className="truncate">{getT("searchJobs")}</span>
                 <ArrowRight
-                  className="ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"
+                  className="ml-1 h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all sm:ml-2 sm:h-[18px] sm:w-[18px]"
                   size={18}
                 />
               </Link>
               <Link
                 href="/trainings"
-                className="bg-white border border-slate-200 hover:border-primary/30 text-slate-700 px-8 py-4 rounded-xl text-base font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center"
+                prefetch
+                onMouseEnter={() => prefetchPublicRouteData("/trainings")}
+                onFocus={() => prefetchPublicRouteData("/trainings")}
+                onTouchStart={() => prefetchPublicRouteData("/trainings")}
+                className="min-w-0 bg-white border border-slate-200 hover:border-primary/30 text-slate-700 px-3 py-3 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center sm:px-8 sm:py-4 sm:text-base"
               >
-                <GraduationCap className="mr-2 text-primary" size={22} />
-                {getT("searchTrainings")}
+                <GraduationCap className="mr-1.5 h-4 w-4 shrink-0 text-primary sm:mr-2 sm:h-[22px] sm:w-[22px]" />
+                <span className="truncate">{getT("searchTrainings")}</span>
               </Link>
             </motion.div>
           </div>
@@ -220,7 +228,7 @@ export default function Home() {
       <section className="py-16 bg-slate-900 border-y border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0,rgba(var(--color-primary-rgb),0.15),transparent_50%)]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:gap-8">
             {[
               {
                 label: isEn ? "Jobs Posted" : "Shaqooyin la soo dhigay",
@@ -245,16 +253,16 @@ export default function Home() {
             ].map((stat, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-4 rounded-3xl border border-white/8 bg-white/[0.03] px-5 py-5 sm:px-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:pl-8 lg:border-l lg:border-white/10 first:lg:border-0 first:lg:pl-0"
+                className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-4 sm:gap-4 sm:rounded-3xl sm:px-6 sm:py-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:pl-8 lg:border-l lg:border-white/10 first:lg:border-0 first:lg:pl-0"
               >
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 shadow-inner">
-                  <stat.icon className="text-primary-light" size={28} />
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-inner sm:h-14 sm:w-14 sm:rounded-2xl">
+                  <stat.icon className="h-5 w-5 text-primary-light sm:h-7 sm:w-7" />
                 </div>
                 <div className="min-w-0">
-                  <div className="mb-1 text-3xl font-black leading-none text-white">
+                  <div className="mb-1 text-2xl font-black leading-none text-white sm:text-3xl">
                     {stat.value}
                   </div>
-                  <div className="text-[10px] font-bold uppercase leading-tight tracking-[0.2em] text-slate-400">
+                  <div className="text-[8px] font-bold uppercase leading-tight tracking-[0.14em] text-slate-400 sm:text-[10px] sm:tracking-[0.2em]">
                     {stat.label}
                   </div>
                 </div>
@@ -413,7 +421,7 @@ export default function Home() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-10"
+            className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:gap-10"
           >
             {[
               {
@@ -426,6 +434,7 @@ export default function Home() {
                 bg: "bg-blue-50",
                 linkTextEn: "Explore Jobs",
                 linkTextSo: "Hel Shaqooyin",
+                href: "/jobs",
               },
 
               {
@@ -438,6 +447,7 @@ export default function Home() {
                 bg: "bg-emerald-50",
                 linkTextEn: "Browse Programs",
                 linkTextSo: "Baro Xirfado",
+                href: "/trainings",
               },
 
               {
@@ -450,6 +460,7 @@ export default function Home() {
                 bg: "bg-purple-50",
                 linkTextEn: "Offer Services",
                 linkTextSo: "Bixi Adeegyadaada",
+                href: "/services",
               },
 
               {
@@ -462,6 +473,7 @@ export default function Home() {
                 bg: "bg-indigo-50",
                 linkTextEn: "Get Support",
                 linkTextSo: "Hel Taageero",
+                href: "/contact",
               },
 
               {
@@ -474,6 +486,7 @@ export default function Home() {
                 bg: "bg-rose-50",
                 linkTextEn: "Post a Job",
                 linkTextSo: "Ku Dar Shaqo",
+                href: "/register?role=employer",
               },
 
               {
@@ -486,28 +499,38 @@ export default function Home() {
                 bg: "bg-amber-50",
                 linkTextEn: "Join Network",
                 linkTextSo: "Ku Biir Shabakada",
+                href: "/register",
               },
             ].map((feature, index) => (
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="group p-10 rounded-[2.5rem] bg-white border border-slate-100 hover:border-primary/20 hover:shadow-2xl transition-all duration-500"
+                className="h-full"
               >
-                <div
-                  className={`w-20 h-20 ${feature.bg} rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm`}
+                <Link
+                  href={feature.href}
+                  prefetch
+                  onMouseEnter={() => prefetchPublicRouteData(feature.href)}
+                  onFocus={() => prefetchPublicRouteData(feature.href)}
+                  onTouchStart={() => prefetchPublicRouteData(feature.href)}
+                  className="group block h-full rounded-2xl border border-slate-100 bg-white p-4 transition-all duration-500 hover:border-primary/20 hover:shadow-2xl sm:rounded-[2rem] sm:p-6 lg:rounded-[2.5rem] lg:p-10"
                 >
-                  <feature.icon className={feature.color} size={36} />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-4">
-                  {feature.title}
-                </h3>
-                <p className="text-slate-500 leading-relaxed mb-8 text-lg">
-                  {feature.description}
-                </p>
-                <div className="flex items-center text-primary font-black group-hover:gap-3 transition-all cursor-pointer">
-                  <span>{isEn ? feature.linkTextEn : feature.linkTextSo}</span>
-                  <ArrowRight size={20} className="ml-1" />
-                </div>
+                  <div
+                    className={`h-12 w-12 ${feature.bg} mb-4 flex items-center justify-center rounded-2xl shadow-sm transition-transform duration-500 group-hover:scale-110 sm:mb-6 sm:h-16 sm:w-16 lg:mb-8 lg:h-20 lg:w-20 lg:rounded-3xl`}
+                  >
+                    <feature.icon className={`h-6 w-6 sm:h-8 sm:w-8 lg:h-9 lg:w-9 ${feature.color}`} />
+                  </div>
+                  <h3 className="mb-2 text-base font-black leading-tight text-slate-900 sm:mb-3 sm:text-xl lg:mb-4 lg:text-2xl">
+                    {feature.title}
+                  </h3>
+                  <p className="mb-4 text-xs leading-relaxed text-slate-500 sm:mb-6 sm:text-sm lg:mb-8 lg:text-lg">
+                    {feature.description}
+                  </p>
+                  <div className="flex items-center text-xs font-black text-primary transition-all group-hover:gap-3 sm:text-sm lg:text-base">
+                    <span className="truncate">{isEn ? feature.linkTextEn : feature.linkTextSo}</span>
+                    <ArrowRight className="ml-1 h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+                  </div>
+                </Link>
               </motion.div>
             ))}
           </motion.div>

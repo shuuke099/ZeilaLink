@@ -77,14 +77,16 @@ export default function Navbar() {
           {/* Logo - Left (MAXIMIZED SIZE) */}
           <Link
             href="/"
-            className="flex items-center group flex-shrink-0 min-w-[250px]"
+            prefetch
+            onTouchStart={() => prefetchPublicRouteData("/")}
+            className="group flex min-w-0 flex-shrink-0 items-center md:min-w-[250px]"
           >
             <Image
               src={logoSrc}
               alt="ZeilaLink logo"
               width={800}
               height={300}
-              className="w-40 md:w-50 h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              className="h-auto w-32 object-contain transition-transform duration-300 group-hover:scale-105 md:w-40"
               priority
             />
           </Link>
@@ -98,8 +100,10 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    prefetch
                     onMouseEnter={() => prefetchPublicRouteData(link.href)}
                     onFocus={() => prefetchPublicRouteData(link.href)}
+                    onTouchStart={() => prefetchPublicRouteData(link.href)}
                     className={`px-4 py-2 text-sm font-medium transition-all rounded-lg relative group ${
                       isActive
                         ? "text-primary"
@@ -256,8 +260,10 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch
                   onMouseEnter={() => prefetchPublicRouteData(link.href)}
                   onFocus={() => prefetchPublicRouteData(link.href)}
+                  onTouchStart={() => prefetchPublicRouteData(link.href)}
                   className="block text-lg font-medium text-foreground py-2 border-b border-border/50"
                   onClick={() => setMobileMenuOpen(false)}
                 >

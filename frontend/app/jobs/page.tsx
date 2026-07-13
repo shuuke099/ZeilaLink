@@ -213,11 +213,11 @@ export default function JobsPage() {
               e.preventDefault();
               applySearch();
             }}
-            className="rounded-[2rem] border border-slate-300 bg-white p-3 shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
+            className="rounded-2xl border border-slate-300 bg-white p-2 shadow-[0_6px_16px_rgba(15,23,42,0.12)] sm:rounded-[2rem] sm:p-3"
           >
-            <div className="flex flex-col gap-2 md:flex-row md:items-center">
-              <div className="flex flex-1 items-center gap-3 rounded-2xl px-4 py-3">
-                <Search className="text-slate-600" size={32} />
+            <div className="grid gap-2 md:flex md:items-center">
+              <div className="flex min-h-12 flex-1 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 sm:gap-3 sm:rounded-2xl sm:bg-transparent sm:px-4 sm:py-3">
+                <Search className="h-5 w-5 shrink-0 text-slate-600 sm:h-8 sm:w-8" />
                 <input
                   type="text"
                   value={searchDraft}
@@ -227,14 +227,14 @@ export default function JobsPage() {
                       ? "Job title, keywords, or company"
                       : "Magaca shaqada, erayo muhiim ah, ama shirkad"
                   }
-                  className="w-full bg-transparent text-xl font-medium text-slate-700 outline-none placeholder:text-slate-500"
+                  className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 sm:text-xl"
                 />
               </div>
 
               <div className="hidden h-10 w-px bg-slate-300 md:block" />
 
-              <div className="flex flex-1 items-center gap-3 rounded-2xl px-4 py-3">
-                <MapPin className="text-slate-600" size={32} />
+              <div className="flex min-h-12 flex-1 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 sm:gap-3 sm:rounded-2xl sm:bg-transparent sm:px-4 sm:py-3">
+                <MapPin className="h-5 w-5 shrink-0 text-slate-600 sm:h-8 sm:w-8" />
                 <input
                   type="text"
                   value={locationDraft}
@@ -244,14 +244,15 @@ export default function JobsPage() {
                       ? 'City, state, or "remote"'
                       : 'Magaalo, gobol, ama "remote"'
                   }
-                  className="w-full bg-transparent text-xl font-medium text-slate-700 outline-none placeholder:text-slate-500"
+                  className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 sm:text-xl"
                 />
               </div>
 
               <button
                 type="submit"
-                className="rounded-2xl bg-[#1757c8] px-10 py-4 text-xl font-bold text-white transition hover:bg-[#1148a8] md:ml-3"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1757c8] px-5 text-sm font-black text-white transition hover:bg-[#1148a8] active:scale-[0.99] md:ml-3 md:w-auto md:rounded-2xl md:px-10 md:text-xl"
               >
+                <Search className="h-4 w-4 md:hidden" />
                 {language === "en" ? "Search" : "Raadi"}
               </button>
             </div>
