@@ -1,0 +1,60 @@
+name: Deploy ZeilaLink
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          script: |
+            set -e
+
+            echo "=============================="
+            echo "Starting ZeilaLink Deployment"
+            echo "=============================="
+
+            cd ~/apps/ZeilaLink
+
+            echo "Pull latest code..."
+            git pull origin main
+
+            echo "Install dependencies..."
+            pnpm install --frozen-lockfile
+
+            echo "Run Prisma migrations..."
+            cd backend
+            pnpm prisma migrate deploy
+            cd ..
+
+            echo "Build application..."
+            pnpm build
+
+            echo "Restart PM2..."
+            pm2 restart ecosystem.config.js --update-env
+
+            echo "Save PM2..."
+            pm2 save
+
+            # echo "Health check..."
+            # sleep 5
+
+            # curl -fsS https://zeilalink.com/api/health
+
+            echo ""
+            echo "Deployment completed successfully."
