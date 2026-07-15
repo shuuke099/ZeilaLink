@@ -142,8 +142,10 @@ function RegisterContent() {
         preferredLanguage: language,
       });
 
-      toast.success("Registration successful");
-      router.push("/");
+      toast.success("Registration successful. Check your email for the verification code.");
+
+      const params = new URLSearchParams({ email: formData.email.trim() });
+      router.push(`/verify-email?${params.toString()}`);
     } catch (err: any) {
       setFieldErrors(extractFieldErrors(err));
       toast.error(extractErrorMessage(err, "Registration failed"));

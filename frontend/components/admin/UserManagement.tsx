@@ -8,6 +8,9 @@ import {
   MoreHorizontal,
   Plus,
   Upload,
+  Eye,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import api from '@/lib/api';
 
@@ -44,6 +47,10 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sortByNameAsc, setSortByNameAsc] = useState(true);
+  const [viewingUser, setViewingUser] = useState<UserData | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'worker', phone: '', location: '', isVerified: true });
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -142,6 +149,38 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
     setMenuOpen(false);
   };
 
+  const handleCreate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      setBusyId('create');
+      const response = await api.post('/admin/users', createForm);
+      setUsers((current) => [response.data, ...current]);
+      setTotal((current) => current + 1);
+      setCreateOpen(false);
+      setCreateForm({ name: '', email: '', password: '', role: 'worker', phone: '', location: '', isVerified: true });
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to create user');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (user: UserData) => {
+    if (!window.confirm(`Delete ${user.name}? This cannot be undone.`)) return;
+    try {
+      setBusyId(user.id);
+      await api.delete(`/admin/users/${user.id}`);
+      setUsers((current) => current.filter((item) => item.id !== user.id));
+      setTotal((current) => Math.max(0, current - 1));
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to delete user');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-transparent rounded-none overflow-hidden">
       <div className="mb-3 flex items-center justify-between px-4 py-2">
@@ -176,13 +215,14 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/register"
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
           >
             <Plus className="h-5 w-5" />
             New
-          </Link>
+          </button>
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -239,16 +279,17 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
               <th className="px-4 py-4">LOCATION</th>
               <th className="px-4 py-4">STATUS</th>
               <th className="px-4 py-4">CREATED</th>
+              <th className="px-4 py-4 text-right">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">Loading users...</td>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">Loading users...</td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">No users found.</td>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">No users found.</td>
               </tr>
             ) : (
               displayUsers.map((user) => {
@@ -265,6 +306,11 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
                       </span>
                     </td>
                     <td className="px-4 py-5 text-base text-slate-700">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
+                    <td className="px-4 py-5"><div className="flex justify-end gap-2">
+                      <button type="button" title="View" onClick={() => setViewingUser(user)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></button>
+                      <Link title="Edit" href={`/admin/users/${user.id}/edit`} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></Link>
+                      <button type="button" title="Delete" disabled={busyId === user.id} onClick={() => handleDelete(user)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
+                    </div></td>
                   </tr>
                 );
               })
@@ -276,6 +322,27 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
       {error && (
         <p className="px-6 py-4 text-sm font-semibold text-red-600">{error}</p>
       )}
+      {viewingUser && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setViewingUser(null)}>
+        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="mb-5 flex justify-between gap-4"><div><h3 className="text-xl font-black text-slate-900">{viewingUser.name}</h3><p className="text-sm text-slate-500">{viewingUser.email}</p></div><button onClick={() => setViewingUser(null)} className="h-fit rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100">Close</button></div>
+          <div className="grid grid-cols-2 gap-4 text-sm"><p><b className="block text-slate-400">Role</b>{viewingUser.role}</p><p><b className="block text-slate-400">Status</b>{viewingUser.isVerified ? 'Verified' : 'Unverified'}</p><p><b className="block text-slate-400">Phone</b>{viewingUser.phone || '-'}</p><p><b className="block text-slate-400">Location</b>{viewingUser.location || '-'}</p></div>
+        </div>
+      </div>}
+      {createOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setCreateOpen(false)}>
+        <form onSubmit={handleCreate} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="mb-5 flex items-center justify-between"><div><h3 className="text-xl font-black text-slate-900">Create User</h3><p className="text-sm text-slate-500">Add a user without leaving the dashboard.</p></div><button type="button" onClick={() => setCreateOpen(false)} className="rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100">Close</button></div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold text-slate-700">Name<input required value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500" /></label>
+            <label className="text-sm font-semibold text-slate-700">Email<input required type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500" /></label>
+            <label className="text-sm font-semibold text-slate-700">Password<input required minLength={6} type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500" /></label>
+            <label className="text-sm font-semibold text-slate-700">Role<select value={createForm.role} onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500"><option value="worker">Worker</option><option value="employer">Employer</option><option value="provider">Provider</option><option value="admin">Admin</option></select></label>
+            <label className="text-sm font-semibold text-slate-700">Phone<input value={createForm.phone} onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500" /></label>
+            <label className="text-sm font-semibold text-slate-700">Location<input value={createForm.location} onChange={(e) => setCreateForm({ ...createForm, location: e.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500" /></label>
+          </div>
+          <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" checked={createForm.isVerified} onChange={(e) => setCreateForm({ ...createForm, isVerified: e.target.checked })} />Mark account as verified</label>
+          <button disabled={busyId === 'create'} className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white hover:bg-blue-700 disabled:opacity-50">{busyId === 'create' ? 'Creating...' : 'Create User'}</button>
+        </form>
+      </div>}
     </div>
   );
 }

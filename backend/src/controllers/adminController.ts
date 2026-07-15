@@ -1,6 +1,66 @@
 import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import bcrypt from 'bcryptjs';
+
+const adminUserSelect = {
+  id: true, name: true, email: true, role: true, phone: true, location: true,
+  bio: true, preferredLanguage: true, isVerified: true, avatarUrl: true, createdAt: true, updatedAt: true,
+} as const;
+
+export const getUserById = async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: {
+        ...adminUserSelect,
+        employer: true,
+        provider: true,
+        userSkills: { include: { skill: true } },
+        userCertifications: { include: { training: { select: { id: true, name: true } }, skill: true } },
+        workerExperiences: { orderBy: { startDate: 'desc' } },
+        workerEducations: { orderBy: { createdAt: 'desc' } },
+        workerLanguages: { orderBy: { language: 'asc' } },
+        workerPreference: true,
+        resumes: { select: { id: true, s3Url: true, skillsExtracted: true, createdAt: true }, orderBy: { createdAt: 'desc' } },
+        _count: { select: { applications: true, serviceBookings: true, sentMessages: true, receivedMessages: true } },
+      },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json({ user });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to load user' });
+  }
+};
+
+export const createUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, email, password, role = 'worker', phone, location, isVerified = true } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedRole = String(role).trim().toLowerCase();
+    if (!String(name || '').trim() || !normalizedEmail || !String(password || '')) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+    if (!['worker', 'employer', 'provider', 'admin'].includes(normalizedRole)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (String(password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const passwordHash = await bcrypt.hash(String(password), 10);
+    const user = await prisma.user.create({
+      data: {
+        name: String(name).trim(), email: normalizedEmail, passwordHash,
+        role: normalizedRole as any, phone: String(phone || '').trim() || null,
+        location: String(location || '').trim() || null, isVerified: Boolean(isVerified),
+      },
+      select: adminUserSelect,
+    });
+    await prisma.auditLog.create({ data: { userId: req.user!.id, action: 'admin_create_user', resourceType: 'user', resourceId: user.id, meta: { email: user.email, role: user.role } } });
+    return res.status(201).json(user);
+  } catch (error: any) {
+    if (error.code === 'P2002') return res.status(400).json({ error: 'Email already exists' });
+    return res.status(500).json({ error: error.message || 'Failed to create user' });
+  }
+};
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
@@ -117,7 +177,7 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, role, phone, location, isVerified, avatarUrl } = req.body;
+    const { name, email, role, phone, location, bio, preferredLanguage, isVerified, avatarUrl } = req.body;
 
     const updated = await prisma.user.update({
       where: { id },
@@ -127,6 +187,8 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         ...(role !== undefined && { role }),
         ...(phone !== undefined && { phone }),
         ...(location !== undefined && { location }),
+        ...(bio !== undefined && { bio }),
+        ...(preferredLanguage !== undefined && { preferredLanguage }),
         ...(isVerified !== undefined && { isVerified }),
         ...(avatarUrl !== undefined && { avatarUrl }),
       },

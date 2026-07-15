@@ -1,109 +1,206 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
+  ArrowUpRight,
   Briefcase,
-  Globe,
-  Share2,
-  AtSign,
-  Mail,
-  Phone,
-  MapPin,
   Facebook,
-  Twitter,
   Linkedin,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Twitter,
   Youtube,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { prefetchPublicRouteData } from "@/lib/api-cache";
-import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const { language } = useLanguage();
   const pathname = usePathname();
   const isEn = language === "en";
+
   const isDashboard =
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/employer") ||
     pathname?.startsWith("/worker") ||
     pathname?.startsWith("/provider");
-  const isTrainingPage = pathname?.startsWith("/trainings");
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
-  if (isDashboard || isTrainingPage || isAuthPage) return null;
+  if (isDashboard || isAuthPage) return null;
+
+  const platformLinks = [
+    {
+      label: isEn ? "Browse Jobs" : "Raadi Shaqooyin",
+      href: "/jobs",
+    },
+    {
+      label: isEn ? "Skill Training" : "Tababar Xirfado",
+      href: "/trainings",
+    },
+    {
+      label: isEn ? "Find Services" : "Raadi Adeegyo",
+      href: "/services",
+    },
+  ];
+
+  const companyLinks = [
+    { label: isEn ? "About Us" : "Nagu Saabsan", href: "/about" },
+    {
+      label: isEn ? "Contact Support" : "La Xiriir Taageerada",
+      href: "/contact",
+    },
+    {
+      label: isEn ? "Privacy Policy" : "Qaanuunka Asturnaanta",
+      href: "/about",
+    },
+  ];
+
+  const socialLinks = [
+    { label: "Facebook", href: "#", icon: Facebook },
+    { label: "Twitter", href: "#", icon: Twitter },
+    { label: "LinkedIn", href: "#", icon: Linkedin },
+    { label: "YouTube", href: "#", icon: Youtube },
+  ];
+
+  const prefetchRoute = (href: string) => {
+    prefetchPublicRouteData(href);
+  };
 
   return (
-    <footer className="bg-slate-900 text-slate-300">
-      <div className="max-w-7xl mx-auto px-4 pt-16 pb-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-          {/* Brand & Mission */}
-          <div className="space-y-6">
-            <Link href="/" className="flex items-center space-x-3">
-              <Image
-                src="/icon.png"
-                alt="ZeilaLink logo"
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-lg object-contain"
-                priority
+    <footer className="relative overflow-hidden bg-[#071426] text-slate-300">
+      {/* Subtle ambient detail keeps the dark footer dimensional without noise. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -bottom-52 -left-36 h-[28rem] w-[28rem] rounded-full bg-cyan-400/5 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:64px_64px]" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 pb-28 pt-10 sm:px-6 sm:pt-14 md:pb-10 lg:px-8 lg:pt-16">
+        {/* Conversion-focused footer header */}
+        <div className="relative isolate overflow-hidden rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-[#1478e8] via-[#1f7fe9] to-[#0866cf] px-5 py-7 shadow-[0_24px_70px_rgba(0,80,180,0.28)] sm:px-8 sm:py-9 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-12 lg:py-11">
+          <div
+            aria-hidden="true"
+            className="absolute -right-20 -top-36 -z-10 h-80 w-80 rounded-full border-[44px] border-white/[0.06]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-40 right-40 -z-10 h-72 w-72 rounded-full bg-cyan-300/10 blur-2xl"
+          />
+
+          <div className="max-w-2xl text-center lg:text-left">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-50 backdrop-blur-sm sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_0_4px_rgba(103,232,249,0.12)]" />
+              {isEn ? "Opportunity starts here" : "Fursaddu halkan ayay ka bilaabataa"}
+            </div>
+            <h2 className="text-balance text-2xl font-black leading-tight text-white sm:text-3xl lg:text-[2.35rem]">
+              {isEn
+                ? "Ready to take the next step in your professional journey?"
+                : "Diyaar ma u tahay tallaabada xigta ee safarkaaga xirfadeed?"}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-blue-50/85 sm:text-base lg:mx-0">
+              {isEn
+                ? "Discover trusted opportunities, practical training, and the support you need to move forward."
+                : "Hel fursado lagu kalsoon yahay, tababar wax ku ool ah, iyo taageerada aad u baahan tahay."}
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center lg:mt-0 lg:flex-none">
+            <Link
+              href="/jobs"
+              onMouseEnter={() => prefetchRoute("/jobs")}
+              onFocus={() => prefetchRoute("/jobs")}
+              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#0d64bf] shadow-lg shadow-blue-950/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600"
+            >
+              <Briefcase size={18} />
+              {isEn ? "Explore Jobs" : "Raadi Shaqooyin"}
+              <ArrowUpRight
+                size={16}
+                className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
               />
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                ZeilaLink
+            </Link>
+            <Link
+              href="/contact"
+              onMouseEnter={() => prefetchRoute("/contact")}
+              onFocus={() => prefetchRoute("/contact")}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              {isEn ? "Talk to Support" : "La Hadal Taageerada"}
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-5 gap-y-10 py-12 sm:gap-x-8 sm:py-14 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:py-16">
+          {/* Brand and mission */}
+          <div className="col-span-2 md:col-span-2 lg:col-span-5 lg:pr-12">
+            <Link
+              href="/"
+              onMouseEnter={() => prefetchRoute("/")}
+              onFocus={() => prefetchRoute("/")}
+              className="group inline-flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              aria-label="ZeilaLink home"
+            >
+              <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-black/20 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
+                <Image
+                  src="/icon.png"
+                  alt=""
+                  width={44}
+                  height={44}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+              <span className="text-2xl font-black tracking-tight text-white">
+                Zeila<span className="text-blue-400">Link</span>
               </span>
             </Link>
-            <p className="text-slate-400 leading-relaxed max-w-sm">
+
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400 sm:text-[15px]">
               {isEn
-                ? "The leading platform for People talent to find meaningful work and develop professional skills."
-                : "Madasha ugu horreysa ee hibooyinka dadka ay ka helaan shaqo macno leh iyo horumarinta xirfadaha."}
+                ? "A professional platform connecting talented people with meaningful work, trusted services, and career-building skills."
+                : "Madal xirfadeed oo dadka kartida leh ku xirta shaqo macno leh, adeegyo lagu kalsoon yahay, iyo xirfado kobciya mustaqbalka."}
             </p>
-            <div className="flex space-x-4">
-              {[Facebook, Twitter, Linkedin, Youtube].map((Icon, idx) => (
+
+            <div className="mt-6 flex items-center gap-2.5">
+              {socialLinks.map(({ label, href, icon: Icon }) => (
                 <a
-                  key={idx}
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all duration-300"
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.045] text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:bg-blue-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                 >
-                  <Icon size={18} />
+                  <Icon size={17} aria-hidden="true" />
                 </a>
               ))}
             </div>
+
+            <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.06] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-300">
+              <ShieldCheck size={15} />
+              {isEn ? "Secure & trusted platform" : "Madal ammaan ah oo lagu kalsoon yahay"}
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-semibold text-lg mb-6">
-              {isEn ? "Quick Links" : "Xiriirro Degdeg ah"}
-            </h4>
-            <ul className="space-y-4">
-              {[
-                {
-                  label: isEn ? "Browse Jobs" : "Raadi Shaqooyin",
-                  href: "/jobs",
-                },
-                {
-                  label: isEn ? "Skill Training" : "Tababar Xirfado",
-                  href: "/trainings",
-                },
-                { label: isEn ? "About Us" : "Nagu Saabsan", href: "/about" },
-                {
-                  label: isEn ? "Contact Support" : "Taageerada",
-                  href: "/contact",
-                },
-                {
-                  label: isEn ? "Privacy Policy" : "Qaanuunka Asturnaanta",
-                  href: "/about",
-                },
-              ].map((link, idx) => (
-                <li key={idx}>
+          {/* Navigation groups */}
+          <div className="min-w-0 lg:col-span-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
+              {isEn ? "Platform" : "Madasha"}
+            </h3>
+            <ul className="mt-5 space-y-3.5">
+              {platformLinks.map((link) => (
+                <li key={link.href}>
                   <Link
                     href={link.href}
-                    onMouseEnter={() => prefetchPublicRouteData(link.href)}
-                    onFocus={() => prefetchPublicRouteData(link.href)}
-                    className="hover:text-blue-500 transition-colors flex items-center group"
+                    onMouseEnter={() => prefetchRoute(link.href)}
+                    onFocus={() => prefetchRoute(link.href)}
+                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mr-3 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-blue-400" />
                     {link.label}
                   </Link>
                 </li>
@@ -111,52 +208,108 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Info */}
-          <div className="md:border-l md:border-slate-800 md:pl-12">
-            <h4 className="text-white font-semibold text-lg mb-6">
-              {isEn ? "Contact Info" : "Macluumaadka Xiriirka"}
-            </h4>
-            <ul className="space-y-5">
-              <li className="flex items-start space-x-4 group">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center group-hover:bg-blue-600/20 transition-colors">
-                  <MapPin className="text-blue-500" size={20} />
-                </div>
-                <span>Minnesota, USA</span>
-              </li>
-              <li className="flex items-center space-x-4 group">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center group-hover:bg-blue-600/20 transition-colors">
-                  <Phone className="text-blue-500" size={18} />
-                </div>
-                <span>+1 (952) 228-8655</span>
-              </li>
-              <li className="flex items-center space-x-4 group">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center group-hover:bg-blue-600/20 transition-colors">
-                  <Mail className="text-blue-500" size={18} />
-                </div>
-                <span>contact@zeilalink.com</span>
-              </li>
+          <div className="min-w-0 lg:col-span-2">
+            <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
+              {isEn ? "Company" : "Shirkadda"}
+            </h3>
+            <ul className="mt-5 space-y-3.5">
+              {companyLinks.map((link) => (
+                <li key={`${link.href}-${link.label}`}>
+                  <Link
+                    href={link.href}
+                    onMouseEnter={() => prefetchRoute(link.href)}
+                    onFocus={() => prefetchRoute(link.href)}
+                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  >
+                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-blue-400" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
+          </div>
+
+          {/* Contact card */}
+          <div className="col-span-2 md:col-span-2 lg:col-span-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
+              {isEn ? "Get in touch" : "Nala Soo Xiriir"}
+            </h3>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045]">
+              <a
+                href="tel:+19522288655"
+                className="group flex items-center gap-3 border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+              >
+                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 transition-colors group-hover:bg-blue-500 group-hover:text-white">
+                  <Phone size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {isEn ? "Call us" : "Naga soo wac"}
+                  </span>
+                  <span className="mt-0.5 block text-sm font-semibold text-slate-200">
+                    +1 (952) 228-8655
+                  </span>
+                </span>
+              </a>
+
+              <a
+                href="mailto:contact@zeilalink.com"
+                className="group flex items-center gap-3 border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
+              >
+                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 transition-colors group-hover:bg-blue-500 group-hover:text-white">
+                  <Mail size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {isEn ? "Email us" : "Email noo soo dir"}
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold text-slate-200">
+                    contact@zeilalink.com
+                  </span>
+                </span>
+              </a>
+
+              <div className="flex items-center gap-3 px-4 py-4">
+                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+                  <MapPin size={16} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    {isEn ? "Location" : "Goobta"}
+                  </span>
+                  <span className="mt-0.5 block text-sm font-semibold text-slate-200">
+                    Minnesota, USA
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm">
-            &copy; {new Date().getFullYear()} ZeilaLink Platform.{" "}
+        {/* Legal bar */}
+        <div className="flex flex-col gap-5 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            &copy; {new Date().getFullYear()} ZeilaLink Platform. {" "}
             {isEn
               ? "All rights reserved."
               : "Dhammaan xuquuqdu waa dhowran yihiin."}
           </p>
-          <div className="flex space-x-6 text-sm">
-            <Link href="/about" className="hover:text-blue-500">
-              Terms
-            </Link>
-            <Link href="/about" onMouseEnter={() => prefetchPublicRouteData("/about")} onFocus={() => prefetchPublicRouteData("/about")} className="hover:text-blue-500">
-              Privacy
-            </Link>
-            <Link href="/about" onMouseEnter={() => prefetchPublicRouteData("/about")} onFocus={() => prefetchPublicRouteData("/about")} className="hover:text-blue-500">
-              Cookies
-            </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {[
+              { label: isEn ? "Terms" : "Shuruudaha", href: "/about" },
+              { label: isEn ? "Privacy" : "Asturnaanta", href: "/about" },
+              { label: isEn ? "Cookies" : "Kukiyada", href: "/about" },
+            ].map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                onMouseEnter={() => prefetchRoute(link.href)}
+                onFocus={() => prefetchRoute(link.href)}
+                className="transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

@@ -20,6 +20,13 @@ const registerLimiter = rateLimit({
   max: 5,
 });
 
+const resendVerificationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Configure multer for avatar uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -50,7 +57,7 @@ const upload = multer({
 router.post('/login', loginLimiter, authController.login);
 router.post('/register', registerLimiter, authController.register);
 router.post('/verify-email', authController.verifyEmail);
-router.post('/resend-verification', authController.resendVerification);
+router.post('/resend-verification', resendVerificationLimiter, authController.resendVerification);
 router.get('/users/:id/profile', authenticate, authController.getProfile);
 router.put('/users/:id', authenticate, authController.updateProfile);
 router.post('/forgot-password', authController.forgotPassword);

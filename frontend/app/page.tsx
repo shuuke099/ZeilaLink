@@ -56,13 +56,17 @@ export default function Home() {
   const [featuredTrainings, setFeaturedTrainings] = useState<HomeTraining[]>(
     [],
   );
-  const [stats, setStats] = useState({
+  const stats = {
     jobs: "2.5k+",
     trainings: "150+",
     workers: "12k+",
     successRate: "98%",
-  });
+  };
   const isEn = language === "en";
+  const sectionEyebrowClass =
+    "inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm shadow-blue-100/60";
+  const sectionEyebrowTextClass =
+    "text-center text-[9px] font-black uppercase leading-relaxed tracking-[0.14em] sm:text-[10px] sm:tracking-[0.2em]";
 
   useEffect(() => {
     const load = async () => {
@@ -78,22 +82,7 @@ export default function Home() {
       }
     };
 
-    const loadStats = async () => {
-      try {
-        const data = await cachedApiGet<any>("/public/stats", undefined, 60_000);
-        setStats({
-          jobs: data.formatted.jobs,
-          trainings: data.formatted.trainings,
-          workers: data.formatted.workers,
-          successRate: data.successRate,
-        });
-      } catch (e) {
-        // keep defaults
-      }
-    };
-
     load();
-    loadStats();
   }, []);
 
   const containerVariants = {
@@ -116,7 +105,7 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section - Reverted to Light Design */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-white">
+      <section className="relative overflow-hidden bg-white pb-14 pt-28 sm:pb-20 sm:pt-32 lg:pb-28 lg:pt-44">
         {/* Abstract Background Accents */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_20%,rgba(var(--color-primary-rgb),0.05),transparent_70%)]" />
@@ -139,10 +128,10 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center space-x-2 bg-primary/5 text-primary px-4 py-2 rounded-full mb-8 border border-primary/10 backdrop-blur-sm"
+              className={`${sectionEyebrowClass} mb-6 sm:mb-8`}
             >
-              <Star size={16} className="fill-current" />
-              <span className="text-xs font-black tracking-[0.2em] uppercase">
+              <Star size={15} className="shrink-0 fill-current" />
+              <span className={sectionEyebrowTextClass}>
                 {isEn
                   ? "Connecting Opportunities & People"
                   : "Isku Xiraha Fursadaha Bulshada"}
@@ -150,9 +139,6 @@ export default function Home() {
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
               className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] mb-8 tracking-tight"
             >
               {isEn ? (
@@ -177,9 +163,6 @@ export default function Home() {
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.4 }}
               className="text-lg text-slate-600 mb-10 max-w-xl mx-auto leading-relaxed"
             >
               {isEn
@@ -188,10 +171,7 @@ export default function Home() {
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.6 }}
-              className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-4 sm:justify-center"
+              className="mx-auto flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4"
             >
               <Link
                 href="/jobs"
@@ -199,10 +179,10 @@ export default function Home() {
                 onMouseEnter={() => prefetchPublicRouteData("/jobs")}
                 onFocus={() => prefetchPublicRouteData("/jobs")}
                 onTouchStart={() => prefetchPublicRouteData("/jobs")}
-                className="group btn-primary min-w-0 px-3 py-3 rounded-xl text-xs font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center sm:px-8 sm:py-4 sm:text-base"
+                className="group btn-primary w-full min-w-0 px-4 py-3.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center sm:w-auto sm:px-8 sm:py-4 sm:text-base"
               >
                 <Search className="mr-1.5 h-4 w-4 shrink-0 sm:mr-2 sm:h-5 sm:w-5" />
-                <span className="truncate">{getT("searchJobs")}</span>
+                <span>{getT("searchJobs")}</span>
                 <ArrowRight
                   className="ml-1 h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all sm:ml-2 sm:h-[18px] sm:w-[18px]"
                   size={18}
@@ -214,10 +194,10 @@ export default function Home() {
                 onMouseEnter={() => prefetchPublicRouteData("/trainings")}
                 onFocus={() => prefetchPublicRouteData("/trainings")}
                 onTouchStart={() => prefetchPublicRouteData("/trainings")}
-                className="min-w-0 bg-white border border-slate-200 hover:border-primary/30 text-slate-700 px-3 py-3 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center sm:px-8 sm:py-4 sm:text-base"
+                className="w-full min-w-0 bg-white border border-slate-200 hover:border-primary/40 hover:-translate-y-0.5 text-slate-700 px-4 py-3.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center sm:w-auto sm:px-8 sm:py-4 sm:text-base"
               >
                 <GraduationCap className="mr-1.5 h-4 w-4 shrink-0 text-primary sm:mr-2 sm:h-[22px] sm:w-[22px]" />
-                <span className="truncate">{getT("searchTrainings")}</span>
+                <span>{getT("searchTrainings")}</span>
               </Link>
             </motion.div>
           </div>
@@ -225,7 +205,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-slate-900 border-y border-white/5 relative overflow-hidden">
+      <section className="relative overflow-hidden border-y border-white/5 bg-slate-900 py-10 sm:py-14 lg:py-16">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0,rgba(var(--color-primary-rgb),0.15),transparent_50%)]" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:gap-8">
@@ -273,25 +253,25 @@ export default function Home() {
       </section>
 
       {/* About Section - Professional Redesign */}
-      <section className="py-32 px-4 bg-white relative overflow-hidden">
+      <section className="relative overflow-hidden bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:py-28">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative text-center lg:text-left"
             >
-              <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-8 border border-blue-100">
-                <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+              <div className={`${sectionEyebrowClass} mb-6 sm:mb-8`}>
+                <Star size={14} className="shrink-0 fill-current" />
+                <span className={sectionEyebrowTextClass}>
                   {isEn
                     ? "Since 2026 • Our Purpose"
                     : "Laga soo bilaabo 2026 • Ujeedadayada"}
                 </span>
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-black text-slate-900 leading-[1.2] mb-8">
+              <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
                 {isEn ? (
                   <>
                     We're Building the <br />
@@ -311,22 +291,22 @@ export default function Home() {
                 )}
               </h2>
 
-              <div className="space-y-6 text-slate-600 text-lg leading-relaxed mb-10">
-                <p>
+              <div className="mb-8 space-y-5 text-center text-base leading-relaxed text-slate-600 sm:mb-10 sm:space-y-6 sm:text-lg lg:text-left">
+                <p className="text-left">
                   {isEn
                     ? "ZeilaLink is more than a platform — it is a growing ecosystem built to connect people with opportunities, empower individuals to develop their potential, and enable businesses to find the talent and services they need. We are committed to bridging gaps, unlocking possibilities, and supporting communities to thrive in a modern, digital economy."
                     : "  ZeilaLink ma aha oo kaliya madal — waa nidaam sii kobcaya oo loogu talagalay isku xirka bulshada  iyo fursadaha jira ,  awoodsiinta xirfadlayaasha si ay u horumariyaan xirfadooda, iyo ka caawinta ganacsiyada inay helaan hibada iyo adeegyada iyo shaqaalaha ay u baahan yihiin. Waxaan u heellan nahay inaan yareyno kala fogaanshaha, furno fursado cusub, oo aan taageerno bulshada si ay ula jaan-qaado dhaqaalaha casriga ah ee danabaysan."}
                 </p>
                 <Link
                   href="/about"
-                  className="group inline-flex items-center gap-2 bg-slate-900 text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10"
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-7 py-4 text-base font-bold text-white shadow-xl shadow-slate-900/10 transition-all duration-300 hover:-translate-y-1 hover:bg-primary hover:shadow-primary/25 sm:px-10 sm:py-5 sm:text-lg"
                 >
                   {isEn
                     ? "Learn More About Us"
                     : "Wax badan oo nagu saabsan ogow"}
                   <ArrowRight
                     size={22}
-                    className="group-hover:translate-x-1 transition-transform"
+                    className="transition-transform duration-300 group-hover:translate-x-2"
                   />
                 </Link>
                 <div className="flex flex-wrap gap-4 pt-4">
@@ -398,15 +378,16 @@ export default function Home() {
       </section>
 
       {/* Features Section - Professional Redesign */}
-      <section className="py-32 px-4 relative bg-white">
+      <section className="relative bg-white px-4 pb-16 pt-8 sm:pb-20 sm:pt-12 lg:py-28">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center space-x-2 bg-slate-50 text-slate-500 px-4 py-2 rounded-full mb-4 border border-slate-100">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="mb-10 text-center sm:mb-14 lg:mb-16">
+            <div className={`${sectionEyebrowClass} mb-4`}>
+              <Star size={14} className="shrink-0 fill-current" />
+              <span className={sectionEyebrowTextClass}>
                 {isEn ? "Our Capabilities" : "Awoodahayada"}
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">
+            <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
               {isEn ? "Empowering Your Success" : "Awoodsiinta Guushaada"}
             </h2>
               <p className="text-slate-500 max-w-2xl mx-auto text-lg">
@@ -538,19 +519,19 @@ export default function Home() {
       </section>
 
       {/* Featured Jobs Section - Professional Redesign */}
-      <section className="py-32 px-4 bg-[#071633] relative overflow-hidden">
+      <section className="relative overflow-hidden bg-[#071633] px-4 py-16 sm:py-20 lg:py-28">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
 
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-8">
+          <div className="mb-10 flex flex-col items-start justify-between gap-6 sm:mb-14 md:flex-row md:items-end lg:mb-16 lg:gap-8">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center space-x-2 bg-[#0d2a5e] text-sky-200 px-3 py-1 rounded-full mb-4 border border-sky-400/20">
-                <TrendingUp size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest">
+              <div className={`${sectionEyebrowClass} mb-4`}>
+                <TrendingUp size={14} className="shrink-0" />
+                <span className={sectionEyebrowTextClass}>
                   {isEn ? "Trending Careers" : "Shaqooyinka ugu Caansan"}
                 </span>
               </div>
-              <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+              <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-white sm:mb-6 sm:text-4xl lg:text-5xl">
                 {isEn ? "Latest Opportunities" : "Fursadihii Ugu Dambeeyay"}
               </h2>
               <p className="text-slate-300 text-lg leading-relaxed">
@@ -571,7 +552,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="space-y-20">
+          <div className="space-y-12 sm:space-y-16 lg:space-y-20">
             {/* Jobs Section */}
             <div>
               <div className="flex items-center gap-4 mb-10 max-w-7xl mx-auto">
@@ -740,150 +721,190 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contact Section - 'Concierge Desk' Layout */}
-      <section className="py-24 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 lg:gap-0">
-            {/* Left Column: Direct Assistance */}
-            <div className="lg:pr-20 py-10">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="inline-flex items-center space-x-2 bg-slate-50 text-slate-500 px-5 py-2.5 rounded-full mb-8 border border-slate-100 shadow-sm"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-                  {isEn
-                    ? "Global Support Center"
-                    : "Xarunta Taageerada Caalamiga"}
-                </span>
-              </motion.div>
+      {/* Contact Section - Professional Support Hub */}
+      <section className="relative overflow-hidden bg-slate-50 px-4 py-14 sm:py-16 lg:py-20">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-32 top-8 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
+          <div className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-100/70 blur-3xl" />
+        </div>
 
-              <h2 className="text-5xl lg:text-6xl font-black text-slate-900 mb-6 tracking-tighter leading-tight">
-                {isEn ? (
-                  <>
-                    Get in{" "}
-                    <span className="text-primary relative inline-block">
-                      Touch{" "}
-                      <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" />
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    Nala soo{" "}
-                    <span className="text-primary relative inline-block">
-                      Xiriir{" "}
-                      <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" />
-                    </span>
-                  </>
-                )}
-              </h2>
-              <p className="text-slate-500 text-lg leading-relaxed mb-10 max-w-md">
+        <div className="relative mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mx-auto mb-8 max-w-2xl text-center sm:mb-10"
+          >
+            <div className={`${sectionEyebrowClass} mb-4`}>
+              <Star size={14} className="shrink-0 fill-current" />
+              <span className={sectionEyebrowTextClass}>
                 {isEn
-                  ? "We're building the future of work. Our team is dedicated to providing you with the most seamless career journey imaginable."
-                  : "Waxaan dhiseynaa mustaqbalka shaqada ee Soomaaliya. Kooxdayadu waxay u go'an tahay inay ku siiyaan socdaalka shaqo ee ugu wanaagsan ee aad qiyaasi karto."}
-              </p>
+                  ? "Global Support Center"
+                  : "Xarunta Taageerada Caalamiga"}
+              </span>
+            </div>
+            <h2 className="mb-4 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              {isEn ? (
+                <>
+                  Support that keeps you{" "}
+                  <span className="text-primary">moving</span>
+                </>
+              ) : (
+                <>
+                  Taageero ku sii wada{" "}
+                  <span className="text-primary">horumarka</span>
+                </>
+              )}
+            </h2>
+            <p className="mx-auto max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+              {isEn
+                ? "Speak with a real person whenever you need help finding work, building skills, or using ZeilaLink."
+                : "La hadal qof dhab ah marka aad u baahan tahay caawimaad shaqo raadinta, horumarinta xirfadaha, ama isticmaalka ZeilaLink."}
+            </p>
+          </motion.div>
 
-              <div className="space-y-6">
+          <div className="grid overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 lg:grid-cols-12 lg:rounded-[2.25rem]">
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative overflow-hidden bg-[#071633] p-6 text-white sm:p-9 lg:col-span-5 lg:p-10"
+            >
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border border-white/10" />
+              <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/5" />
+              <div className="relative">
+                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/15 text-blue-300 sm:h-14 sm:w-14">
+                  <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
+                </div>
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-blue-300">
+                  {isEn ? "Direct assistance" : "Caawimaad toos ah"}
+                </p>
+                <h3 className="mb-4 text-2xl font-black leading-tight sm:text-3xl">
+                  {isEn
+                    ? "Talk to our support team"
+                    : "La hadal kooxdayada taageerada"}
+                </h3>
+                <p className="mb-7 max-w-md text-sm leading-relaxed text-slate-300 sm:text-base">
+                  {isEn
+                    ? "Get fast, practical guidance from the people who know the platform best."
+                    : "Ka hel hagitaan degdeg ah oo wax ku ool ah dadka sida fiican u yaqaan madasha."}
+                </p>
+
                 <a
                   href="https://wa.me/19522288655"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg hover:shadow-xl transition-all no-underline w-full sm:w-auto"
+                  className="group inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-black text-white no-underline shadow-lg shadow-emerald-950/20 transition-all hover:-translate-y-0.5 hover:bg-[#20bd5a] hover:shadow-xl sm:w-auto sm:px-7"
                 >
                   <WhatsAppIcon size={20} fill="white" />
-                  {isEn ? "MESSAGE US ON WHATSAPP" : "NAGA SOO QOR WHATSAPP"}
+                  {isEn ? "Message on WhatsApp" : "Nagala soo xiriir WhatsApp"}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
-                  <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                    {isEn
-                      ? "Typical response time: Under 5 minutes"
-                      : "Waqtiga jawaabta caadiga ah: In ka yar 5 daqiiqo"}
+
+                <div className="mt-5 flex items-center gap-2.5 text-xs font-bold text-slate-300">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                  </span>
+                  {isEn
+                    ? "Usually replies in under 5 minutes"
+                    : "Badanaa waxay ku jawaabaan 5 daqiiqo gudahood"}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="p-5 sm:p-8 lg:col-span-7 lg:p-10"
+            >
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-7">
+                <div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                    {isEn ? "Talent support desk" : "Miiska taageerada"}
+                  </p>
+                  <h3 className="text-xl font-black text-slate-900 sm:text-2xl">
+                    {isEn ? "Choose how to reach us" : "Dooro sida aad nala soo xiriirayso"}
+                  </h3>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  {isEn ? "Available 24/7" : "Furan 24/7"}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+                <a
+                  href="tel:+19522288655"
+                  className="group rounded-2xl border border-slate-200 bg-slate-50/70 p-4 no-underline transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/60 hover:shadow-lg sm:p-5"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105">
+                    <Phone size={19} />
+                  </div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {isEn ? "Call support" : "Wac taageerada"}
+                  </p>
+                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                    +1 (952) 228-8655
+                  </p>
+                </a>
+
+                <a
+                  href="mailto:Koryaal6@gmail.com"
+                  className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 no-underline transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/60 hover:shadow-lg sm:p-5"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105">
+                    <Mail size={19} />
+                  </div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {isEn ? "Email inquiries" : "Su'aalaha iimaylka"}
+                  </p>
+                  <p className="break-all text-base font-black text-slate-900 sm:text-lg">
+                    Koryaal6@gmail.com
+                  </p>
+                </a>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100">
+                    <MapPin size={19} />
+                  </div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {isEn ? "Support location" : "Goobta taageerada"}
+                  </p>
+                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                    Minnesota, USA
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100">
+                    <Clock size={19} />
+                  </div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                    {isEn ? "Availability" : "Waqtiga la heli karo"}
+                  </p>
+                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                    {isEn ? "Every day, 24 hours" : "Maalin kasta, 24 saac"}
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Right Column: Information Desk */}
-            <div className="lg:pl-20 py-10 lg:border-l border-slate-100 space-y-16">
-              <div>
-                <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.3em] mb-10">
-                  {isEn ? "Talent Support Desk" : "Miiska Taageerada Tayada"}
-                </h3>
-
-                <div className="space-y-10">
-                  {/* Location */}
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                      {isEn ? "LOCATION" : "GOOBTA"}
-                    </p>
-                    <p className="text-xl font-bold text-slate-900 leading-tight">
-                      Minnesota
-                      <br />
-                      USA
-                    </p>
-                  </div>
-
-                  {/* Connect */}
-                  <div className="space-y-6">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                      {isEn ? "CONNECT" : "XIRIIRKA"}
-                    </p>
-                    <div className="space-y-4 max-w-sm">
-                      <div className="flex justify-between items-end border-b border-slate-50 pb-4">
-                        <span className="text-slate-500 font-medium">
-                          {isEn ? "Talent Support" : "Taageerada Tayada"}
-                        </span>
-                        <a
-                          href="tel:+19522288655"
-                          className="text-xl font-bold text-slate-900 hover:text-primary transition-colors no-underline"
-                        >
-                          +1 (952) 228-8655
-                        </a>
-                      </div>
-                      <div className="flex justify-between items-end border-b border-slate-50 pb-4">
-                        <span className="text-slate-500 font-medium">
-                          {isEn ? "General Inquiry" : "Weydiinta Guud"}
-                        </span>
-                        <a
-                          href="tel:+19522288655"
-                          className="text-xl font-bold text-slate-900 hover:text-primary transition-colors no-underline"
-                        >
-                          +1 (952) 228-8655
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Inquiries */}
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                      {isEn ? "INQUIRIES" : "CODSIGA"}
-                    </p>
-                    <a
-                      href="mailto:Koryaal6@gmail.com"
-                      className="text-xl font-bold text-primary hover:underline decoration-2 underline-offset-8 transition-all"
-                    >
-                      Koryaal6@gmail.com
-                    </a>
-                  </div>
-
-                  {/* Availability */}
-                  <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                      {isEn ? "AVAILABILITY" : "OOGOLAASHAHA"}
-                    </p>
-                    <p className="text-slate-500 font-medium leading-relaxed max-w-sm">
-                      {isEn
-                        ? "Our career consultants are on hand 24 hours a day, 7 days a week, ensuring you never miss an opportunity."
-                        : "La-taliyayaashayada shaqada waxay joogaan 24 saac maalintii, 7 maalmood usbuucii, iyagoo hubinaya inaadan marnaba seegin fursad."}
-                    </p>
-                  </div>
-                </div>
+              <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-relaxed text-slate-500">
+                  {isEn
+                    ? "Need to share more details with our team?"
+                    : "Ma u baahan tahay inaad faahfaahin dheeraad ah nala wadaagto?"}
+                </p>
+                <Link
+                  href="/contact"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-primary transition-all hover:border-primary hover:bg-primary hover:text-white"
+                >
+                  {isEn ? "Open contact page" : "Fur bogga xiriirka"}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>

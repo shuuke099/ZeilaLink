@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
@@ -19,6 +19,53 @@ export default function VerifyEmailPage() {
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setEmail(params.get('email') || '');
+  }, []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = window.setTimeout(
+      () => setResendCooldown((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setStatus('error');
+      setMessage(language === 'en' ? 'Enter your email address first' : 'Marka hore geli email-kaaga');
+      return;
+    }
+
+    try {
+      setResending(true);
+      setResendMessage('');
+      await api.post('/auth/resend-verification', { email: normalizedEmail });
+      setResendCooldown(60);
+      setResendMessage(
+        language === 'en'
+          ? 'A new verification code was sent to your email.'
+          : 'Lambar xaqiijin cusub ayaa laguugu soo diray email-kaaga.',
+      );
+    } catch (error: any) {
+      setResendMessage(
+        error.response?.data?.error ||
+          (language === 'en'
+            ? 'Could not resend the code. Please try again.'
+            : 'Lambarka dib looma diri karin. Fadlan isku day mar kale.'),
+      );
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +171,28 @@ export default function VerifyEmailPage() {
               <p className="text-xs text-gray-500 mt-1">
                 {language === 'en' ? 'Enter the 6-digit code sent to your email' : 'Geli lambarka 6-lambar ah ee loo diray email-kaga'}
               </p>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-xs text-muted">
+                  {language === 'en' ? "Didn't receive the code?" : 'Lambarka ma helin?'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending || resendCooldown > 0 || status === 'success'}
+                  className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resending
+                    ? language === 'en' ? 'Sending...' : 'Waa la dirayaa...'
+                    : resendCooldown > 0
+                      ? `${language === 'en' ? 'Resend in' : 'Dib u dir'} ${resendCooldown}s`
+                      : language === 'en' ? 'Resend Code' : 'Dib u Dir Lambarka'}
+                </button>
+              </div>
+              {resendMessage && (
+                <p className="mt-2 text-xs font-medium text-primary-dark" role="status">
+                  {resendMessage}
+                </p>
+              )}
             </div>
 
             {status === 'error' && (

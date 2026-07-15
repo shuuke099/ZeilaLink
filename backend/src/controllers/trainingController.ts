@@ -468,3 +468,40 @@ export const issueCertificate = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const adminUpdateTraining = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.training.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Training not found' });
+    const { name, category, duration, description, cost, published } = req.body;
+    const updated = await prisma.training.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name: String(name).trim() }),
+        ...(category !== undefined && { category: String(category).trim() }),
+        ...(duration !== undefined && { duration: String(duration).trim() }),
+        ...(description !== undefined && { description: String(description).trim() }),
+        ...(cost !== undefined && { cost: Math.max(0, Number(cost) || 0) }),
+        ...(published !== undefined && { published: Boolean(published) }),
+      },
+    });
+    void invalidateCacheByPrefix(['trainings:list', 'trainings:detail', 'public:stats']);
+    return res.json(updated);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to update training' });
+  }
+};
+
+export const adminDeleteTraining = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.training.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ error: 'Training not found' });
+    await prisma.training.delete({ where: { id } });
+    void invalidateCacheByPrefix(['trainings:list', 'trainings:detail', 'public:stats']);
+    return res.json({ message: 'Training deleted successfully' });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to delete training' });
+  }
+};

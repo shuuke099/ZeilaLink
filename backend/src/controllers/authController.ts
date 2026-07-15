@@ -83,10 +83,6 @@ export const register = async (req: Request, res: Response) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[Auth] Generated verification code for ${email}: ${verificationCode}`);
-    }
-
     const user = await prisma.user.create({
       data: {
         name: normalizedName,
@@ -111,7 +107,7 @@ export const register = async (req: Request, res: Response) => {
       console.error(`[Auth] Error:`, emailError.message || emailError);
       console.error(`[Auth] Error code:`, emailError.code);
       console.error(`[Auth] Response code:`, emailError.responseCode);
-      
+
       // Delete the user since email failed
       await prisma.user.delete({ where: { id: user.id } });
       
@@ -145,7 +141,7 @@ export const register = async (req: Request, res: Response) => {
       
       console.error('[Auth] Full email error object:', JSON.stringify(errorDetails, null, 2));
       
-      return res.status(500).json(errorDetails);
+      return res.status(503).json(errorDetails);
     }
 
     res.status(201).json({
@@ -157,9 +153,6 @@ export const register = async (req: Request, res: Response) => {
         role: user.role,
         avatarUrl: user.avatarUrl,
       },
-      ...(process.env.NODE_ENV !== 'production' && {
-        devVerificationCode: verificationCode,
-      }),
     });
   } catch (error: any) {
     console.error('[Auth] Registration error:', error);
@@ -300,12 +293,7 @@ export const resendVerification = async (req: Request, res: Response) => {
 
     try {
       await sendVerificationEmail(user.email, verificationCode, user.name);
-      res.json({ 
-        message: 'Verification email sent',
-        ...(process.env.NODE_ENV !== 'production' && {
-          devVerificationCode: verificationCode,
-        }),
-      });
+      res.json({ message: 'Verification email sent' });
     } catch (emailError: any) {
       console.error(`[Auth] Failed to resend verification email to ${user.email}:`, emailError);
       res.status(500).json({ 

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowUpDown, ChevronRight, MoreHorizontal, Plus, Upload } from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Eye, MoreHorizontal, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 
 type AdminService = {
   id: string;
@@ -67,6 +67,26 @@ export default function AdminServicesPage() {
       setServices((prev) => prev.filter((service) => service.id !== id));
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Failed to delete service');
+    }
+  };
+
+  const handleEdit = async (service: AdminService) => {
+    const title = window.prompt('Service title', service.title);
+    if (title === null || !title.trim()) return;
+    const category = window.prompt('Category', service.category);
+    if (category === null || !category.trim()) return;
+    const priceLabel = window.prompt('Price label', service.priceLabel);
+    if (priceLabel === null || !priceLabel.trim()) return;
+    try {
+      const response = await api.put(`/admin/services/${service.id}`, {
+        title: title.trim(),
+        category: category.trim(),
+        priceLabel: priceLabel.trim(),
+      });
+      setServices((current) => current.map((item) => item.id === service.id ? { ...item, ...response.data } : item));
+      setError(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Failed to update service');
     }
   };
 
@@ -173,7 +193,7 @@ export default function AdminServicesPage() {
                   <th className="px-4 py-4">PRICE</th>
                   <th className="px-4 py-4">BOOKINGS</th>
                   <th className="px-4 py-4">STATUS</th>
-                  <th className="px-4 py-4">ACTION</th>
+                  <th className="px-4 py-4 text-right">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,12 +225,11 @@ export default function AdminServicesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-5">
-                        <button
-                          onClick={() => handleDelete(service.id)}
-                          className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/services/${service.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
+                          <button type="button" title="Edit" onClick={() => handleEdit(service)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></button>
+                          <button type="button" title="Delete" onClick={() => handleDelete(service.id)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
+                        </div>
                       </td>
                     </tr>
                   ))

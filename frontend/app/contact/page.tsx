@@ -34,7 +34,7 @@ export default function ContactPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center space-x-2 bg-slate-50 text-slate-500 px-5 py-2.5 rounded-full mb-8 border border-slate-100 shadow-sm"
+                className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm sm:mb-8 sm:px-5 sm:py-2.5"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.3em]">

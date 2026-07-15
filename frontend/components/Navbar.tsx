@@ -12,7 +12,6 @@ import { t } from "@/lib/translations";
 import { prefetchPublicRouteData } from "@/lib/api-cache";
 import { usePathname } from "next/navigation";
 import {
-  Menu,
   X,
   Briefcase,
   Globe,
@@ -20,6 +19,9 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  Home,
+  Wrench,
+  GraduationCap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,7 +30,6 @@ export default function Navbar() {
   const { language, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -65,13 +66,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 py-2 transition-all duration-300 ${
-        scrolled
-          ? "bg-surface/80 backdrop-blur-md shadow-lg border-b border-border"
-          : "bg-transparent"
-      }`}
-    >
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 py-2 transition-all duration-300 ${
+          scrolled
+            ? "bg-surface/80 backdrop-blur-md shadow-lg border-b border-border"
+            : "bg-transparent"
+        }`}
+      >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 md:h-20">
           {/* Logo - Left (MAXIMIZED SIZE) */}
@@ -86,7 +88,7 @@ export default function Navbar() {
               alt="ZeilaLink logo"
               width={800}
               height={300}
-              className="h-auto w-32 object-contain transition-transform duration-300 group-hover:scale-105 md:w-40"
+              className="h-auto w-40 object-contain transition-transform duration-300 group-hover:scale-105 md:w-40"
               priority
             />
           </Link>
@@ -228,99 +230,67 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center space-x-2">
+          {/* Mobile Utilities */}
+          <div className="flex items-center gap-1 md:hidden">
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-black uppercase text-foreground/70 transition-colors hover:bg-surface-muted"
+              title={getT("language.toggle")}
+            >
+              <Globe size={18} />
+              <span>{language}</span>
+            </button>
             <button
               onClick={toggleTheme}
               className={`p-2 rounded-lg transition-colors ${scrolled ? "hover:bg-surface-muted text-foreground/70" : isDarkHeroPage ? "hover:bg-white/10 text-white/80" : "hover:bg-surface-muted text-foreground/70"}`}
             >
               {isDark ? <Moon size={20} /> : <Sun size={20} />}
             </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`p-2 rounded-lg transition-all hover:scale-105 active:scale-95 ${scrolled ? "bg-surface-muted text-foreground" : isDarkHeroPage ? "bg-white/10 text-white" : "bg-surface-muted text-foreground"}`}
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
           </div>
         </div>
       </div>
+      </nav>
 
-      {/* Mobile Navigation */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-surface border-t border-border overflow-hidden"
-          >
-            <div className="px-4 py-6 space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  prefetch
-                  onMouseEnter={() => prefetchPublicRouteData(link.href)}
-                  onFocus={() => prefetchPublicRouteData(link.href)}
-                  onTouchStart={() => prefetchPublicRouteData(link.href)}
-                  className="block text-lg font-medium text-foreground py-2 border-b border-border/50"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
+      {/* Persistent mobile bottom navigation */}
+      <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-border bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-5">
+          {[
+            { name: getT("home"), href: "/", icon: Home },
+            { name: getT("jobs"), href: "/jobs", icon: Briefcase },
+            { name: getT("services"), href: "/services", icon: Wrench },
+            { name: getT("trainings"), href: "/trainings", icon: GraduationCap },
+            {
+              name: user ? "Account" : language === "en" ? "Sign In" : "Soo gal",
+              href: user ? `/${user.role}` : "/login",
+              icon: UserIcon,
+            },
+          ].map((item) => {
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const Icon = item.icon;
 
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
-                  Language
-                </span>
-                <button
-                  onClick={() => {
-                    toggleLanguage();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold"
-                >
-                  <Globe size={18} />
-                  {language === "en" ? "English" : "Soomaali"}
-                </button>
-              </div>
-
-              {user ? (
-                <div className="pt-4 space-y-3">
-                  <Link
-                    href={`/${user.role}`}
-                    className="flex items-center justify-center w-full py-3 rounded-xl bg-surface-muted text-foreground font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <UserIcon size={18} className="mr-2" />
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full py-3 rounded-xl bg-red-50 text-red-600 font-medium"
-                  >
-                    {getT("logout")}
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="flex w-full items-center justify-center gap-2 py-4 btn-primary text-center rounded-xl shadow-lg shadow-primary/20 text-lg font-bold"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span>{language === "en" ? "Sign In" : "Soo gal"}</span>
-                  <UserIcon size={18} />
-                </Link>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                onTouchStart={() => prefetchPublicRouteData(item.href)}
+                className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-bold transition-colors ${
+                  isActive ? "text-primary" : "text-muted hover:text-primary"
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute -top-2 h-0.5 w-8 rounded-full bg-primary" />
+                )}
+                <Icon size={21} strokeWidth={isActive ? 2.6 : 2} />
+                <span className="w-full truncate text-center">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }

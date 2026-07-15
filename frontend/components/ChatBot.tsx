@@ -351,7 +351,7 @@ export default function ChatBot() {
   if (isAdmin) return null;
 
   return (
-    <div className="fixed bottom-8 right-8 z-[100] font-poppins">
+    <div className="fixed bottom-24 right-4 z-[100] font-poppins md:bottom-8 md:right-8">
       <AnimatePresence>
         {isOpen && (
           <motion.div

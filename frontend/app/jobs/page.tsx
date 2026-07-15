@@ -190,7 +190,7 @@ export default function JobsPage() {
 
       <div className="mx-auto max-w-7xl px-4 pb-14 pt-28 sm:px-6 lg:px-8">
         <section className="mx-auto max-w-4xl text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-primary-darker">
+          <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 sm:bg-white sm:py-1.5 sm:text-[11px] sm:text-primary-darker">
             <Sparkles size={12} />
             {language === "en" ? "Career Marketplace" : "Suuqa Shaqooyinka"}
           </p>

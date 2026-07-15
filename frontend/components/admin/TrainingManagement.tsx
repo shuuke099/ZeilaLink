@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import api from '@/lib/api';
 import {
   BookOpen,
@@ -9,7 +10,10 @@ import {
   Clock,
   Users,
   Search,
-  Plus
+  Plus,
+  Eye,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,6 +33,40 @@ export default function TrainingManagement() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const handleEdit = async (training: TrainingRow) => {
+    const name = window.prompt('Training name', training.name);
+    if (name === null || !name.trim()) return;
+    const category = window.prompt('Category', training.category || 'Professional');
+    if (category === null) return;
+    const costInput = window.prompt('Cost', String(training.cost ?? 0));
+    if (costInput === null || Number.isNaN(Number(costInput))) return;
+    try {
+      setBusyId(training.id);
+      const response = await api.put(`/admin/trainings/${training.id}`, { name: name.trim(), category: category.trim(), cost: Number(costInput) });
+      setTrainings((current) => current.map((item) => item.id === training.id ? { ...item, ...response.data } : item));
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to update training');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (training: TrainingRow) => {
+    if (!window.confirm(`Delete ${training.name}? This cannot be undone.`)) return;
+    try {
+      setBusyId(training.id);
+      await api.delete(`/admin/trainings/${training.id}`);
+      setTrainings((current) => current.filter((item) => item.id !== training.id));
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to delete training');
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -151,9 +189,11 @@ export default function TrainingManagement() {
                       </span>
                     </td>
                     <td className="px-10 py-6 text-right">
-                      <button className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all opacity-0 group-hover:opacity-100">
-                        <Plus size={16} />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/trainings/${t.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
+                        <button type="button" title="Edit" disabled={busyId === t.id} onClick={() => handleEdit(t)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"><Pencil size={16} /></button>
+                        <button type="button" title="Delete" disabled={busyId === t.id} onClick={() => handleDelete(t)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
+                      </div>
                     </td>
                   </tr>
                 ))

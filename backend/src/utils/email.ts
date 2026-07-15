@@ -7,8 +7,11 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
     return transporterPromise;
   }
 
-  const emailUser = process.env.EMAIL_USER?.trim();
-  const emailPass = process.env.EMAIL_PASS?.trim();
+  const emailUser = (process.env.SMTP_USER || process.env.EMAIL_USER)?.trim();
+  const emailPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS)?.replace(/\s+/g, '');
+  const smtpHost = process.env.SMTP_HOST?.trim() || 'smtp.gmail.com';
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpSecure = process.env.SMTP_SECURE === 'true';
 
   console.log('[Email] ========================================');
   console.log('[Email] Checking email configuration...');
@@ -26,19 +29,15 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
   if (hasSmtpCreds) {
     console.log('[Email] Using Gmail SMTP configuration');
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
       auth: {
         user: emailUser,
         pass: emailPass,
       },
-      tls: {
-        rejectUnauthorized: false, // For development, set to true in production
-      },
-      debug: process.env.NODE_ENV === 'development', // Enable debug logging in development
-      logger: process.env.NODE_ENV === 'development', // Enable logger in development
+      debug: process.env.SMTP_DEBUG === 'true',
+      logger: process.env.SMTP_DEBUG === 'true',
     });
     
     transporterPromise = Promise.resolve(transporter);
@@ -79,7 +78,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     const transporter = await getTransporter();
     
     // Priority: EMAIL_USER > EMAIL_FROM (extract email) > fallback
-    let fromEmailAddress = process.env.EMAIL_USER?.trim();
+    let fromEmailAddress = (process.env.SMTP_USER || process.env.EMAIL_USER)?.trim();
     
     if (!fromEmailAddress) {
       // Try to extract from EMAIL_FROM if it exists
@@ -99,8 +98,9 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     
     console.log(`[Email] Sending from: ${fromEmailAddress}`);
     
+    const fromName = process.env.SMTP_FROM?.trim() || 'ZeilaLink';
     const mailOptions = {
-      from: `"ZeilaLink" <${fromEmailAddress}>`,
+      from: `"${fromName}" <${fromEmailAddress}>`,
       to,
       subject,
       html,
@@ -157,7 +157,6 @@ export const sendVerificationEmail = async (email: string, code: string, userNam
   console.log(`[Email] 📧 Sending verification email`);
   console.log(`[Email] To: ${email}`);
   console.log(`[Email] User: ${userName}`);
-  console.log(`[Email] Code: ${code}`);
   console.log(`[Email] ========================================`);
   
   const html = `
@@ -197,7 +196,6 @@ export const sendVerificationEmail = async (email: string, code: string, userNam
   try {
     await sendEmail(email, 'Verify your email - ZeilaLink', html);
     console.log(`[Email] ✅ Verification email sent successfully to ${email}`);
-    console.log(`[Email] Code: ${code} (for testing)`);
   } catch (error: any) {
     console.error(`[Email] ❌ FAILED to send verification email to ${email}`);
     console.error(`[Email] Error details:`, {

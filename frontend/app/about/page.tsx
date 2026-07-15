@@ -57,7 +57,7 @@ export default function AboutPage() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center space-x-2 bg-primary/5 text-primary px-5 py-2.5 rounded-full mb-10 border border-primary/10"
+            className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 sm:mb-10 sm:px-5 sm:py-2.5"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-black tracking-[0.3em] uppercase">
