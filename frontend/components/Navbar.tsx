@@ -43,6 +43,10 @@ export default function Navbar() {
     [router],
   );
 
+  const resetScrollForMobileNavigation = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   // Logic to use dar.png for dark theme and light.png for light theme
   const isDark = theme === "dark";
   const logoSrc = isDark ? darLogo : lightLogo;
@@ -276,6 +280,8 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 prefetch={false}
+                scroll={false}
+                onClick={resetScrollForMobileNavigation}
                 className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[9px] font-bold transition-colors duration-150 active:scale-[0.97] ${
                   isActive
                     ? "bg-primary text-white shadow-md shadow-primary/25"

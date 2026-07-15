@@ -353,9 +353,9 @@ export default function Home() {
       </section>
 
       {/* Features Section - Professional Redesign */}
-      <section className="relative bg-white px-4 pb-10 pt-6 sm:pb-20 sm:pt-12 lg:py-28">
+      <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-6 sm:pb-20 sm:pt-12 lg:py-28">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-10 text-center sm:mb-14 lg:mb-16">
+          <div className="home-capabilities-content mb-10 text-center sm:mb-14 lg:mb-16">
             <div className={`${sectionEyebrowClass} mb-4`}>
               <Star size={14} className="shrink-0 fill-current" />
               <span className={sectionEyebrowTextClass}>

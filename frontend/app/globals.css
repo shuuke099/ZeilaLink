@@ -240,4 +240,15 @@
     opacity: 1;
     visibility: visible;
   }
+
+  .home-capabilities-section {
+    overflow: visible;
+  }
+
+  .home-capabilities-content {
+    content-visibility: visible;
+    contain: none;
+    opacity: 1;
+    visibility: visible;
+  }
 }
