@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import {
   Briefcase,
@@ -56,6 +55,7 @@ export default function Home() {
   const [featuredTrainings, setFeaturedTrainings] = useState<HomeTraining[]>(
     [],
   );
+  const [featuredLoading, setFeaturedLoading] = useState(true);
   const stats = {
     jobs: "2.5k+",
     trainings: "150+",
@@ -79,6 +79,8 @@ export default function Home() {
         setFeaturedTrainings((trainingsData.trainings || []).slice(0, 2));
       } catch (e) {
         // best-effort; ignore
+      } finally {
+        setFeaturedLoading(false);
       }
     };
 
@@ -109,7 +111,7 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <motion.div
+            <div
               className={`${sectionEyebrowClass} mb-6 sm:mb-8`}
             >
               <Star size={15} className="shrink-0 fill-current" />
@@ -118,9 +120,9 @@ export default function Home() {
                   ? "Connecting Opportunities & People"
                   : "Isku Xiraha Fursadaha Bulshada"}
               </span>
-            </motion.div>
+            </div>
 
-            <motion.h1
+            <h1
               className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] mb-8 tracking-tight"
             >
               {isEn ? (
@@ -142,17 +144,17 @@ export default function Home() {
                   iyo Adeegyada.
                 </>
               )}
-            </motion.h1>
+            </h1>
 
-            <motion.p
+            <p
               className="text-lg text-slate-600 mb-10 max-w-xl mx-auto leading-relaxed"
             >
               {isEn
                 ? "Discover job opportunities, gain in-demand skills, get support with your resume and job applications, and offer your services while connecting with employers and clients — all on one powerful platform."
                 : "Ka hel fursado shaqo, baro xirfadaha suuqa looga baahan yahay, uhel taageero CV-gaaga iyo codsiyada shaqada, ku soo bandhig adeegyadaada si ay u gaaraan macaamiil badan — hal madal oo awood leh oo kulminaysa dhammaan."}
-            </motion.p>
+            </p>
 
-            <motion.div
+            <div
               className="mx-auto flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4"
             >
               <Link
@@ -181,7 +183,7 @@ export default function Home() {
                 <GraduationCap className="mr-1.5 h-4 w-4 shrink-0 text-primary sm:mr-2 sm:h-[22px] sm:w-[22px]" />
                 <span>{getT("searchTrainings")}</span>
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -238,7 +240,7 @@ export default function Home() {
       <section className="relative overflow-hidden bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:py-28">
         <div className="max-w-7xl mx-auto">
           <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
-            <motion.div
+            <div
               className="relative text-center lg:text-left"
             >
               <div className={`${sectionEyebrowClass} mb-6 sm:mb-8`}>
@@ -305,9 +307,9 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
+            <div
               className="relative"
             >
               {/* Main Image */}
@@ -323,10 +325,7 @@ export default function Home() {
               </div>
 
               {/* Floating Element */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+              <div
                 className="absolute -bottom-8 -left-8 bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 z-30 hidden md:block"
               >
                 <div className="flex items-center gap-5">
@@ -344,11 +343,11 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Decorative Background Blob */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/5 rounded-full blur-[120px] -z-10" />
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -373,7 +372,7 @@ export default function Home() {
               </p>
           </div>
 
-          <motion.div
+          <div
             className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:gap-10"
           >
             {[
@@ -455,7 +454,7 @@ export default function Home() {
                 href: "/register",
               },
             ].map((feature, index) => (
-              <motion.div
+              <div
                 key={index}
                 className="h-full"
               >
@@ -483,9 +482,9 @@ export default function Home() {
                     <ArrowRight className="ml-1 h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+              </div>
         </div>
       </section>
 
@@ -534,14 +533,16 @@ export default function Home() {
                 <div className="h-px flex-1 bg-slate-600/60" />
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                {featuredJobs.map((job, idx) => (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                  >
+                {featuredLoading
+                  ? Array.from({ length: 3 }).map((_, index) => (
+                      <div
+                        key={`job-skeleton-${index}`}
+                        aria-hidden="true"
+                        className="h-72 animate-pulse rounded-[2rem] border border-[#15356a] bg-[#0a1f49]"
+                      />
+                    ))
+                  : featuredJobs.map((job) => (
+                      <div key={job.id}>
                     <Link
                       href={`/jobs/${job.id}`}
                       className="block group h-full"
@@ -587,14 +588,13 @@ export default function Home() {
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
-                ))}
+                      </div>
+                    ))}
               </div>
             </div>
 
             {/* Trainings Section */}
-            {featuredTrainings.length > 0 && (
-              <div>
+            <div>
                 <div className="flex items-center gap-4 mb-10 max-w-7xl mx-auto">
                   <div className="h-px flex-1 bg-slate-600/60" />
                   <h3 className="text-sm font-black uppercase tracking-[0.3em] text-emerald-300/60">
@@ -605,14 +605,16 @@ export default function Home() {
                   <div className="h-px flex-1 bg-slate-600/60" />
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                  {featuredTrainings.map((training, idx) => (
-                    <motion.div
-                      key={training.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: idx * 0.1 }}
-                    >
+                  {featuredLoading
+                    ? Array.from({ length: 2 }).map((_, index) => (
+                        <div
+                          key={`training-skeleton-${index}`}
+                          aria-hidden="true"
+                          className="h-72 animate-pulse rounded-[2rem] border border-[#15356a] bg-[#0a1f49]"
+                        />
+                      ))
+                    : featuredTrainings.map((training) => (
+                        <div key={training.id}>
                       <Link
                         href={`/trainings/${training.id}`}
                         className="block group h-full"
@@ -665,13 +667,14 @@ export default function Home() {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
-                  ))}
+                        </div>
+                      ))}
                 </div>
               </div>
-            )}
 
-            {featuredJobs.length === 0 && featuredTrainings.length === 0 && (
+            {!featuredLoading &&
+              featuredJobs.length === 0 &&
+              featuredTrainings.length === 0 && (
               <div className="py-20 text-center bg-[#0a1f49] border-2 border-dashed border-slate-600 rounded-[3rem] max-w-7xl mx-auto">
                 <div className="w-20 h-20 bg-[#0b244f] rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                   <Briefcase size={40} />
@@ -700,10 +703,7 @@ export default function Home() {
         </div>
 
         <div className="relative mx-auto max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <div
             className="mx-auto mb-8 max-w-2xl text-center sm:mb-10"
           >
             <div className={`${sectionEyebrowClass} mb-4`}>
@@ -732,13 +732,10 @@ export default function Home() {
                 ? "Speak with a real person whenever you need help finding work, building skills, or using ZeilaLink."
                 : "La hadal qof dhab ah marka aad u baahan tahay caawimaad shaqo raadinta, horumarinta xirfadaha, ama isticmaalka ZeilaLink."}
             </p>
-          </motion.div>
+          </div>
 
           <div className="grid overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 lg:grid-cols-12 lg:rounded-[2.25rem]">
-            <motion.div
-              initial={{ opacity: 0, x: -24 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <div
               className="relative overflow-hidden bg-[#071633] p-6 text-white sm:p-9 lg:col-span-5 lg:p-10"
             >
               <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border border-white/10" />
@@ -782,12 +779,9 @@ export default function Home() {
                     : "Badanaa waxay ku jawaabaan 5 daqiiqo gudahood"}
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 24 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <div
               className="p-5 sm:p-8 lg:col-span-7 lg:p-10"
             >
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-7">
@@ -875,7 +869,7 @@ export default function Home() {
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

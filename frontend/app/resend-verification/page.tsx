@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -35,11 +34,7 @@ export default function ResendVerificationPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="flex items-center justify-center py-20 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card max-w-md w-full"
-        >
+        <div className="card max-w-md w-full">
           <h1 className="text-2xl font-bold text-primary-darker mb-6">
             {language === 'en' ? 'Resend Verification' : 'Dib u Dir Xaqiijin'}
           </h1>
@@ -66,7 +61,7 @@ export default function ResendVerificationPage() {
               {loading ? getT('loading') : (language === 'en' ? 'Send' : 'Dir')}
             </button>
           </form>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

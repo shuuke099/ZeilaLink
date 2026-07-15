@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
@@ -157,14 +156,8 @@ function RegisterContent() {
   return (
     <>
       <Navbar />
-      çç
       <div className="min-h-screen flex items-center justify-center bg-background px-4 mt-18">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm"
-        >
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm">
           {/* HEADER */}
           <div className="mb-6 text-center">
             <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
@@ -402,7 +395,7 @@ function RegisterContent() {
               </Link>
             </p>
           </form>
-        </motion.div>
+        </div>
       </div>
     </>
   );

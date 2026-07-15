@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   Briefcase,
@@ -16,10 +16,29 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { prefetchPublicRouteData } from "@/lib/api-cache";
 
+const FOOTER_ROUTES = [
+  "/",
+  "/jobs",
+  "/trainings",
+  "/services",
+  "/about",
+  "/contact",
+] as const;
+
 export default function Footer() {
   const { language } = useLanguage();
   const pathname = usePathname();
+  const router = useRouter();
   const isEn = language === "en";
+
+  const prefetchRoute = useCallback((href: string) => {
+    router.prefetch(href);
+    prefetchPublicRouteData(href);
+  }, [router]);
+
+  useEffect(() => {
+    FOOTER_ROUTES.forEach((href) => router.prefetch(href));
+  }, [router]);
 
   const isDashboard =
     pathname?.startsWith("/admin") ||
@@ -63,10 +82,6 @@ export default function Footer() {
     { label: "LinkedIn", href: "#", icon: Linkedin },
     { label: "YouTube", href: "#", icon: Youtube },
   ];
-
-  const prefetchRoute = (href: string) => {
-    prefetchPublicRouteData(href);
-  };
 
   return (
     <footer className="relative overflow-hidden bg-[#071426] text-slate-300">
@@ -112,7 +127,9 @@ export default function Footer() {
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center lg:mt-0 lg:flex-none">
             <Link
               href="/jobs"
-              onMouseEnter={() => prefetchRoute("/jobs")}
+              prefetch
+              onPointerEnter={() => prefetchRoute("/jobs")}
+              onTouchStart={() => prefetchRoute("/jobs")}
               onFocus={() => prefetchRoute("/jobs")}
               className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#0d64bf] shadow-lg shadow-blue-950/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600"
             >
@@ -125,7 +142,9 @@ export default function Footer() {
             </Link>
             <Link
               href="/contact"
-              onMouseEnter={() => prefetchRoute("/contact")}
+              prefetch
+              onPointerEnter={() => prefetchRoute("/contact")}
+              onTouchStart={() => prefetchRoute("/contact")}
               onFocus={() => prefetchRoute("/contact")}
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
@@ -139,7 +158,9 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-2 lg:col-span-6 lg:pr-12">
             <Link
               href="/"
-              onMouseEnter={() => prefetchRoute("/")}
+              prefetch
+              onPointerEnter={() => prefetchRoute("/")}
+              onTouchStart={() => prefetchRoute("/")}
               onFocus={() => prefetchRoute("/")}
               className="group inline-flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               aria-label="ZeilaLink home"
@@ -193,7 +214,9 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    onMouseEnter={() => prefetchRoute(link.href)}
+                    prefetch
+                    onPointerEnter={() => prefetchRoute(link.href)}
+                    onTouchStart={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
                     className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   >
@@ -214,7 +237,9 @@ export default function Footer() {
                 <li key={`${link.href}-${link.label}`}>
                   <Link
                     href={link.href}
-                    onMouseEnter={() => prefetchRoute(link.href)}
+                    prefetch
+                    onPointerEnter={() => prefetchRoute(link.href)}
+                    onTouchStart={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
                     className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                   >
@@ -245,7 +270,9 @@ export default function Footer() {
               <Link
                 key={link.label}
                 href={link.href}
-                onMouseEnter={() => prefetchRoute(link.href)}
+                prefetch
+                onPointerEnter={() => prefetchRoute(link.href)}
+                onTouchStart={() => prefetchRoute(link.href)}
                 onFocus={() => prefetchRoute(link.href)}
                 className="transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
               >

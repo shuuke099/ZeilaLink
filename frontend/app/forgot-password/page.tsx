@@ -3,7 +3,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Navbar from '@/components/Navbar';
@@ -113,7 +112,7 @@ function ForgotPasswordContent() {
       <Navbar />
 
       <div className="flex items-center justify-center py-20 px-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card max-w-md w-full">
+        <div className="card max-w-md w-full">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <KeyRound className="text-white" size={30} />
@@ -244,7 +243,7 @@ function ForgotPasswordContent() {
               {isEn ? 'Back to Login' : 'Ku laabo Galitaanka'}
             </Link>
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

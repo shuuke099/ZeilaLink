@@ -20,8 +20,6 @@ import {
   DollarSign,
   Filter,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-
 interface Training {
   id: string;
   name: string;
@@ -111,16 +109,12 @@ export default function TrainingsPage() {
       <div className="max-w-7xl mx-auto px-4 pt-28 pb-12">
         {/* Header */}
         <div className="mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600"
-          >
+          <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em]">
               {language === 'en' ? 'Professional Development' : 'Horumarinta Xirfadaha'}
             </span>
-          </motion.div>
+          </div>
           <h1 className="text-5xl lg:text-6xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">
             {language === 'en' ? (
               <>Skills & <span className="text-primary relative inline-block">Training <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" /></span> Programs</>
@@ -166,11 +160,7 @@ export default function TrainingsPage() {
           </div>
           {/* Left Sidebar - Filters */}
           <div className={`${showMobileFilters ? 'block' : 'hidden'} lg:block lg:w-1/4 flex-shrink-0`}>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-[2rem] border border-slate-100 p-8 sticky top-28 shadow-sm"
-            >
+            <div className="bg-white rounded-[2rem] border border-slate-100 p-8 sticky top-28 shadow-sm">
               <h2 className="text-xl font-black text-slate-900 mb-8 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <GraduationCap size={18} />
@@ -245,7 +235,7 @@ export default function TrainingsPage() {
                   {language === 'en' ? 'Reset Filters' : 'Nadiifi'}
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Main Content */}
@@ -276,14 +266,8 @@ export default function TrainingsPage() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-                {trainings.map((training, index) => (
-                  <motion.div
-                    key={training.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                  >
+                {trainings.map((training) => (
+                  <div key={training.id}>
                     <Link href={`/trainings/${training.id}`} className="block group h-full">
                       <div className="bg-white rounded-[2rem] border border-slate-100 group-hover:border-primary/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
                         {/* Image/Icon */}
@@ -347,7 +331,7 @@ export default function TrainingsPage() {
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}

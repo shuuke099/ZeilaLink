@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   Briefcase,
@@ -354,15 +353,9 @@ export default function JobsPage() {
           </div>
         ) : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredAndSortedJobs.map((job, index) => {
+            {filteredAndSortedJobs.map((job) => {
               return (
-                <motion.div
-                  key={job.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.35, delay: index * 0.03 }}
-                >
+                <div key={job.id}>
                   <Link href={`/jobs/${job.id}`} className="group block h-full">
                     <article className="flex h-full flex-col rounded-3xl border border-border bg-white p-5 text-primary-darker shadow-soft transition-all duration-300 group-hover:-translate-y-1">
                       <div className="mb-4 flex items-start justify-between">
@@ -438,7 +431,7 @@ export default function JobsPage() {
                       </div>
                     </article>
                   </Link>
-                </motion.div>
+                </div>
               );
             })}
           </div>

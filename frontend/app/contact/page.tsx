@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Navbar from "@/components/Navbar";
 import api from "@/lib/api";
-import { motion } from "framer-motion";
 import {
   Mail,
   Phone,
@@ -31,18 +30,14 @@ export default function ContactPage() {
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-0">
             {/* Left Column: Direct Assistance */}
             <div className="lg:pr-20 py-10">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm sm:mb-8 sm:px-5 sm:py-2.5"
-              >
+              <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm sm:mb-8 sm:px-5 sm:py-2.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-[0.3em]">
                   {isEn
                     ? "Global Support Center"
                     : "Xarunta Taageerada Caalamiga"}
                 </span>
-              </motion.div>
+              </div>
 
               <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tighter leading-tight">
                 {isEn ? (

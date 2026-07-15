@@ -5,7 +5,6 @@ import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/translations';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Users, GraduationCap, Briefcase, Star, Search, ShieldCheck, Zap, Globe, Rocket, Landmark } from 'lucide-react';
 import { cachedApiGet } from '@/lib/api-cache';
 
@@ -54,38 +53,26 @@ export default function AboutPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 sm:mb-10 sm:px-5 sm:py-2.5"
-          >
+          <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 sm:mb-10 sm:px-5 sm:py-2.5">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[10px] font-black tracking-[0.3em] uppercase">
               {isEn ? 'PIONEERING PROGRESS' : 'HORMUUDKA HORUMARKA'}
             </span>
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter"
-          >
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter">
             {isEn ? (
               <>Designing the <br /><span className="text-primary italic">Future of Work</span></>
             ) : (
               <>Naqshadeynta <br /><span className="text-primary italic">Mustaqbalka Shaqada</span></>
             )}
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-lg md:text-xl text-slate-600 mb-12 max-w-xl mx-auto leading-relaxed"
-          >
+          <p className="text-lg md:text-xl text-slate-600 mb-12 max-w-xl mx-auto leading-relaxed">
             {isEn
               ? 'ZeilaLink is not just a platform; it is a movement dedicated to connecting elite talent with extraordinary global opportunities.'
               : 'ZeilaLink kaba badan platform; waa dhaqdhaqaaq loogu talagalay isku xirka hibada sare iyo fursadaha caalamiga ah ee aan caadiga ahayn.'}
-          </motion.p>
+          </p>
         </div>
       </section>
 

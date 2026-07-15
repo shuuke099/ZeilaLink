@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import darLogo from "@/assets/dar.png";
@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { t } from "@/lib/translations";
 import { prefetchPublicRouteData } from "@/lib/api-cache";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   X,
   Briefcase,
@@ -25,15 +25,34 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const PUBLIC_NAV_ROUTES = [
+  "/",
+  "/jobs",
+  "/services",
+  "/trainings",
+  "/about",
+  "/contact",
+  "/login",
+] as const;
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { language, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   const getT = (key: string) => t(key, language);
+
+  const prefetchRoute = useCallback(
+    (href: string) => {
+      router.prefetch(href);
+      prefetchPublicRouteData(href);
+    },
+    [router],
+  );
 
   // Logic to use dar.png for dark theme and light.png for light theme
   const isDark = theme === "dark";
@@ -55,6 +74,11 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    PUBLIC_NAV_ROUTES.forEach((href) => router.prefetch(href));
+    if (user?.role) router.prefetch(`/${user.role}`);
+  }, [router, user?.role]);
 
   const navLinks = [
     { name: getT("home"), href: "/" },
@@ -80,7 +104,9 @@ export default function Navbar() {
           <Link
             href="/"
             prefetch
-            onTouchStart={() => prefetchPublicRouteData("/")}
+            onPointerEnter={() => prefetchRoute("/")}
+            onTouchStart={() => prefetchRoute("/")}
+            onFocus={() => prefetchRoute("/")}
             className="group flex min-w-0 flex-shrink-0 items-center md:min-w-[250px]"
           >
             <Image
@@ -103,9 +129,9 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     prefetch
-                    onMouseEnter={() => prefetchPublicRouteData(link.href)}
-                    onFocus={() => prefetchPublicRouteData(link.href)}
-                    onTouchStart={() => prefetchPublicRouteData(link.href)}
+                    onPointerEnter={() => prefetchRoute(link.href)}
+                    onFocus={() => prefetchRoute(link.href)}
+                    onTouchStart={() => prefetchRoute(link.href)}
                     className={`px-4 py-2 text-sm font-medium transition-all rounded-lg relative group ${
                       isActive
                         ? "text-primary"
@@ -276,8 +302,11 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 prefetch
-                onTouchStart={() => prefetchPublicRouteData(item.href)}
-                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[9px] font-bold transition-all duration-300 ${
+                onPointerEnter={() => prefetchRoute(item.href)}
+                onPointerDown={() => prefetchRoute(item.href)}
+                onTouchStart={() => prefetchRoute(item.href)}
+                onFocus={() => prefetchRoute(item.href)}
+                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[9px] font-bold transition-colors duration-150 active:scale-[0.97] ${
                   isActive
                     ? "bg-primary text-white shadow-md shadow-primary/25"
                     : "text-muted hover:bg-primary/5 hover:text-primary"

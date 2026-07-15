@@ -45,7 +45,9 @@
 
 @layer base {
   html {
-    scroll-behavior: smooth;
+    /* Route changes must jump to the new page immediately. Opt into smooth
+       scrolling only on controls that explicitly need it. */
+    scroll-behavior: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
