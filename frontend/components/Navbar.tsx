@@ -276,10 +276,6 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 prefetch={false}
-                onPointerEnter={() => prefetchRoute(item.href)}
-                onPointerDown={() => prefetchRoute(item.href)}
-                onTouchStart={() => prefetchRoute(item.href)}
-                onFocus={() => prefetchRoute(item.href)}
                 className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[9px] font-bold transition-colors duration-150 active:scale-[0.97] ${
                   isActive
                     ? "bg-primary text-white shadow-md shadow-primary/25"
