@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowUpRight,
-  Briefcase,
   Facebook,
   Linkedin,
   ShieldCheck,
@@ -95,64 +93,7 @@ export default function Footer() {
         <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:64px_64px]" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-28 pt-10 sm:px-6 sm:pt-14 md:pb-10 lg:px-8 lg:pt-16">
-        {/* Conversion-focused footer header */}
-        <div className="relative isolate overflow-hidden rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-[#1478e8] via-[#1f7fe9] to-[#0866cf] px-5 py-7 shadow-[0_24px_70px_rgba(0,80,180,0.28)] sm:px-8 sm:py-9 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:px-12 lg:py-11">
-          <div
-            aria-hidden="true"
-            className="absolute -right-20 -top-36 -z-10 h-80 w-80 rounded-full border-[44px] border-white/[0.06]"
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-40 right-40 -z-10 h-72 w-72 rounded-full bg-cyan-300/10 blur-2xl"
-          />
-
-          <div className="max-w-2xl text-center lg:text-left">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-50 backdrop-blur-sm sm:text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_0_4px_rgba(103,232,249,0.12)]" />
-              {isEn ? "Opportunity starts here" : "Fursaddu halkan ayay ka bilaabataa"}
-            </div>
-            <h2 className="text-balance text-2xl font-black leading-tight text-white sm:text-3xl lg:text-[2.35rem]">
-              {isEn
-                ? "Ready to take the next step in your professional journey?"
-                : "Diyaar ma u tahay tallaabada xigta ee safarkaaga xirfadeed?"}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-blue-50/85 sm:text-base lg:mx-0">
-              {isEn
-                ? "Discover trusted opportunities, practical training, and the support you need to move forward."
-                : "Hel fursado lagu kalsoon yahay, tababar wax ku ool ah, iyo taageerada aad u baahan tahay."}
-            </p>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center lg:mt-0 lg:flex-none">
-            <Link
-              href="/jobs"
-              prefetch
-              onPointerEnter={() => prefetchRoute("/jobs")}
-              onTouchStart={() => prefetchRoute("/jobs")}
-              onFocus={() => prefetchRoute("/jobs")}
-              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#0d64bf] shadow-lg shadow-blue-950/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600"
-            >
-              <Briefcase size={18} />
-              {isEn ? "Explore Jobs" : "Raadi Shaqooyin"}
-              <ArrowUpRight
-                size={16}
-                className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </Link>
-            <Link
-              href="/contact"
-              prefetch
-              onPointerEnter={() => prefetchRoute("/contact")}
-              onTouchStart={() => prefetchRoute("/contact")}
-              onFocus={() => prefetchRoute("/contact")}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-white/45 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              {isEn ? "Talk to Support" : "La Hadal Taageerada"}
-            </Link>
-          </div>
-        </div>
-
+      <div className="relative mx-auto max-w-7xl px-4 pb-28 sm:px-6 md:pb-10 lg:px-8">
         <div className="grid grid-cols-2 gap-x-5 gap-y-10 py-12 sm:gap-x-8 sm:py-14 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:py-16">
           {/* Brand and mission */}
           <div className="col-span-2 md:col-span-2 lg:col-span-6 lg:pr-12">
