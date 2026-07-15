@@ -85,21 +85,6 @@ export default function Home() {
     load();
   }, []);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -125,9 +110,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
               className={`${sectionEyebrowClass} mb-6 sm:mb-8`}
             >
               <Star size={15} className="shrink-0 fill-current" />
@@ -257,9 +239,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
             <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
               className="relative text-center lg:text-left"
             >
               <div className={`${sectionEyebrowClass} mb-6 sm:mb-8`}>
@@ -329,9 +308,6 @@ export default function Home() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
               className="relative"
             >
               {/* Main Image */}
@@ -398,10 +374,6 @@ export default function Home() {
           </div>
 
           <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
             className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:gap-10"
           >
             {[
@@ -409,7 +381,7 @@ export default function Home() {
                 icon: Briefcase,
                 title: isEn ? "Jobs & Opportunities" : "Shaqooyin & Fursado",
                 description: isEn
-                  ? "Discover job opportunities that match your skills and apply بسهولة through a modern, mobile-friendly platform."
+                  ? "Discover job opportunities that match your skills and apply easily through a modern, mobile-friendly platform."
                   : "Hel fursado shaqo oo ku habboon xirfadahaaga oo si fudud uga dalbo madal casri ah oo ku habboon moobaylka.",
                 color: "text-blue-600",
                 bg: "bg-blue-50",
@@ -485,7 +457,6 @@ export default function Home() {
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                variants={itemVariants}
                 className="h-full"
               >
                 <Link

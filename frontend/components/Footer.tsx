@@ -9,9 +9,6 @@ import {
   Briefcase,
   Facebook,
   Linkedin,
-  Mail,
-  MapPin,
-  Phone,
   ShieldCheck,
   Twitter,
   Youtube,
@@ -139,7 +136,7 @@ export default function Footer() {
 
         <div className="grid grid-cols-2 gap-x-5 gap-y-10 py-12 sm:gap-x-8 sm:py-14 md:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:py-16">
           {/* Brand and mission */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-5 lg:pr-12">
+          <div className="col-span-2 md:col-span-2 lg:col-span-6 lg:pr-12">
             <Link
               href="/"
               onMouseEnter={() => prefetchRoute("/")}
@@ -187,7 +184,7 @@ export default function Footer() {
           </div>
 
           {/* Navigation groups */}
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 lg:col-span-3">
             <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
               {isEn ? "Platform" : "Madasha"}
             </h3>
@@ -208,7 +205,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 lg:col-span-3">
             <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
               {isEn ? "Company" : "Shirkadda"}
             </h3>
@@ -229,61 +226,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact card */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-3">
-            <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-white">
-              {isEn ? "Get in touch" : "Nala Soo Xiriir"}
-            </h3>
-            <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045]">
-              <a
-                href="tel:+19522288655"
-                className="group flex items-center gap-3 border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
-              >
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 transition-colors group-hover:bg-blue-500 group-hover:text-white">
-                  <Phone size={16} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    {isEn ? "Call us" : "Naga soo wac"}
-                  </span>
-                  <span className="mt-0.5 block text-sm font-semibold text-slate-200">
-                    +1 (952) 228-8655
-                  </span>
-                </span>
-              </a>
-
-              <a
-                href="mailto:contact@zeilalink.com"
-                className="group flex items-center gap-3 border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
-              >
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 transition-colors group-hover:bg-blue-500 group-hover:text-white">
-                  <Mail size={16} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    {isEn ? "Email us" : "Email noo soo dir"}
-                  </span>
-                  <span className="mt-0.5 block truncate text-sm font-semibold text-slate-200">
-                    contact@zeilalink.com
-                  </span>
-                </span>
-              </a>
-
-              <div className="flex items-center gap-3 px-4 py-4">
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
-                  <MapPin size={16} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    {isEn ? "Location" : "Goobta"}
-                  </span>
-                  <span className="mt-0.5 block text-sm font-semibold text-slate-200">
-                    Minnesota, USA
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Legal bar */}

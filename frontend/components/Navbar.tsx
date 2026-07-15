@@ -252,8 +252,8 @@ export default function Navbar() {
       </nav>
 
       {/* Persistent mobile bottom navigation */}
-      <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-border bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-5">
+      <div className="fixed inset-x-0 bottom-0 z-[90] rounded-t-2xl border-t border-slate-200/80 bg-surface/95 px-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-10px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl md:hidden">
+        <div className="grid grid-cols-5 gap-1">
           {[
             { name: getT("home"), href: "/", icon: Home },
             { name: getT("jobs"), href: "/jobs", icon: Briefcase },
@@ -277,14 +277,17 @@ export default function Navbar() {
                 href={item.href}
                 prefetch
                 onTouchStart={() => prefetchPublicRouteData(item.href)}
-                className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-bold transition-colors ${
-                  isActive ? "text-primary" : "text-muted hover:text-primary"
+                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[9px] font-bold transition-all duration-300 ${
+                  isActive
+                    ? "bg-primary text-white shadow-md shadow-primary/25"
+                    : "text-muted hover:bg-primary/5 hover:text-primary"
                 }`}
               >
-                {isActive && (
-                  <span className="absolute -top-2 h-0.5 w-8 rounded-full bg-primary" />
-                )}
-                <Icon size={21} strokeWidth={isActive ? 2.6 : 2} />
+                <span
+                  className="flex h-6 w-6 items-center justify-center"
+                >
+                  <Icon size={19} strokeWidth={isActive ? 2.6 : 2} />
+                </span>
                 <span className="w-full truncate text-center">{item.name}</span>
               </Link>
             );
