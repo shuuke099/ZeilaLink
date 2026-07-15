@@ -222,3 +222,22 @@
     max-height: 95vh;
   }
 }
+
+/*
+ * Mobile Safari can occasionally postpone repainting descendants of an
+ * overflow-clipped, off-screen section while it restores a page position.
+ * The About copy is primary content, so keep its paint region un-clipped on
+ * small screens. The desktop composition retains its clipped decoration.
+ */
+@media (max-width: 767px) {
+  .home-about-section {
+    overflow: visible;
+  }
+
+  .home-about-content {
+    content-visibility: visible;
+    contain: none;
+    opacity: 1;
+    visibility: visible;
+  }
+}

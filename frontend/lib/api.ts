@@ -1,6 +1,18 @@
 import axios from "axios";
 
-const DEFAULT_API_URL = "http://localhost:7000/api";
+// Production is served behind the same-site /api reverse proxy. Keeping this
+// relative avoids shipping a developer's localhost URL to real phones.
+const DEFAULT_API_URL =
+  process.env.NODE_ENV === "production" ? "/api" : "http://localhost:7000/api";
+
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const isLoopbackApiUrl = (value?: string) =>
+  /^(?:https?:\/\/)?(?:localhost|127(?:\.\d{1,3}){3}|\[::1\])(?::\d+)?(?:\/|$)/i.test(
+    value?.trim() || "",
+  );
+const shouldUseSameOriginApi =
+  process.env.NODE_ENV === "production" &&
+  (!configuredApiUrl || isLoopbackApiUrl(configuredApiUrl));
 
 const ensureApiPath = (rawUrl?: string) => {
   if (!rawUrl) {
@@ -34,7 +46,9 @@ const ensureApiPath = (rawUrl?: string) => {
   return /\/api($|\/)/i.test(normalized) ? normalized : `${normalized}/api`;
 };
 
-const baseURL = ensureApiPath(process.env.NEXT_PUBLIC_API_URL);
+const baseURL = ensureApiPath(
+  shouldUseSameOriginApi ? "/api" : configuredApiUrl,
+);
 const debugApi = process.env.NEXT_PUBLIC_API_DEBUG === "true";
 
 const isLikelyJwt = (value: string) =>

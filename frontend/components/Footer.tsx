@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,15 +14,6 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { prefetchPublicRouteData } from "@/lib/api-cache";
 
-const FOOTER_ROUTES = [
-  "/",
-  "/jobs",
-  "/trainings",
-  "/services",
-  "/about",
-  "/contact",
-] as const;
-
 export default function Footer() {
   const { language } = useLanguage();
   const pathname = usePathname();
@@ -32,10 +23,6 @@ export default function Footer() {
   const prefetchRoute = useCallback((href: string) => {
     router.prefetch(href);
     prefetchPublicRouteData(href);
-  }, [router]);
-
-  useEffect(() => {
-    FOOTER_ROUTES.forEach((href) => router.prefetch(href));
   }, [router]);
 
   const isDashboard =

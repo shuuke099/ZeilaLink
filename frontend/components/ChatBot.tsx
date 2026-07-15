@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePathname } from 'next/navigation';
@@ -352,14 +351,8 @@ export default function ChatBot() {
 
   return (
     <div className="fixed bottom-24 right-4 z-[100] font-poppins md:bottom-8 md:right-8">
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.92, transformOrigin: 'bottom right' }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.92 }}
-            className="mb-6 w-[400px] max-w-[calc(100vw-32px)] bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 flex flex-col h-[600px] max-h-[calc(100vh-120px)]"
-          >
+      {isOpen && (
+        <div className="mb-6 flex h-[600px] max-h-[calc(100vh-120px)] w-[400px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-2xl">
             <div className="bg-slate-900 px-6 py-5 flex items-center justify-between relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 animate-pulse" />
               <div className="flex items-center gap-3 relative z-10">
@@ -453,15 +446,12 @@ export default function ChatBot() {
                 {isEn ? 'Tip: use /reset to clear chat' : 'Talo: isticmaal /reset si aad u nadiifiso chat-ka'}
               </p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
-      <motion.button
+      <button
         onClick={() => setIsOpen((prev) => !prev)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-2xl transition-all duration-300 ${
+        className={`flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 ${
           isOpen ? 'bg-slate-900' : 'bg-primary'
         }`}
       >
@@ -473,7 +463,7 @@ export default function ChatBot() {
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-primary animate-pulse" />
           </div>
         )}
-      </motion.button>
+      </button>
     </div>
   );
 }

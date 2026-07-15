@@ -159,7 +159,7 @@ export default function Home() {
             >
               <Link
                 href="/jobs"
-                prefetch
+                prefetch={false}
                 onMouseEnter={() => prefetchPublicRouteData("/jobs")}
                 onFocus={() => prefetchPublicRouteData("/jobs")}
                 onTouchStart={() => prefetchPublicRouteData("/jobs")}
@@ -174,7 +174,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/trainings"
-                prefetch
+                prefetch={false}
                 onMouseEnter={() => prefetchPublicRouteData("/trainings")}
                 onFocus={() => prefetchPublicRouteData("/trainings")}
                 onTouchStart={() => prefetchPublicRouteData("/trainings")}
@@ -237,12 +237,10 @@ export default function Home() {
       </section>
 
       {/* About Section - Professional Redesign */}
-      <section className="relative overflow-hidden bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:py-28">
+      <section className="home-about-section relative bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:overflow-hidden lg:py-28">
         <div className="max-w-7xl mx-auto">
           <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
-            <div
-              className="relative text-center lg:text-left"
-            >
+            <div className="home-about-content relative text-center lg:text-left">
               <div className={`${sectionEyebrowClass} mb-6 sm:mb-8`}>
                 <Star size={14} className="shrink-0 fill-current" />
                 <span className={sectionEyebrowTextClass}>
@@ -317,6 +315,8 @@ export default function Home() {
                 <img
                   src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=1200&fit=crop"
                   alt="Team working together"
+                  width={1200}
+                  height={1200}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover aspect-square"
@@ -542,10 +542,10 @@ export default function Home() {
                       />
                     ))
                   : featuredJobs.map((job) => (
-                      <div key={job.id}>
+                      <div key={job.id} className="min-h-72">
                     <Link
                       href={`/jobs/${job.id}`}
-                      className="block group h-full"
+                      className="block h-full min-h-72 group"
                     >
                       <div className="bg-[#0a1f49] rounded-[2rem] border border-[#15356a] group-hover:border-sky-400/40 shadow-xl shadow-black/25 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
                         <div className="w-20 h-20 rounded-2xl bg-[#0b244f] border border-[#1a3d78] p-3 mx-auto mb-5 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center">
@@ -614,10 +614,10 @@ export default function Home() {
                         />
                       ))
                     : featuredTrainings.map((training) => (
-                        <div key={training.id}>
+                        <div key={training.id} className="min-h-72">
                       <Link
                         href={`/trainings/${training.id}`}
-                        className="block group h-full"
+                        className="block h-full min-h-72 group"
                       >
                         <div className="bg-[#0a1f49] rounded-[2rem] border border-[#15356a] group-hover:border-emerald-300/40 shadow-xl shadow-black/25 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
                           <div className="w-20 h-20 rounded-2xl bg-[#0b244f] border border-[#1a3d78] p-3.5 mx-auto mb-5 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center">

@@ -23,17 +23,6 @@ import {
   Wrench,
   GraduationCap,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-
-const PUBLIC_NAV_ROUTES = [
-  "/",
-  "/jobs",
-  "/services",
-  "/trainings",
-  "/about",
-  "/contact",
-  "/login",
-] as const;
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -75,11 +64,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    PUBLIC_NAV_ROUTES.forEach((href) => router.prefetch(href));
-    if (user?.role) router.prefetch(`/${user.role}`);
-  }, [router, user?.role]);
-
   const navLinks = [
     { name: getT("home"), href: "/" },
     { name: getT("jobs"), href: "/jobs" },
@@ -103,7 +87,7 @@ export default function Navbar() {
           {/* Logo - Left (MAXIMIZED SIZE) */}
           <Link
             href="/"
-            prefetch
+            prefetch={false}
             onPointerEnter={() => prefetchRoute("/")}
             onTouchStart={() => prefetchRoute("/")}
             onFocus={() => prefetchRoute("/")}
@@ -128,7 +112,7 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    prefetch
+                    prefetch={false}
                     onPointerEnter={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
                     onTouchStart={() => prefetchRoute(link.href)}
@@ -140,10 +124,7 @@ export default function Navbar() {
                   >
                     {link.name}
                     {isActive && (
-                      <motion.div
-                        layoutId="nav-active"
-                        className="absolute bottom-0 left-4 right-4 h-0.5 bg-primary rounded-full"
-                      />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-primary" />
                     )}
                   </Link>
                 );
@@ -207,14 +188,8 @@ export default function Navbar() {
                   />
                 </button>
 
-                <AnimatePresence>
-                  {userMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 mt-2 w-48 bg-surface shadow-xl rounded-xl border border-border py-2 overflow-hidden ring-1 ring-black/5"
-                    >
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-surface py-2 shadow-xl ring-1 ring-black/5">
                       <div className="px-4 py-3 border-b border-border mb-1">
                         <p className="text-xs text-muted-foreground">
                           Signed in as
@@ -241,9 +216,8 @@ export default function Navbar() {
                         <X size={16} className="mr-2" />
                         {getT("logout")}
                       </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                  </div>
+                )}
               </div>
             ) : (
               <Link
@@ -301,7 +275,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                prefetch
+                prefetch={false}
                 onPointerEnter={() => prefetchRoute(item.href)}
                 onPointerDown={() => prefetchRoute(item.href)}
                 onTouchStart={() => prefetchRoute(item.href)}
