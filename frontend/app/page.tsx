@@ -571,7 +571,7 @@ export default function Home() {
                     <Link
                       key={job.id}
                       href={`/jobs/${job.id}`}
-                      className={`group flex min-h-48 flex-col rounded-2xl border border-sky-300/15 bg-[#0a1f49]/80 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-[#0d2858] hover:shadow-sky-950/40 sm:p-5 ${featuredJobs.length % 2 === 1 ? "last:sm:col-span-2" : ""}`}
+                      className={`group flex min-h-48 flex-col rounded-2xl border border-sky-300/15 bg-[#0a1f49]/80 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-[#0d2858] hover:shadow-sky-950/40 sm:p-5 ${featuredJobs.length % 2 === 1 ? "sm:last:col-span-2" : ""}`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-300/15 bg-[#102b5f] p-2 text-lg font-black uppercase text-sky-200">
@@ -604,7 +604,7 @@ export default function Home() {
                           {job.location}
                         </span>
                         <span className="inline-flex items-center rounded-lg border border-sky-300/10 bg-sky-300/[0.07] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-sky-200">
-                          {job.employmentType}
+                          {job.employmentType || (isEn ? "Flexible" : "Dabacsan")}
                         </span>
                       </div>
 
