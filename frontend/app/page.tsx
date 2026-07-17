@@ -67,6 +67,10 @@ export default function Home() {
     "inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm shadow-blue-100/60";
   const sectionEyebrowTextClass =
     "text-center text-[9px] font-black uppercase leading-relaxed tracking-[0.14em] sm:text-[10px] sm:tracking-[0.2em]";
+  const supportCardClass =
+    "group rounded-2xl border border-border/80 bg-gradient-to-br from-surface-muted to-background-muted p-4 no-underline shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:from-primary/10 hover:to-surface hover:shadow-lg hover:shadow-primary/10 sm:p-5";
+  const supportIconClass =
+    "mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-primary shadow-md shadow-slate-900/5 ring-1 ring-border/80 transition-transform group-hover:scale-105";
 
   useEffect(() => {
     const load = async () => {
@@ -491,8 +495,10 @@ export default function Home() {
       {/* Featured Jobs Section - Professional Redesign */}
       <section className="relative overflow-hidden bg-[#071633] px-4 py-16 sm:py-20 lg:py-28">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
+        <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-sky-500/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -right-40 bottom-10 h-96 w-96 rounded-full bg-emerald-400/10 blur-[120px]" />
 
-        <div className="max-w-7xl mx-auto">
+        <div className="relative mx-auto max-w-7xl">
           <div className="mb-10 flex flex-col items-start justify-between gap-6 sm:mb-14 md:flex-row md:items-end lg:mb-16 lg:gap-8">
             <div className="max-w-2xl">
               <div className={`${sectionEyebrowClass} mb-4`}>
@@ -510,196 +516,249 @@ export default function Home() {
                   : "Ka raadi doorarka saameynta weyn leh ee ururrada hormuudka ka ah Soomaaliya. Guushaada xigta waxay halkan ka bilaabataa."}
               </p>
             </div>
-            <Link
-              href="/jobs"
-              className="group flex items-center gap-3 bg-[#0a1f49] text-sky-200 font-black px-8 py-4 rounded-2xl border border-[#1b3f7a] shadow-lg shadow-black/20 hover:shadow-xl hover:border-sky-400/40 transition-all"
-            >
-              {isEn ? "Browse All Jobs" : "Eeg dhammaan shaqooyinka"}
-              <ArrowRight
-                size={20}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </Link>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300 shadow-lg shadow-black/10 backdrop-blur-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              </span>
+              {isEn ? "Fresh listings, updated regularly" : "Fursado cusub oo joogto ah"}
+            </div>
           </div>
 
-          <div className="space-y-12 sm:space-y-16 lg:space-y-20">
-            {/* Jobs Section */}
-            <div>
-              <div className="flex items-center gap-4 mb-10 max-w-7xl mx-auto">
-                <div className="h-px flex-1 bg-slate-600/60" />
-                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-sky-300/50">
-                  {isEn ? "Professional Job Openings" : "Shaqooyinka Bannaan"}
-                </h3>
-                <div className="h-px flex-1 bg-slate-600/60" />
+          <div className="grid gap-6 lg:grid-cols-12 lg:items-stretch">
+            {/* Jobs collection */}
+            <article className="relative flex flex-col overflow-hidden rounded-[2rem] border border-sky-400/20 bg-gradient-to-br from-sky-500/[0.12] via-[#0b2148] to-[#081936] p-5 shadow-2xl shadow-black/20 sm:p-7 lg:col-span-7">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
+
+              <div className="relative mb-6 flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/10 text-sky-300 shadow-inner">
+                    <Briefcase size={23} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-sky-300/75">
+                      {isEn ? "Career marketplace" : "Suuqa shaqada"}
+                    </p>
+                    <h3 className="text-xl font-black text-white sm:text-2xl">
+                      {isEn ? "Jobs & Employment" : "Shaqooyin & Shaqaaleysiin"}
+                    </h3>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full border border-sky-300/15 bg-sky-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-sky-200">
+                  {featuredLoading
+                    ? "..."
+                    : `${featuredJobs.length} ${isEn ? "live roles" : "shaqo"}`}
+                </span>
               </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                {featuredLoading
-                  ? Array.from({ length: 3 }).map((_, index) => (
-                      <div
-                        key={`job-skeleton-${index}`}
-                        aria-hidden="true"
-                        className="h-72 animate-pulse rounded-[2rem] border border-[#15356a] bg-[#0a1f49]"
-                      />
-                    ))
-                  : featuredJobs.map((job) => (
-                      <div key={job.id} className="min-h-72">
+
+              <p className="relative mb-6 max-w-xl text-sm leading-relaxed text-slate-300">
+                {isEn
+                  ? "Explore verified opportunities and connect directly with employers ready to hire."
+                  : "Sahami fursado la hubiyay oo si toos ah ula xiriir shaqo-bixiyeyaasha."}
+              </p>
+
+              <div className="relative grid gap-4 sm:grid-cols-2">
+                {featuredLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={`job-skeleton-${index}`}
+                      aria-hidden="true"
+                      className={`min-h-48 animate-pulse rounded-2xl border border-sky-300/10 bg-[#0a1f49]/80 ${index === 2 ? "sm:col-span-2" : ""}`}
+                    />
+                  ))
+                ) : featuredJobs.length > 0 ? (
+                  featuredJobs.map((job) => (
                     <Link
+                      key={job.id}
                       href={`/jobs/${job.id}`}
-                      className="block h-full min-h-72 group"
+                      className={`group flex min-h-48 flex-col rounded-2xl border border-sky-300/15 bg-[#0a1f49]/80 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-[#0d2858] hover:shadow-sky-950/40 sm:p-5 ${featuredJobs.length % 2 === 1 ? "last:sm:col-span-2" : ""}`}
                     >
-                      <div className="bg-[#0a1f49] rounded-[2rem] border border-[#15356a] group-hover:border-sky-400/40 shadow-xl shadow-black/25 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
-                        <div className="w-20 h-20 rounded-2xl bg-[#0b244f] border border-[#1a3d78] p-3 mx-auto mb-5 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-sky-300/15 bg-[#102b5f] p-2 text-lg font-black uppercase text-sky-200">
                           {job.employer.avatarUrl || job.employer.logoUrl ? (
-                              <img
-                                src={
-                                  job.employer.avatarUrl || job.employer.logoUrl
-                                }
-                                alt={job.employer.name}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-contain"
-                              />
+                            <img
+                              src={job.employer.avatarUrl || job.employer.logoUrl}
+                              alt={job.employer.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-contain"
+                            />
                           ) : (
-                            <div className="text-2xl font-black text-primary uppercase">
-                              {job.employer.name?.charAt(0)}
-                            </div>
+                            job.employer.name?.charAt(0)
                           )}
                         </div>
-
-                        <div className="flex-1 flex flex-col">
-                          <div className="mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-sky-300/70 mb-1">
-                              {job.employer.name}
-                            </p>
-                            <h3 className="text-lg font-black text-white tracking-tight leading-tight group-hover:text-sky-200 transition-colors line-clamp-2 min-h-[2.5rem]">
-                              {job.title}
-                            </h3>
-                          </div>
-
-                          <div className="mt-auto pt-4 border-t border-slate-700/60 flex flex-col items-center gap-3">
-                            <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest w-full">
-                              <MapPin size={12} className="text-sky-300/60" />
-                              {job.location}
-                            </div>
-                            <div className="bg-[#102b5f] text-sky-200 px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] group-hover:bg-sky-500 group-hover:text-white transition-all w-full">
-                              {isEn ? "View Details" : "Eeg Faahfaahinta"}
-                            </div>
-                          </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 truncate text-[10px] font-black uppercase tracking-[0.13em] text-sky-300/70">
+                            {job.employer.name}
+                          </p>
+                          <h4 className="line-clamp-2 text-base font-black leading-snug text-white transition-colors group-hover:text-sky-200 sm:text-lg">
+                            {job.title}
+                          </h4>
                         </div>
+                        <ArrowRight className="h-5 w-5 shrink-0 text-sky-300/40 transition-all group-hover:translate-x-1 group-hover:text-sky-300" />
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/[0.04] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-300">
+                          <MapPin size={12} className="text-sky-300" />
+                          {job.location}
+                        </span>
+                        <span className="inline-flex items-center rounded-lg border border-sky-300/10 bg-sky-300/[0.07] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-sky-200">
+                          {job.employmentType}
+                        </span>
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between border-t border-white/[0.07] pt-4 text-[10px] font-black uppercase tracking-[0.14em] text-sky-200">
+                        <span>{isEn ? "View role" : "Eeg shaqada"}</span>
+                        <span className="text-slate-500">{isEn ? "Details" : "Faahfaahin"}</span>
                       </div>
                     </Link>
-                      </div>
-                    ))}
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-sky-300/20 bg-sky-300/[0.04] px-5 py-10 text-center sm:col-span-2">
+                    <Briefcase className="mx-auto mb-3 text-sky-300/60" size={28} />
+                    <p className="font-bold text-white">
+                      {isEn ? "No job openings right now" : "Shaqooyin hadda ma jiraan"}
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Trainings Section */}
-            <div>
-                <div className="flex items-center gap-4 mb-10 max-w-7xl mx-auto">
-                  <div className="h-px flex-1 bg-slate-600/60" />
-                  <h3 className="text-sm font-black uppercase tracking-[0.3em] text-emerald-300/60">
-                    {isEn
-                      ? "Skills & Training Programs"
-                      : "Barnaamijyada Tababarka"}
-                  </h3>
-                  <div className="h-px flex-1 bg-slate-600/60" />
+              <Link
+                href="/jobs"
+                className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-400/10 px-5 py-3.5 text-sm font-black text-sky-200 transition-all hover:border-sky-300/40 hover:bg-sky-500 hover:text-white"
+              >
+                {isEn ? "Explore all jobs" : "Eeg dhammaan shaqooyinka"}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </article>
+
+            {/* Training collection */}
+            <article className="relative flex flex-col overflow-hidden rounded-[2rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.12] via-[#0a2732] to-[#081c2d] p-5 shadow-2xl shadow-black/20 sm:p-7 lg:col-span-5">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+
+              <div className="relative mb-6 flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10 text-emerald-300 shadow-inner">
+                    <GraduationCap size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300/75">
+                      {isEn ? "Skills academy" : "Akadeemiyada xirfadaha"}
+                    </p>
+                    <h3 className="text-xl font-black text-white sm:text-2xl">
+                      {isEn ? "Learn & Advance" : "Baro & Horumar"}
+                    </h3>
+                  </div>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                <span className="shrink-0 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-200">
                   {featuredLoading
-                    ? Array.from({ length: 2 }).map((_, index) => (
-                        <div
-                          key={`training-skeleton-${index}`}
-                          aria-hidden="true"
-                          className="h-72 animate-pulse rounded-[2rem] border border-[#15356a] bg-[#0a1f49]"
-                        />
-                      ))
-                    : featuredTrainings.map((training) => (
-                        <div key={training.id} className="min-h-72">
-                      <Link
-                        href={`/trainings/${training.id}`}
-                        className="block h-full min-h-72 group"
-                      >
-                        <div className="bg-[#0a1f49] rounded-[2rem] border border-[#15356a] group-hover:border-emerald-300/40 shadow-xl shadow-black/25 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
-                          <div className="w-20 h-20 rounded-2xl bg-[#0b244f] border border-[#1a3d78] p-3.5 mx-auto mb-5 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center">
-                            {training.provider.logoUrl ? (
-                              <img
-                                src={training.provider.logoUrl}
-                                alt={training.provider.name}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <div className="text-2xl font-black text-emerald-300 uppercase">
-                                {training.provider.name?.charAt(0)}
-                              </div>
-                            )}
-                          </div>
+                    ? "..."
+                    : `${featuredTrainings.length} ${isEn ? "programs" : "tababar"}`}
+                </span>
+              </div>
 
-                          <div className="flex-1 flex flex-col">
-                            <div className="mb-4">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300/70 mb-1">
-                                {training.provider.name}
-                              </p>
-                              <h3 className="text-lg font-black text-white tracking-tight leading-tight group-hover:text-emerald-200 transition-colors line-clamp-2 min-h-[2.5rem]">
-                                {training.name}
-                              </h3>
-                            </div>
+              <p className="relative mb-6 text-sm leading-relaxed text-slate-300">
+                {isEn
+                  ? "Build practical, career-ready skills through trusted training providers."
+                  : "Ka baro xirfado shaqo oo wax ku ool ah bixiyeyaasha tababarka la hubiyay."}
+              </p>
 
-                            <div className="mt-auto pt-4 border-t border-slate-700/60 flex flex-col items-center gap-3">
-                              <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest w-full">
-                                <Clock
-                                  size={12}
-                                  className="text-emerald-300/70"
-                                />
-                                {training.duration}
-                              </div>
-                              <div
-                                className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all w-full ${training.cost === 0 ? "bg-emerald-800/40 text-emerald-200 group-hover:bg-emerald-500 group-hover:text-white" : "bg-[#102b5f] text-slate-200 group-hover:bg-slate-800 group-hover:text-white"}`}
-                              >
-                                {training.cost === 0
-                                  ? isEn
-                                    ? "ENROLL FREE"
-                                    : "ISQORI BILAASH"
-                                  : `$${training.cost}`}
-                              </div>
-                            </div>
-                          </div>
+              <div className="relative space-y-4">
+                {featuredLoading ? (
+                  Array.from({ length: 2 }).map((_, index) => (
+                    <div
+                      key={`training-skeleton-${index}`}
+                      aria-hidden="true"
+                      className="min-h-40 animate-pulse rounded-2xl border border-emerald-300/10 bg-emerald-950/25"
+                    />
+                  ))
+                ) : featuredTrainings.length > 0 ? (
+                  featuredTrainings.map((training) => (
+                    <Link
+                      key={training.id}
+                      href={`/trainings/${training.id}`}
+                      className="group block rounded-2xl border border-emerald-300/15 bg-emerald-950/25 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/40 hover:bg-emerald-950/40 hover:shadow-emerald-950/30 sm:p-5"
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-emerald-300/15 bg-emerald-400/10 p-2 text-lg font-black uppercase text-emerald-300">
+                          {training.provider.logoUrl ? (
+                            <img
+                              src={training.provider.logoUrl}
+                              alt={training.provider.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            training.provider.name?.charAt(0)
+                          )}
                         </div>
-                      </Link>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 truncate text-[10px] font-black uppercase tracking-[0.13em] text-emerald-300/70">
+                            {training.provider.name}
+                          </p>
+                          <h4 className="line-clamp-2 text-base font-black leading-snug text-white transition-colors group-hover:text-emerald-200 sm:text-lg">
+                            {training.name}
+                          </h4>
                         </div>
-                      ))}
+                        <ArrowRight className="h-5 w-5 shrink-0 text-emerald-300/40 transition-all group-hover:translate-x-1 group-hover:text-emerald-300" />
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.07] pt-4">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                          <Clock size={13} className="text-emerald-300" />
+                          {training.duration}
+                        </span>
+                        <span className={`rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-wider ${training.cost === 0 ? "bg-emerald-400/15 text-emerald-200" : "bg-white/[0.06] text-white"}`}>
+                          {training.cost === 0
+                            ? isEn
+                              ? "Free"
+                              : "Bilaash"
+                            : `$${training.cost}`}
+                        </span>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-emerald-300/20 bg-emerald-300/[0.04] px-5 py-10 text-center">
+                    <GraduationCap className="mx-auto mb-3 text-emerald-300/60" size={30} />
+                    <p className="font-bold text-white">
+                      {isEn ? "No training programs right now" : "Tababaro hadda ma jiraan"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-emerald-300/10 bg-emerald-300/[0.05] p-3 text-[10px] font-bold leading-relaxed text-emerald-100">
+                  <CheckCircle2 className="mb-2 h-4 w-4 text-emerald-300" />
+                  {isEn ? "Career-ready skills" : "Xirfado shaqo"}
+                </div>
+                <div className="rounded-xl border border-emerald-300/10 bg-emerald-300/[0.05] p-3 text-[10px] font-bold leading-relaxed text-emerald-100">
+                  <Clock className="mb-2 h-4 w-4 text-emerald-300" />
+                  {isEn ? "Flexible programs" : "Tababaro dabacsan"}
                 </div>
               </div>
 
-            {!featuredLoading &&
-              featuredJobs.length === 0 &&
-              featuredTrainings.length === 0 && (
-              <div className="py-20 text-center bg-[#0a1f49] border-2 border-dashed border-slate-600 rounded-[3rem] max-w-7xl mx-auto">
-                <div className="w-20 h-20 bg-[#0b244f] rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-                  <Briefcase size={40} />
-                </div>
-                <h4 className="text-2xl font-bold text-white mb-2">
-                  {isEn
-                    ? "No Opportunities Available"
-                    : "Ma jiraan fursado banaan"}
-                </h4>
-                <p className="text-slate-300 max-w-xs mx-auto">
-                  {isEn
-                    ? "Please check back later for new openings and programs."
-                    : "Fadlan dib u hubi mar dambe fursado iyo barnaamijyo cusub."}
-                </p>
-              </div>
-            )}
+              <Link
+                href="/trainings"
+                className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-5 py-3.5 text-sm font-black text-emerald-200 transition-all hover:border-emerald-300/40 hover:bg-emerald-500 hover:text-white"
+              >
+                {isEn ? "Explore training programs" : "Eeg barnaamijyada tababarka"}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </article>
           </div>
         </div>
       </section>
 
       {/* Contact Section - Professional Support Hub */}
-      <section className="relative overflow-hidden bg-slate-50 px-4 py-14 sm:py-16 lg:py-20">
+      <section className="relative overflow-hidden bg-background-muted px-4 py-14 sm:py-16 lg:py-20">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 top-8 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-100/70 blur-3xl" />
+          <div className="absolute -left-32 top-8 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+          <div className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-400/10 blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,rgba(var(--color-primary-rgb),0.035)_50%,transparent_100%)]" />
         </div>
 
         <div className="relative mx-auto max-w-7xl">
@@ -714,7 +773,7 @@ export default function Home() {
                   : "Xarunta Taageerada Caalamiga"}
               </span>
             </div>
-            <h2 className="mb-4 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+            <h2 className="mb-4 text-3xl font-black leading-tight tracking-tight text-heading sm:text-4xl lg:text-5xl">
               {isEn ? (
                 <>
                   Support that keeps you{" "}
@@ -727,14 +786,14 @@ export default function Home() {
                 </>
               )}
             </h2>
-            <p className="mx-auto max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            <p className="mx-auto max-w-xl text-base leading-relaxed text-foreground/70 sm:text-lg">
               {isEn
                 ? "Speak with a real person whenever you need help finding work, building skills, or using ZeilaLink."
                 : "La hadal qof dhab ah marka aad u baahan tahay caawimaad shaqo raadinta, horumarinta xirfadaha, ama isticmaalka ZeilaLink."}
             </p>
           </div>
 
-          <div className="grid overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-2xl shadow-slate-200/60 lg:grid-cols-12 lg:rounded-[2.25rem]">
+          <div className="grid overflow-hidden rounded-[1.75rem] border border-border/80 bg-surface/95 shadow-2xl shadow-slate-900/10 backdrop-blur-xl lg:grid-cols-12 lg:rounded-[2.25rem]">
             <div
               className="relative overflow-hidden bg-[#071633] p-6 text-white sm:p-9 lg:col-span-5 lg:p-10"
             >
@@ -781,19 +840,17 @@ export default function Home() {
               </div>
             </div>
 
-            <div
-              className="p-5 sm:p-8 lg:col-span-7 lg:p-10"
-            >
+            <div className="bg-gradient-to-br from-surface via-surface to-surface-muted p-5 sm:p-8 lg:col-span-7 lg:p-10">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-7">
                 <div>
                   <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
                     {isEn ? "Talent support desk" : "Miiska taageerada"}
                   </p>
-                  <h3 className="text-xl font-black text-slate-900 sm:text-2xl">
+                  <h3 className="text-xl font-black text-heading sm:text-2xl">
                     {isEn ? "Choose how to reach us" : "Dooro sida aad nala soo xiriirayso"}
                   </h3>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   {isEn ? "Available 24/7" : "Furan 24/7"}
                 </div>
@@ -802,68 +859,68 @@ export default function Home() {
               <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
                 <a
                   href="tel:+19522288655"
-                  className="group rounded-2xl border border-slate-200 bg-slate-50/70 p-4 no-underline transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/60 hover:shadow-lg sm:p-5"
+                  className={supportCardClass}
                 >
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105">
+                  <div className={supportIconClass}>
                     <Phone size={19} />
                   </div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
                     {isEn ? "Call support" : "Wac taageerada"}
                   </p>
-                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                  <p className="text-base font-black text-heading sm:text-lg">
                     +1 (952) 228-8655
                   </p>
                 </a>
 
                 <a
                   href="mailto:Koryaal6@gmail.com"
-                  className="group min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 no-underline transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/60 hover:shadow-lg sm:p-5"
+                  className={`${supportCardClass} min-w-0`}
                 >
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105">
+                  <div className={supportIconClass}>
                     <Mail size={19} />
                   </div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
                     {isEn ? "Email inquiries" : "Su'aalaha iimaylka"}
                   </p>
-                  <p className="break-all text-base font-black text-slate-900 sm:text-lg">
+                  <p className="break-all text-base font-black text-heading sm:text-lg">
                     Koryaal6@gmail.com
                   </p>
                 </a>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100">
+                <div className={supportCardClass}>
+                  <div className={supportIconClass}>
                     <MapPin size={19} />
                   </div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
                     {isEn ? "Support location" : "Goobta taageerada"}
                   </p>
-                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                  <p className="text-base font-black text-heading sm:text-lg">
                     Minnesota, USA
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-slate-100">
+                <div className={supportCardClass}>
+                  <div className={supportIconClass}>
                     <Clock size={19} />
                   </div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
                     {isEn ? "Availability" : "Waqtiga la heli karo"}
                   </p>
-                  <p className="text-base font-black text-slate-900 sm:text-lg">
+                  <p className="text-base font-black text-heading sm:text-lg">
                     {isEn ? "Every day, 24 hours" : "Maalin kasta, 24 saac"}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm leading-relaxed text-slate-500">
+              <div className="mt-5 flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-relaxed text-foreground/65">
                   {isEn
                     ? "Need to share more details with our team?"
                     : "Ma u baahan tahay inaad faahfaahin dheeraad ah nala wadaagto?"}
                 </p>
                 <Link
                   href="/contact"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-primary transition-all hover:border-primary hover:bg-primary hover:text-white"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 py-3 text-sm font-black text-primary transition-all hover:border-primary hover:bg-primary hover:text-white"
                 >
                   {isEn ? "Open contact page" : "Fur bogga xiriirka"}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

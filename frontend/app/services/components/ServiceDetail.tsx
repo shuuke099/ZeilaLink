@@ -1,7 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Star, ShieldCheck, Clock3, RotateCcw, MessageCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Maximize2,
+  MessageCircle,
+  RotateCcw,
+  ShieldCheck,
+  Star,
+  X,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import type { ServiceItem } from '../data/services';
@@ -61,6 +71,20 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [paidBooking, setPaidBooking] = useState<PaidBookingSummary | null>(null);
   const [processedSessionId, setProcessedSessionId] = useState<string | null>(null);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState<number | null>(null);
+
+  const gallery = useMemo(() => {
+    const serviceGallery = Array.isArray(service.gallery)
+      ? service.gallery.filter(Boolean)
+      : [];
+
+    return serviceGallery.length > 0 ? serviceGallery : [service.image];
+  }, [service.gallery, service.image]);
+
+  const galleryFallback = Array.from(
+    { length: 4 },
+    (_, index) => gallery[index % gallery.length],
+  );
 
   useEffect(() => {
     setForm((prev) => ({
@@ -103,6 +127,46 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
       setBookingMessage(isEn ? 'Checkout cancelled. You can try again anytime.' : 'Lacag bixinta waa la joojiyay. Mar kasta waad isku dayi kartaa.');
     }
   }, [isEn, user, processedSessionId]);
+
+  useEffect(() => {
+    if (activeGalleryIndex === null) {
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveGalleryIndex(null);
+      } else if (event.key === 'ArrowLeft') {
+        setActiveGalleryIndex((current) =>
+          current === null
+            ? null
+            : (current - 1 + gallery.length) % gallery.length,
+        );
+      } else if (event.key === 'ArrowRight') {
+        setActiveGalleryIndex((current) =>
+          current === null ? null : (current + 1) % gallery.length,
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [activeGalleryIndex, gallery.length]);
+
+  useEffect(() => {
+    setActiveGalleryIndex(null);
+  }, [service.id]);
 
   const validationError = useMemo(() => {
     if (!form.customerName.trim() || !form.customerEmail.trim()) {
@@ -167,11 +231,53 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
     }
   };
 
-  const gallery = service.gallery.length > 0 ? service.gallery : [service.image];
-  const galleryFallback = [gallery[0], gallery[1] || gallery[0], gallery[2] || gallery[0], gallery[3] || gallery[0]];
-
   const highlights = service.highlights.length > 0 ? service.highlights : [isEn ? 'Trusted service' : 'Adeeg lagu kalsoon yahay'];
   const includes = service.includes.length > 0 ? service.includes : [isEn ? 'Consultation included' : 'La-talin ayaa ku jirta'];
+
+  const showPreviousImage = () => {
+    setActiveGalleryIndex((current) =>
+      current === null
+        ? null
+        : (current - 1 + gallery.length) % gallery.length,
+    );
+  };
+
+  const showNextImage = () => {
+    setActiveGalleryIndex((current) =>
+      current === null ? null : (current + 1) % gallery.length,
+    );
+  };
+
+  const renderGalleryImage = (
+    displayIndex: number,
+    className: string,
+    alt: string,
+  ) => {
+    const galleryIndex = displayIndex % gallery.length;
+
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveGalleryIndex(galleryIndex)}
+        className={`group relative block w-full cursor-zoom-in overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 ${className}`}
+        aria-label={
+          isEn
+            ? `Preview image ${galleryIndex + 1}`
+            : `Daawo sawirka ${galleryIndex + 1}`
+        }
+        aria-haspopup="dialog"
+      >
+        <img
+          src={galleryFallback[displayIndex]}
+          alt={alt}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-slate-950/70 text-white shadow-lg backdrop-blur-sm transition-colors group-hover:bg-primary">
+          <Maximize2 size={17} aria-hidden="true" />
+        </span>
+      </button>
+    );
+  };
 
   return (
     <>
@@ -192,12 +298,28 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-3 gap-3">
-              <img src={galleryFallback[0]} alt={service.title} className="col-span-2 h-80 w-full object-cover rounded-xl" />
+              {renderGalleryImage(
+                0,
+                'col-span-2 h-80 rounded-xl',
+                service.title,
+              )}
               <div className="grid gap-3">
-                <img src={galleryFallback[1]} alt={`${service.title} gallery`} className="h-[154px] w-full object-cover rounded-xl" />
-                <img src={galleryFallback[2]} alt={`${service.title} gallery`} className="h-[154px] w-full object-cover rounded-xl" />
+                {renderGalleryImage(
+                  1,
+                  'h-[154px] rounded-xl',
+                  `${service.title} gallery 2`,
+                )}
+                {renderGalleryImage(
+                  2,
+                  'h-[154px] rounded-xl',
+                  `${service.title} gallery 3`,
+                )}
               </div>
-              <img src={galleryFallback[3]} alt={`${service.title} gallery`} className="col-span-3 h-48 w-full object-cover rounded-xl" />
+              {renderGalleryImage(
+                3,
+                'col-span-3 h-48 rounded-xl',
+                `${service.title} gallery 4`,
+              )}
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -365,6 +487,62 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
         </div>
       </div>
     </section>
+
+    {activeGalleryIndex !== null && (
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/95 p-3 backdrop-blur-md sm:p-8"
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEn ? 'Service image preview' : 'Daawashada sawirka adeegga'}
+        onClick={() => setActiveGalleryIndex(null)}
+      >
+        <button
+          type="button"
+          onClick={() => setActiveGalleryIndex(null)}
+          className="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-xl backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-7 sm:top-7"
+          aria-label={isEn ? 'Close preview' : 'Xir sawirka'}
+        >
+          <X size={24} aria-hidden="true" />
+        </button>
+
+        <div
+          className="relative flex w-full max-w-6xl items-center justify-center"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <img
+            src={gallery[activeGalleryIndex]}
+            alt={`${service.title} ${activeGalleryIndex + 1}`}
+            className="max-h-[calc(100dvh-7rem)] max-w-full rounded-xl object-contain shadow-2xl sm:max-h-[calc(100dvh-6rem)]"
+          />
+
+          {gallery.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={showPreviousImage}
+                className="absolute left-1 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white shadow-xl backdrop-blur-md transition-all hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:left-4 sm:h-14 sm:w-14"
+                aria-label={isEn ? 'Previous image' : 'Sawirkii hore'}
+              >
+                <ChevronLeft size={28} aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                onClick={showNextImage}
+                className="absolute right-1 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-950/70 text-white shadow-xl backdrop-blur-md transition-all hover:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-4 sm:h-14 sm:w-14"
+                aria-label={isEn ? 'Next image' : 'Sawirka xiga'}
+              >
+                <ChevronRight size={28} aria-hidden="true" />
+              </button>
+            </>
+          )}
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-white/15 bg-slate-950/75 px-4 py-2 text-xs font-bold text-white shadow-lg backdrop-blur-md sm:bottom-5 sm:text-sm">
+            {activeGalleryIndex + 1} / {gallery.length}
+          </div>
+        </div>
+      </div>
+    )}
 
     {paidBooking && (
       <div className="fixed inset-0 z-[70] bg-slate-950/45 backdrop-blur-sm flex items-center justify-center p-4">
