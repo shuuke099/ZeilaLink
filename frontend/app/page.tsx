@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import {
@@ -29,7 +29,7 @@ import {
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
-import { cachedApiGet, prefetchPublicRouteData } from "@/lib/api-cache";
+import { prefetchPublicRouteData } from "@/lib/api-cache";
 
 interface HomeJob {
   id: string;
@@ -48,14 +48,43 @@ interface HomeTraining {
   provider: { name: string; logoUrl?: string | null };
 }
 
+// Homepage cards are deliberately static. They are available in the first
+// server-rendered HTML and never hold the surrounding homepage sections until
+// a production API request finishes on a slow mobile connection.
+const FEATURED_JOBS: HomeJob[] = [
+  {
+    id: "seed-job-warehouse-associate",
+    title: "Warehouse Associate",
+    location: "Minneapolis, MN",
+    employmentType: "Full-time",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    employer: { name: "ZeilaLink Business Solutions" },
+  },
+  {
+    id: "seed-job-rideshare-driver",
+    title: "Rideshare Driver",
+    location: "Minneapolis, MN",
+    employmentType: "Part-time",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    employer: { name: "ZeilaLink Business Solutions" },
+  },
+];
+
+const FEATURED_TRAININGS: HomeTraining[] = [
+  {
+    id: "seed-training-customer-service",
+    name: "Customer Service Excellence",
+    duration: "4 weeks",
+    cost: 299,
+    provider: { name: "ZeilaLink Skills Academy" },
+  },
+];
+
 export default function Home() {
   const { language } = useLanguage();
   const getT = (key: string) => t(key, language);
-  const [featuredJobs, setFeaturedJobs] = useState<HomeJob[]>([]);
-  const [featuredTrainings, setFeaturedTrainings] = useState<HomeTraining[]>(
-    [],
-  );
-  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const featuredJobs = FEATURED_JOBS;
+  const featuredTrainings = FEATURED_TRAININGS;
   const stats = {
     jobs: "2.5k+",
     trainings: "150+",
@@ -71,25 +100,6 @@ export default function Home() {
     "group rounded-2xl border border-border/80 bg-gradient-to-br from-surface-muted to-background-muted p-4 no-underline shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:from-primary/10 hover:to-surface hover:shadow-lg hover:shadow-primary/10 sm:p-5";
   const supportIconClass =
     "mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-primary shadow-md shadow-slate-900/5 ring-1 ring-border/80 transition-transform group-hover:scale-105";
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [jobsData, trainingsData] = await Promise.all([
-          cachedApiGet<{ jobs?: HomeJob[] }>("/jobs?limit=3"),
-          cachedApiGet<{ trainings?: HomeTraining[] }>("/trainings?limit=2"),
-        ]);
-        setFeaturedJobs((jobsData.jobs || []).slice(0, 3));
-        setFeaturedTrainings((trainingsData.trainings || []).slice(0, 2));
-      } catch (e) {
-        // best-effort; ignore
-      } finally {
-        setFeaturedLoading(false);
-      }
-    };
-
-    load();
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,10 +257,10 @@ export default function Home() {
       </section>
 
       {/* About Section - Professional Redesign */}
-      <section className="home-about-section relative bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:overflow-hidden lg:py-28">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
-            <div className="home-about-content relative text-center lg:text-left">
+      <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:overflow-hidden lg:py-28">
+        <div className="mx-auto w-full min-w-0 max-w-7xl">
+          <div className="grid min-w-0 items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
+            <div className="home-about-content relative min-w-0 max-w-full text-center lg:text-left">
               <div className={`${sectionEyebrowClass} mb-6 sm:mb-8`}>
                 <Star size={14} className="shrink-0 fill-current" />
                 <span className={sectionEyebrowTextClass}>
@@ -260,7 +270,7 @@ export default function Home() {
                 </span>
               </div>
 
-              <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
+              <h2 className="mb-5 max-w-full whitespace-normal break-words text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
                 {isEn ? (
                   <>
                     We're Building the <br />
@@ -280,8 +290,8 @@ export default function Home() {
                 )}
               </h2>
 
-              <div className="mb-8 space-y-5 text-center text-base leading-relaxed text-slate-600 sm:mb-10 sm:space-y-6 sm:text-lg lg:text-left">
-                <p className="text-left">
+              <div className="mb-8 min-w-0 max-w-full space-y-5 text-center text-base leading-relaxed text-slate-600 sm:mb-10 sm:space-y-6 sm:text-lg lg:text-left">
+                <p className="max-w-full whitespace-normal break-words text-left">
                   {isEn
                     ? "ZeilaLink is more than a platform — it is a growing ecosystem built to connect people with opportunities, empower individuals to develop their potential, and enable businesses to find the talent and services they need. We are committed to bridging gaps, unlocking possibilities, and supporting communities to thrive in a modern, digital economy."
                     : "  ZeilaLink ma aha oo kaliya madal — waa nidaam sii kobcaya oo loogu talagalay isku xirka bulshada  iyo fursadaha jira ,  awoodsiinta xirfadlayaasha si ay u horumariyaan xirfadooda, iyo ka caawinta ganacsiyada inay helaan hibada iyo adeegyada iyo shaqaalaha ay u baahan yihiin. Waxaan u heellan nahay inaan yareyno kala fogaanshaha, furno fursado cusub, oo aan taageerno bulshada si ay ula jaan-qaado dhaqaalaha casriga ah ee danabaysan."}
@@ -298,18 +308,18 @@ export default function Home() {
                     className="transition-transform duration-300 group-hover:translate-x-2"
                   />
                 </Link>
-                <div className="flex flex-wrap gap-4 pt-4">
-                  <div className="flex items-center space-x-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                <div className="grid min-w-0 grid-cols-1 gap-3 pt-4 sm:grid-cols-2 sm:gap-4">
+                  <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
                     <CheckCircle2 size={18} className="text-primary" />
-                    <span className="text-sm font-bold text-slate-700">
+                    <span className="min-w-0 whitespace-normal break-words text-sm font-bold text-slate-700">
                       {isEn
                         ? "Verified Employers"
                         : "Loo-shaqeeyayaal la Hubiyay"}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3 bg-slate-50 px-5 py-3 rounded-2xl border border-slate-100">
+                  <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
                     <CheckCircle2 size={18} className="text-primary" />
-                    <span className="text-sm font-bold text-slate-700">
+                    <span className="min-w-0 whitespace-normal break-words text-sm font-bold text-slate-700">
                       {isEn ? "Skill Training" : "Tababar Xirfadeed"}
                     </span>
                   </div>
@@ -551,9 +561,7 @@ export default function Home() {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-sky-300/15 bg-sky-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-sky-200">
-                  {featuredLoading
-                    ? "..."
-                    : `${featuredJobs.length} ${isEn ? "live roles" : "shaqo"}`}
+                  {`${featuredJobs.length} ${isEn ? "live roles" : "shaqo"}`}
                 </span>
               </div>
 
@@ -564,15 +572,7 @@ export default function Home() {
               </p>
 
               <div className="relative grid gap-4 sm:grid-cols-2">
-                {featuredLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={`job-skeleton-${index}`}
-                      aria-hidden="true"
-                      className={`min-h-48 animate-pulse rounded-2xl border border-sky-300/10 bg-[#0a1f49]/80 ${index === 2 ? "sm:col-span-2" : ""}`}
-                    />
-                  ))
-                ) : featuredJobs.length > 0 ? (
+                {featuredJobs.length > 0 ? (
                   featuredJobs.map((job) => (
                     <Link
                       key={job.id}
@@ -658,9 +658,7 @@ export default function Home() {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-200">
-                  {featuredLoading
-                    ? "..."
-                    : `${featuredTrainings.length} ${isEn ? "programs" : "tababar"}`}
+                  {`${featuredTrainings.length} ${isEn ? "programs" : "tababar"}`}
                 </span>
               </div>
 
@@ -671,15 +669,7 @@ export default function Home() {
               </p>
 
               <div className="relative space-y-4">
-                {featuredLoading ? (
-                  Array.from({ length: 2 }).map((_, index) => (
-                    <div
-                      key={`training-skeleton-${index}`}
-                      aria-hidden="true"
-                      className="min-h-40 animate-pulse rounded-2xl border border-emerald-300/10 bg-emerald-950/25"
-                    />
-                  ))
-                ) : featuredTrainings.length > 0 ? (
+                {featuredTrainings.length > 0 ? (
                   featuredTrainings.map((training) => (
                     <Link
                       key={training.id}
