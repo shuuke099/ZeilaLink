@@ -96,7 +96,7 @@ export default function Home() {
       <Navbar />
 
       {/* Hero Section - Reverted to Light Design */}
-      <section className="relative overflow-hidden bg-white pb-14 pt-28 sm:pb-20 sm:pt-32 lg:pb-28 lg:pt-44">
+      <section className="relative w-full max-w-full overflow-hidden bg-white pb-14 pt-28 sm:pb-20 sm:pt-32 lg:pb-28 lg:pt-44">
         {/* Abstract Background Accents */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_20%,rgba(var(--color-primary-rgb),0.05),transparent_70%)]" />
@@ -113,13 +113,13 @@ export default function Home() {
           <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-400/5 rounded-full blur-[100px]" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-4xl mx-auto">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto min-w-0 max-w-4xl text-center">
             <div
               className={`${sectionEyebrowClass} mb-6 sm:mb-8`}
             >
               <Star size={15} className="shrink-0 fill-current" />
-              <span className={sectionEyebrowTextClass}>
+              <span className={`${sectionEyebrowTextClass} min-w-0 max-w-full whitespace-normal break-words`}>
                 {isEn
                   ? "Connecting Opportunities & People"
                   : "Isku Xiraha Fursadaha Bulshada"}
@@ -127,14 +127,17 @@ export default function Home() {
             </div>
 
             <h1
-              className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.2] mb-8 tracking-tight"
+              className="mb-8 max-w-full whitespace-normal break-words text-3xl font-black leading-[1.2] tracking-tight text-slate-900 md:text-4xl lg:text-5xl"
             >
               {isEn ? (
                 <>
                   Your Gateway to Jobs,{" "}
                   <span className="text-primary relative inline-block">
                     Skills{" "}
-                    <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" />
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-2 left-0 -z-10 h-3 w-full bg-primary/10"
+                    />
                   </span>{" "}
                   and Services.
                 </>
@@ -143,7 +146,10 @@ export default function Home() {
                   Madasha Shaqooyinka,{" "}
                   <span className="text-primary relative inline-block">
                     Xirfadaha{" "}
-                    <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" />
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-2 left-0 -z-10 h-3 w-full bg-primary/10"
+                    />
                   </span>{" "}
                   iyo Adeegyada.
                 </>
@@ -151,7 +157,7 @@ export default function Home() {
             </h1>
 
             <p
-              className="text-lg text-slate-600 mb-10 max-w-xl mx-auto leading-relaxed"
+              className="mx-auto mb-10 max-w-xl whitespace-normal break-words text-lg leading-relaxed text-slate-600"
             >
               {isEn
                 ? "Discover job opportunities, gain in-demand skills, get support with your resume and job applications, and offer your services while connecting with employers and clients — all on one powerful platform."
