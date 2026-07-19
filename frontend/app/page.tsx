@@ -795,7 +795,7 @@ export default function Home() {
 
           <div className="grid overflow-hidden rounded-[1.75rem] border border-border/80 bg-surface/95 shadow-2xl shadow-slate-900/10 backdrop-blur-xl lg:grid-cols-12 lg:rounded-[2.25rem]">
             <div
-              className="relative overflow-hidden bg-[#071633] p-6 text-white sm:p-9 lg:col-span-5 lg:p-10"
+              className="relative overflow-hidden bg-gradient-to-br from-[#0c2859] via-[#081d42] to-[#06142e] p-6 text-white sm:p-9 lg:col-span-5 lg:p-10"
             >
               <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border border-white/10" />
               <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/5" />
@@ -806,7 +806,7 @@ export default function Home() {
                 <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-blue-300">
                   {isEn ? "Direct assistance" : "Caawimaad toos ah"}
                 </p>
-                <h3 className="mb-4 text-2xl font-black leading-tight sm:text-3xl">
+                <h3 className="mb-4 text-2xl font-black leading-tight text-white sm:text-3xl">
                   {isEn
                     ? "Talk to our support team"
                     : "La hadal kooxdayada taageerada"}

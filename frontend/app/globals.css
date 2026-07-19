@@ -239,6 +239,10 @@
     contain: none;
     opacity: 1;
     visibility: visible;
+    /* Give Safari a stable paint layer so text is not postponed until the
+       adjacent lazy-loaded image or hydration triggers another repaint. */
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   .home-capabilities-section {
@@ -250,5 +254,7 @@
     contain: none;
     opacity: 1;
     visibility: visible;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 }
