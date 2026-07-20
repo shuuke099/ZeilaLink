@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -8,14 +8,7 @@ import ErrorSuppressor from '@/components/ErrorSuppressor';
 import ChatBot from '@/components/ChatBot';
 import Footer from '@/components/Footer';
 import ToastProvider from '@/components/ToastProvider';
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-  display: 'swap',
-  preload: true,
-  variable: '--font-poppins',
-});
+import type { Language } from '@/lib/translations';
 
 export const metadata: Metadata = {
   title: 'ZeilaLink',
@@ -32,8 +25,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const savedLanguage = cookies().get('language')?.value;
+  const initialLanguage: Language = savedLanguage === 'so' ? 'so' : 'en';
+
   return (
-    <html lang="en" translate="no" suppressHydrationWarning>
+    <html lang={initialLanguage} translate="no" suppressHydrationWarning>
       <head>
         <meta name="google" content="notranslate" />
         <script
@@ -81,11 +77,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={poppins.className}>
+      <body>
         <ErrorSuppressor />
         <ThemeProvider>
           <AuthProvider>
-            <LanguageProvider>
+            <LanguageProvider initialLanguage={initialLanguage}>
               <div className="flex flex-col min-h-screen">
                 <main className="flex-grow">
                   {children}

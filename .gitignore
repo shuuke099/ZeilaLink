@@ -21,6 +21,8 @@ build/
 # Next.js
 .next/
 **/.next/
+.next-dev/
+**/.next-dev/
 
 # Coverage
 coverage/

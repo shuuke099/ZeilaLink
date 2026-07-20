@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "pnpm run dev:prepare; concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
-    "dev:prepare": "kill-port 3000 7000 || true && rimraf frontend/.next",
+    "dev:prepare": "kill-port 3000 7000 || true && rimraf frontend/.next-dev",
     "dev:backend": "pnpm -C backend run dev",
     "dev:frontend": "pnpm -C frontend run dev",
     "seed": "pnpm -C backend run prisma:seed",

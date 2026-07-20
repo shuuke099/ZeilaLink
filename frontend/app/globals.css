@@ -4,9 +4,9 @@
 
 :root {
   color-scheme: light;
-  --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  --font-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI',
     'Roboto', sans-serif;
 
   --color-background: 250 251 254;
@@ -223,34 +223,30 @@
   }
 }
 
-/*
- * Mobile Safari can occasionally postpone repainting descendants of an
- * overflow-clipped, off-screen section while it restores a page position.
- * The About copy is primary content, so keep its paint region un-clipped on
- * small screens. The desktop composition retains its clipped decoration.
- */
+/* Keep static homepage content in Safari's immediate paint path. Large blur
+   layers are desktop-only because they can delay mobile repainting. */
 @media (max-width: 767px) {
-  .home-about-section {
-    overflow-x: clip;
-    overflow-y: visible;
+  .home-hero-section,
+  .home-stats-section,
+  .home-about-section,
+  .home-capabilities-section,
+  .home-opportunities-section,
+  .home-support-section {
+    overflow: visible;
+    content-visibility: visible;
+    contain: none;
   }
 
+  .home-section-content,
   .home-about-content {
     content-visibility: visible;
     contain: none;
     opacity: 1;
     visibility: visible;
+    transform: none;
   }
 
-  .home-capabilities-section {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
-
-  .home-capabilities-content {
-    content-visibility: visible;
-    contain: none;
-    opacity: 1;
-    visibility: visible;
+  .home-mobile-decoration {
+    display: none;
   }
 }

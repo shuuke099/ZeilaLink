@@ -11,22 +11,31 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en');
+interface LanguageProviderProps {
+  children: React.ReactNode;
+  initialLanguage?: Language;
+}
+
+export const LanguageProvider: React.FC<LanguageProviderProps> = ({
+  children,
+  initialLanguage = 'en',
+}) => {
+  const [language, setLanguageState] = useState<Language>(initialLanguage);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('language') as Language;
-      if (saved) {
-        setLanguageState(saved);
-      }
-    }
-  }, []);
+    window.localStorage.setItem('language', initialLanguage);
+  }, [initialLanguage]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
+
     if (typeof window !== 'undefined') {
-      localStorage.setItem('language', lang);
+      window.localStorage.setItem('language', lang);
+      document.cookie = `language=${lang}; Path=/; Max-Age=31536000; SameSite=Lax`;
+
+      // Static page copy is rendered on the server. Reload so the selected
+      // language is returned in the next response without client hydration.
+      window.location.reload();
     }
   };
 

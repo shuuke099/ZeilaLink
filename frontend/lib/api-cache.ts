@@ -77,13 +77,14 @@ export const prefetchPublicRouteData = (href: string) => {
   const route = href.split('?')[0].replace(/\/$/, '') || '/';
   const prefetches: Promise<unknown>[] = [];
 
+  // The homepage content is bundled as local static data. Do not start
+  // backend requests when its navigation links are touched on mobile; those
+  // requests only compete with the initial document and image download.
   if (route === '/') {
-    prefetches.push(
-      cachedApiGet('/jobs?limit=3'),
-      cachedApiGet('/trainings?limit=2'),
-      cachedApiGet('/public/stats', undefined, 60_000),
-    );
-  } else if (route === '/jobs') {
+    return;
+  }
+
+  if (route === '/jobs') {
     prefetches.push(cachedApiGet('/jobs'));
   } else if (route === '/trainings') {
     prefetches.push(cachedApiGet('/trainings'));
