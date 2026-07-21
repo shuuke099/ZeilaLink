@@ -25,7 +25,7 @@ export default function FeaturedOpportunitiesSection({
   const isEn = language === "en";
 
   return (
-    <section className="home-opportunities-section relative overflow-hidden bg-[#071633] px-4 py-16 sm:py-20 lg:py-28">
+    <section className="home-opportunities-section relative overflow-hidden bg-[#071633] px-4 pb-16 pt-10 sm:pb-20 sm:pt-12 lg:pb-28 lg:pt-16">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
       <div className="home-mobile-decoration pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="home-mobile-decoration pointer-events-none absolute -right-40 bottom-10 h-96 w-96 rounded-full bg-emerald-400/10 blur-[120px]" />

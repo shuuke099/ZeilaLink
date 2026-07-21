@@ -29,7 +29,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
   const isEn = language === "en";
 
   return (
-    <section className="home-support-section relative overflow-hidden bg-background-muted px-4 py-14 sm:py-16 lg:py-20">
+    <section className="home-support-section relative overflow-hidden bg-background-muted px-4 pb-14 pt-10 sm:pb-16 sm:pt-12 lg:pb-20 lg:pt-16">
       <div className="home-mobile-decoration pointer-events-none absolute inset-0">
         <div className="absolute -left-32 top-8 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
         <div className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-400/10 blur-3xl" />

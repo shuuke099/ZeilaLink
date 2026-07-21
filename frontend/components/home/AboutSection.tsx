@@ -17,7 +17,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
   const isEn = language === "en";
 
   return (
-    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-16 sm:pb-12 sm:pt-20 lg:overflow-hidden lg:py-28">
+    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-10 sm:pb-12 sm:pt-12 lg:overflow-hidden lg:pb-28 lg:pt-16">
       <div className="home-section-content mx-auto w-full min-w-0 max-w-7xl">
         <div className="grid min-w-0 items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
           <div className="home-about-content relative min-w-0 max-w-full text-center lg:text-left">

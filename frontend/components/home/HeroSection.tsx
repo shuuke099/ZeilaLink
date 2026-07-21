@@ -15,7 +15,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
   const getT = (key: string) => t(key, language);
 
   return (
-    <section className="home-hero-section relative w-full max-w-full overflow-hidden bg-white pb-14 pt-28 sm:pb-20 sm:pt-32 lg:pb-28 lg:pt-44">
+    <section className="home-hero-section relative w-full max-w-full overflow-hidden bg-white pb-14 pt-20 sm:pb-20 sm:pt-24 lg:pb-28 lg:pt-28">
       {/* Abstract Background Accents */}
       <div className="home-mobile-decoration absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_20%,rgba(var(--color-primary-rgb),0.05),transparent_70%)]" />

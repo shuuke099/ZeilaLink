@@ -25,7 +25,7 @@ export default function CapabilitiesSection({
   const isEn = language === "en";
 
   return (
-    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-6 sm:pb-20 sm:pt-12 lg:py-28">
+    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-4 sm:pb-20 sm:pt-8 lg:pb-28 lg:pt-16">
       <div className="home-section-content max-w-7xl mx-auto">
         <div className="home-capabilities-content mb-10 text-center sm:mb-14 lg:mb-16">
           <div className={`${SECTION_EYEBROW_CLASS} mb-4`}>

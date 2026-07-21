@@ -17,7 +17,7 @@ export default function AboutPage() {
       <Navbar />
 
       {/* Hero Section - Matching Homepage Light Color BG */}
-      <section className="relative pt-32 pb-20 lg:pt-56 lg:pb-40 overflow-hidden bg-white">
+      <section className="relative pb-20 pt-20 sm:pt-24 lg:pb-40 lg:pt-28 overflow-hidden bg-white">
         {/* Abstract Background Accents - Matching Home */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -mr-96 -mt-96" />
@@ -55,13 +55,8 @@ export default function AboutPage() {
       </section>
 
       {/* Stats - Premium Dark Contrast */}
-      <section className="py-20 bg-slate-900 relative overflow-hidden">
+      <section className="py-14 bg-slate-900 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <p className="mb-10 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200">
-            {isEn
-              ? 'Illustrative platform goals — not live totals'
-              : 'Yoolal tusaale ah — ma aha tirooyin toos ah'}
-          </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
             {[
               { label: isEn ? 'COMMUNITY GOAL' : 'YOOLKA BULSHADA', value: '12,000+', icon: Users },
