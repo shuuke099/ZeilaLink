@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import Navbar from "@/components/Navbar";
 import AboutSection from "@/components/home/AboutSection";
 import CapabilitiesSection from "@/components/home/CapabilitiesSection";
-import FeaturedOpportunitiesSection from "@/components/home/FeaturedOpportunitiesSection";
 import HeroSection from "@/components/home/HeroSection";
 import StatsSection from "@/components/home/StatsSection";
 import SupportSection from "@/components/home/SupportSection";
@@ -19,7 +18,6 @@ export default function HomePage() {
       <StatsSection language={language} />
       <AboutSection language={language} />
       <CapabilitiesSection language={language} />
-      <FeaturedOpportunitiesSection language={language} />
       <SupportSection language={language} />
     </div>
   );

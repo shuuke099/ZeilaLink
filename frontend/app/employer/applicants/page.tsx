@@ -5,6 +5,7 @@ import Link from 'next/link';
 import EmployerDashboardPage from '@/components/employer/EmployerDashboardPage';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import { getSafeMailtoUrl, getSafeStoredUrl } from '@/lib/safeUrl';
 import { Download, Mail, Users, CheckCircle2, Clock4, BarChart3 } from 'lucide-react';
 
 type ApplicantStatus = 'applied' | 'reviewed' | 'accepted' | 'rejected';
@@ -47,22 +48,7 @@ export default function EmployerApplicantsPage() {
     const loadApplicants = async () => {
       if (!user) return;
       try {
-        const response = await api
-          .get('/applications')
-          .catch(() => ({
-            data: {
-              applications: [
-                {
-                  id: '1',
-                  user: { name: 'Abdi Ahmed', email: 'abdi@example.com' },
-                  job: { title: 'Operations Manager' },
-                  resumeUrl: '#',
-                  status: 'applied',
-                  skills: ['Logistics', 'Inventory', 'Leadership'],
-                },
-              ],
-            },
-          }));
+        const response = await api.get('/applications');
         if (!active) return;
         const applicationsData = response.data.applications ?? response.data ?? [];
         const formatted = (Array.isArray(applicationsData) ? applicationsData : []).map((record: any) => ({
@@ -95,7 +81,7 @@ export default function EmployerApplicantsPage() {
             (!error?.response && error?.request);
           
           if (isConnectionError) {
-            errorMessage = 'Network Error: Cannot connect to server. Please ensure the backend server is running on port 7000.';
+            errorMessage = 'The applicant service is temporarily unavailable.';
           } else if (error?.response?.data?.error) {
             errorMessage = error.response.data.error;
           } else if (error?.message) {
@@ -143,8 +129,15 @@ export default function EmployerApplicantsPage() {
   };
 
   const handleEmail = (record: ApplicantRecord) => {
-    if (!record.email) return;
-    window.location.href = `mailto:${record.email}?subject=Regarding your application for ${record.jobTitle}`;
+    const safeEmailUrl = getSafeMailtoUrl(
+      record.email,
+      `Regarding your application for ${record.jobTitle}`,
+    );
+    if (!safeEmailUrl) {
+      setFeedback('This applicant email address is not valid.');
+      return;
+    }
+    window.location.href = safeEmailUrl;
   };
 
   return (
@@ -230,11 +223,13 @@ export default function EmployerApplicantsPage() {
               No applicants yet. Share your job post to attract more candidates.
             </div>
           ) : (
-            filteredApplicants.map((applicant) => (
-              <article
-                key={applicant.id}
-                className="rounded-xl border border-border bg-surface-muted p-5 shadow-sm"
-              >
+            filteredApplicants.map((applicant) => {
+              const safeResumeUrl = getSafeStoredUrl(applicant.resumeUrl);
+              return (
+                <article
+                  key={applicant.id}
+                  className="rounded-xl border border-border bg-surface-muted p-5 shadow-sm"
+                >
                 <header className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-3">
@@ -301,9 +296,9 @@ export default function EmployerApplicantsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {applicant.resumeUrl && (
+                    {safeResumeUrl && (
                       <a
-                        href={applicant.resumeUrl}
+                        href={safeResumeUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn-secondary flex items-center gap-2"
@@ -357,8 +352,9 @@ export default function EmployerApplicantsPage() {
                     Reject
                   </button>
                 </footer>
-              </article>
-            ))
+                </article>
+              );
+            })
           )}
         </div>
       </section>

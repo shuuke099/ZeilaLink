@@ -28,34 +28,9 @@ export default function WorkerRecommendedJobsPage() {
       if (!user) return;
       try {
         setLoading(true);
-        const response = await api
-          .get('/jobs/recommended', {
-            params: { userId: user.id },
-          })
-          .catch(() => ({
-            data: {
-              jobs: [
-                {
-                  id: '1',
-                  title: 'Warehouse Operations Lead',
-                  company: 'SomLogistics',
-                  location: 'Mogadishu • Hybrid',
-                  salary: '$500 - $650 / month',
-                  matchScore: 92,
-                  tags: ['Logistics', 'Inventory', 'Leadership'],
-                },
-                {
-                  id: '2',
-                  title: 'Supply Chain Coordinator',
-                  company: 'Horn of Africa Foods',
-                  location: 'Hargeisa • Onsite',
-                  salary: '$450 - $520 / month',
-                  matchScore: 88,
-                  tags: ['Supply Chain', 'Excel', 'Procurement'],
-                },
-              ],
-            },
-          }));
+        const response = await api.get('/jobs/recommended', {
+          params: { userId: user.id },
+        });
 
         if (!active) return;
 
@@ -71,6 +46,10 @@ export default function WorkerRecommendedJobsPage() {
         setJobs(formatted);
       } catch (error) {
         console.error('Failed to load recommended jobs', error);
+        if (active) {
+          setJobs([]);
+          setFeedback('Recommended jobs are unavailable right now.');
+        }
       } finally {
         if (active) setLoading(false);
       }

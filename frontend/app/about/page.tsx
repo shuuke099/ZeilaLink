@@ -1,38 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/translations';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Users, GraduationCap, Briefcase, Star, Search, ShieldCheck, Zap, Globe, Rocket, Landmark } from 'lucide-react';
-import { cachedApiGet } from '@/lib/api-cache';
 
 export default function AboutPage() {
   const { language } = useLanguage();
   const isEn = language === 'en';
   const getT = (key: string) => t(key, language);
-
-  const [stats, setStats] = useState({
-    workers: '12,000+',
-    successRate: '98%',
-  });
-
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const data = await cachedApiGet<any>('/public/stats', undefined, 60_000);
-        setStats(prev => ({
-          ...prev,
-          workers: data.formatted.workers,
-          successRate: data.successRate,
-        }));
-      } catch (e) {
-        // keep defaults
-      }
-    };
-    loadStats();
-  }, []);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-primary/20">
@@ -79,12 +57,17 @@ export default function AboutPage() {
       {/* Stats - Premium Dark Contrast */}
       <section className="py-20 bg-slate-900 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <p className="mb-10 text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200">
+            {isEn
+              ? 'Illustrative platform goals — not live totals'
+              : 'Yoolal tusaale ah — ma aha tirooyin toos ah'}
+          </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
             {[
-              { label: isEn ? 'ACTIVE USERS' : 'ISTICMAALAYAASHA GAALKA LEH', value: stats.workers, icon: Users },
-              { label: isEn ? 'PREMIUM PARTNERS' : 'SHARIYADA SARE', value: '450+', icon: Landmark },
-              { label: isEn ? 'CAREER SUCCESS' : 'GUUSHA SHARYADA', value: stats.successRate, icon: Rocket },
-              { label: isEn ? 'REGIONS' : 'GOBIYADA', value: '18', icon: Globe },
+              { label: isEn ? 'COMMUNITY GOAL' : 'YOOLKA BULSHADA', value: '12,000+', icon: Users },
+              { label: isEn ? 'PARTNER GOAL' : 'YOOLKA SHURAAGADA', value: '450+', icon: Landmark },
+              { label: isEn ? 'SUCCESS GOAL' : 'YOOLKA GUUSHA', value: '98%', icon: Rocket },
+              { label: isEn ? 'REGION GOAL' : 'YOOLKA GOBOLLADA', value: '18', icon: Globe },
             ].map((stat, idx) => (
               <div key={idx} className="group">
                 <div className="text-4xl lg:text-5xl font-black text-white mb-2 tracking-tighter group-hover:text-primary transition-colors">

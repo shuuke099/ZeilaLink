@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import { getSafeStripeCheckoutUrl } from '@/lib/safeUrl';
 import type { ServiceItem } from '../data/services';
 
 type ServiceDetailProps = {
@@ -188,6 +189,15 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
   }, [form, isEn]);
 
   const handleBookService = async () => {
+    if (service.isDemo) {
+      setBookingMessage(
+        isEn
+          ? 'Demo preview only. Booking is disabled for sample services.'
+          : 'Kani waa tusaale keliya. Dalabka adeegyada tijaabada ah waa xiran yahay.',
+      );
+      return;
+    }
+
     if (!user) {
       const nextPath = `/services/${service.id}`;
       window.location.href = `/login?redirect=${encodeURIComponent(nextPath)}`;
@@ -214,9 +224,9 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
         notes: form.notes,
       });
 
-      const checkoutUrl = response?.data?.checkoutUrl;
-      if (typeof checkoutUrl === 'string' && checkoutUrl.trim()) {
-        window.location.href = checkoutUrl;
+      const checkoutUrl = getSafeStripeCheckoutUrl(response?.data?.checkoutUrl);
+      if (checkoutUrl) {
+        window.location.assign(checkoutUrl);
         return;
       }
 
@@ -286,6 +296,17 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
         <div className="mb-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
           {service.category} | {service.provider}
         </div>
+
+        {service.isDemo && (
+          <div
+            role="status"
+            className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950"
+          >
+            {isEn
+              ? 'Demo preview — the provider, price, rating, reviews, and service details below are sample content. Booking is disabled.'
+              : 'Tani waa tusaale — bixiyaha, qiimaha, qiimeynta, faallooyinka, iyo faahfaahinta adeeggu waa xog tijaabo ah. Dalabku waa xiran yahay.'}
+          </div>
+        )}
 
         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{service.title}</h1>
 
@@ -372,7 +393,13 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
                 <div className="flex items-center gap-2"><ShieldCheck size={16} className="text-primary" /> {service.support || (isEn ? 'Support included' : 'Taageero ayaa ku jirta')}</div>
               </div>
 
-              {!showBookingForm ? (
+              {service.isDemo ? (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
+                  {isEn
+                    ? 'Demo preview only — booking is unavailable.'
+                    : 'Kani waa tusaale keliya — dalab lama samayn karo.'}
+                </div>
+              ) : !showBookingForm ? (
                 <button
                   type="button"
                   onClick={() => {

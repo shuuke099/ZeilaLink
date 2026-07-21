@@ -32,29 +32,7 @@ export default function ProviderOverviewPage() {
     const loadMetrics = async () => {
       if (!user) return;
       try {
-        const response = await api
-          .get('/providers/me/metrics')
-          .catch(() => ({
-            data: {
-              totalCourses: 8,
-              activeLearners: 120,
-              certificatesIssued: 45,
-              upcoming: [
-                {
-                  id: '1',
-                  title: 'Exporter mentorship webinar',
-                  date: '13 Nov',
-                  description: 'Live Q&A for new exporters enrolled in Supply Chain Pro.',
-                },
-                {
-                  id: '2',
-                  title: 'Graduation ceremony',
-                  date: '28 Nov',
-                  description: 'Celebrate learners completing the AgriTech Innovation program.',
-                },
-              ],
-            },
-          }));
+        const response = await api.get('/providers/me/metrics');
         if (!active) return;
         setMetrics({
           totalCourses: response.data.totalCourses ?? 0,
@@ -65,6 +43,15 @@ export default function ProviderOverviewPage() {
         setUpcomingEvents(response.data.upcoming ?? []);
       } catch (error) {
         console.error('Failed to load provider metrics', error);
+        if (active) {
+          setMetrics({
+            totalCourses: 0,
+            activeLearners: 0,
+            certificatesIssued: 0,
+            newMessages: 0,
+          });
+          setUpcomingEvents([]);
+        }
       }
     };
     loadMetrics();

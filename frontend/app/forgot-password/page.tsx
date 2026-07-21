@@ -10,6 +10,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import api from '@/lib/api';
 import { extractErrorMessage } from '@/lib/error-utils';
 
+const MINIMUM_PASSWORD_LENGTH = 12;
+
 function ForgotPasswordContent() {
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -24,6 +26,7 @@ function ForgotPasswordContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState<'send' | 'otp' | 'password'>('send');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [resetting, setResetting] = useState(false);
 
@@ -48,7 +51,11 @@ function ForgotPasswordContent() {
       setNewPassword('');
       setConfirmPassword('');
       setStep('otp');
-      toast.success(isEn ? 'OTP sent to your email' : 'OTP ayaa email-kaaga loo diray');
+      toast.success(
+        isEn
+          ? 'If this is a verified account, an OTP will arrive shortly.'
+          : 'Haddii kani yahay akoon la xaqiijiyay, OTP ayaa iman doona wax yar kadib.',
+      );
     } catch (err: any) {
       toast.error(extractErrorMessage(err, isEn ? 'Failed to send OTP' : 'Waa lagu fashilmay dirista OTP'));
     } finally {
@@ -82,8 +89,12 @@ function ForgotPasswordContent() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newPassword.length < 6) {
-      toast.error(isEn ? 'Password must be at least 6 characters' : 'Furaha waa inuu ahaadaa ugu yaraan 6 xaraf');
+    if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {
+      toast.error(
+        isEn
+          ? `Password must be at least ${MINIMUM_PASSWORD_LENGTH} characters`
+          : `Furaha waa inuu ahaadaa ugu yaraan ${MINIMUM_PASSWORD_LENGTH} xaraf`,
+      );
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -104,6 +115,34 @@ function ForgotPasswordContent() {
       toast.error(extractErrorMessage(err, isEn ? 'Failed to reset password' : 'Waa lagu fashilmay beddelka furaha'));
     } finally {
       setResetting(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resending) return;
+
+    setResending(true);
+    try {
+      await api.post('/auth/forgot-password', {
+        email: email.trim().toLowerCase(),
+      });
+      // Resending rotates the server-side code, so an older code must not stay
+      // in the input and accidentally consume one of the limited attempts.
+      setOtp('');
+      toast.success(
+        isEn
+          ? 'If this is a verified account, a new OTP will arrive shortly.'
+          : 'Haddii kani yahay akoon la xaqiijiyay, OTP cusub ayaa iman doona wax yar kadib.',
+      );
+    } catch (err: any) {
+      toast.error(
+        extractErrorMessage(
+          err,
+          isEn ? 'Failed to resend OTP' : 'Waa lagu fashilmay dib u dirista OTP',
+        ),
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -147,7 +186,10 @@ function ForgotPasswordContent() {
           ) : step === 'otp' ? (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
-                {isEn ? 'OTP sent to:' : 'OTP waxaa loo diray:'} <strong>{email}</strong>
+                {isEn
+                  ? 'If this is a verified account, check this inbox for the OTP:'
+                  : 'Haddii kani yahay akoon la xaqiijiyay, ka eeg OTP-ga email-kan:'}{' '}
+                <strong>{email}</strong>
               </div>
 
               <div>
@@ -161,6 +203,8 @@ function ForgotPasswordContent() {
                   className="input-field text-center tracking-widest font-mono"
                   placeholder="000000"
                   maxLength={6}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
                   required
                 />
               </div>
@@ -171,13 +215,17 @@ function ForgotPasswordContent() {
 
               <button
                 type="button"
-                onClick={() => void api.post('/auth/forgot-password', { email: email.trim().toLowerCase() })
-                  .then(() => toast.success(isEn ? 'OTP resent' : 'OTP dib ayaa loo diray'))
-                  .catch((err: any) => toast.error(extractErrorMessage(err, isEn ? 'Failed to resend OTP' : 'Waa lagu fashilmay dib u dirista OTP')))}
-                disabled={loading}
+                onClick={() => void handleResendCode()}
+                disabled={resending}
                 className="w-full text-sm text-primary hover:underline"
               >
-                {isEn ? 'Resend OTP' : 'Dib u dir OTP'}
+                {resending
+                  ? isEn
+                    ? 'Resending...'
+                    : 'Dib ayaa loo dirayaa...'
+                  : isEn
+                    ? 'Resend OTP'
+                    : 'Dib u dir OTP'}
               </button>
             </form>
           ) : (
@@ -196,7 +244,8 @@ function ForgotPasswordContent() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="input-field pr-12"
-                    minLength={6}
+                    minLength={MINIMUM_PASSWORD_LENGTH}
+                    autoComplete="new-password"
                     required
                   />
                   <button
@@ -219,7 +268,8 @@ function ForgotPasswordContent() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="input-field pr-12"
-                    minLength={6}
+                    minLength={MINIMUM_PASSWORD_LENGTH}
+                    autoComplete="new-password"
                     required
                   />
                   <button

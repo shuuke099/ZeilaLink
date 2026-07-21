@@ -22,7 +22,11 @@ export default function ResendVerificationPage() {
     try {
       setLoading(true);
       await api.post('/auth/resend-verification', { email });
-      setMessage(language === 'en' ? 'Verification email sent if the account exists.' : 'Haddii akoonku jiro, email xaqiijin ayaa la diray.');
+      setMessage(
+        language === 'en'
+          ? 'If an unverified account exists, a verification code will arrive shortly.'
+          : 'Haddii akoon aan la xaqiijin uu jiro, lambar xaqiijin ayaa iman doona wax yar kadib.',
+      );
     } catch (e: any) {
       setError(e.response?.data?.error || (language === 'en' ? 'Failed to send verification email' : 'Dirista email-ka xaqiijinta way fashilantay'));
     } finally {

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, ShieldCheck } from 'lucide-react';
 
 type UserForm = {
   name: string;
@@ -26,6 +26,7 @@ export default function EditAdminUserPage() {
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -57,6 +58,40 @@ export default function EditAdminUserPage() {
     }
   };
 
+  const approveOrganization = async () => {
+    const organization = details?.employer || details?.provider;
+    const kind = details?.employer ? 'employer' : details?.provider ? 'provider' : null;
+    if (!organization?.id || !kind) return;
+
+    try {
+      setApproving(true);
+      setError('');
+      const identity = kind === 'employer'
+        ? {
+            name: organization.name,
+            logoUrl: organization.logoUrl ?? null,
+            bannerUrl: organization.bannerUrl ?? null,
+            description: organization.description ?? null,
+            website: organization.website ?? null,
+            address: organization.address ?? null,
+          }
+        : {
+            name: organization.name,
+            logoUrl: organization.logoUrl ?? null,
+            description: organization.description ?? null,
+          };
+      await api.post(`/admin/verify-${kind}/${organization.id}`, { identity });
+      setDetails((current: any) => ({
+        ...current,
+        [kind]: { ...current[kind], verified: true },
+      }));
+    } catch (err: any) {
+      setError(err?.response?.data?.error || `Failed to approve ${kind}`);
+    } finally {
+      setApproving(false);
+    }
+  };
+
   const inputClass = 'mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
 
   return <AdminDashboardPage title="Edit User" description="Update account details and access.">
@@ -77,10 +112,10 @@ export default function EditAdminUserPage() {
           <label className="mt-5 flex items-center gap-3 rounded-xl bg-slate-50 p-4 text-sm font-bold text-slate-700"><input type="checkbox" checked={form.isVerified} onChange={(e) => setForm({ ...form, isVerified: e.target.checked })} />Email verified</label>
           {details && <div className="mt-7 space-y-6 border-t border-slate-100 pt-7">
             <section><h3 className="mb-3 text-base font-black text-slate-900">Account activity</h3><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[['Applications', details._count?.applications], ['Bookings', details._count?.serviceBookings], ['Sent messages', details._count?.sentMessages], ['Received', details._count?.receivedMessages]].map(([label, value]) => <div key={String(label)} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold text-slate-400">{label}</p><p className="mt-1 text-xl font-black text-slate-900">{value ?? 0}</p></div>)}</div></section>
-            {(details.employer || details.provider) && <section><h3 className="mb-3 text-base font-black text-slate-900">Role profile</h3><div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">{details.employer ? <><p><b>Company:</b> {details.employer.name}</p><p><b>Website:</b> {details.employer.website || '-'}</p><p><b>Address:</b> {details.employer.address || '-'}</p><p><b>Verified:</b> {details.employer.verified ? 'Yes' : 'No'}</p></> : <><p><b>Provider:</b> {details.provider.name}</p><p><b>Rating:</b> {details.provider.rating}</p><p><b>Verified:</b> {details.provider.verified ? 'Yes' : 'No'}</p><p><b>Description:</b> {details.provider.description || '-'}</p></>}</div></section>}
+            {(details.employer || details.provider) && <section><h3 className="mb-3 text-base font-black text-slate-900">Role profile</h3><div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">{details.employer ? <><p><b>Company:</b> {details.employer.name}</p><p><b>Website:</b> {details.employer.website || '-'}</p><p><b>Address:</b> {details.employer.address || '-'}</p><p><b>Approved:</b> {details.employer.verified ? 'Yes' : 'No'}</p></> : <><p><b>Provider:</b> {details.provider.name}</p><p><b>Rating:</b> {details.provider.rating}</p><p><b>Approved:</b> {details.provider.verified ? 'Yes' : 'No'}</p><p><b>Description:</b> {details.provider.description || '-'}</p></>}{!(details.employer?.verified || details.provider?.verified) && <button type="button" onClick={approveOrganization} disabled={approving || !details.isVerified} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"><ShieldCheck size={17} />{approving ? 'Approving...' : 'Approve organization'}</button>}{!details.isVerified && !(details.employer?.verified || details.provider?.verified) && <p className="mt-2 text-xs font-semibold text-amber-700">Verify the account email before approval.</p>}</div></section>}
             <section><h3 className="mb-3 text-base font-black text-slate-900">Skills and languages</h3><div className="flex flex-wrap gap-2">{details.userSkills?.map((item: any) => <span key={item.id} className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">{item.skill.name} · {item.level}</span>)}{details.workerLanguages?.map((item: any) => <span key={item.id} className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">{item.language} · {item.level}</span>)}{!details.userSkills?.length && !details.workerLanguages?.length && <span className="text-sm text-slate-400">No skills or languages added.</span>}</div></section>
             <section><h3 className="mb-3 text-base font-black text-slate-900">Work experience</h3><div className="space-y-2">{details.workerExperiences?.map((item: any) => <div key={item.id} className="rounded-xl border border-slate-100 p-3 text-sm"><b>{item.jobTitle}</b> · {item.company}<p className="text-xs text-slate-400">{new Date(item.startDate).toLocaleDateString()} – {item.isCurrent ? 'Present' : item.endDate ? new Date(item.endDate).toLocaleDateString() : '-'}</p></div>)}{!details.workerExperiences?.length && <p className="text-sm text-slate-400">No work experience added.</p>}</div></section>
-            <section><h3 className="mb-3 text-base font-black text-slate-900">Education and certifications</h3><div className="space-y-2">{details.workerEducations?.map((item: any) => <div key={item.id} className="rounded-xl border border-slate-100 p-3 text-sm"><b>{item.degreeLevel}</b> · {item.institution}<p className="text-xs text-slate-400">{item.fieldOfStudy || item.certificationName || '-'}</p></div>)}{details.userCertifications?.map((item: any) => <div key={item.id} className="rounded-xl border border-slate-100 p-3 text-sm"><b>{item.training.name}</b><p className="text-xs text-slate-400">Issued {new Date(item.issuedAt).toLocaleDateString()}</p></div>)}{!details.workerEducations?.length && !details.userCertifications?.length && <p className="text-sm text-slate-400">No education or certifications added.</p>}</div></section>
+            <section><h3 className="mb-3 text-base font-black text-slate-900">Education, enrollments, and certifications</h3><div className="space-y-2">{details.workerEducations?.map((item: any) => <div key={item.id} className="rounded-xl border border-slate-100 p-3 text-sm"><b>{item.degreeLevel}</b> · {item.institution}<p className="text-xs text-slate-400">{item.fieldOfStudy || item.certificationName || '-'}</p></div>)}{details.userCertifications?.map((item: any) => <div key={item.id} className="rounded-xl border border-slate-100 p-3 text-sm"><b>{item.training.name}</b><p className="text-xs text-slate-400">{item.certificateIssued ? 'Certificate issued' : 'Enrolled'} · {new Date(item.enrolledAt).toLocaleDateString()}</p></div>)}{!details.workerEducations?.length && !details.userCertifications?.length && <p className="text-sm text-slate-400">No education, enrollments, or certifications added.</p>}</div></section>
             <section className="grid gap-3 text-xs text-slate-500 sm:grid-cols-3"><p><b className="block text-slate-700">User ID</b>{details.id}</p><p><b className="block text-slate-700">Created</b>{new Date(details.createdAt).toLocaleString()}</p><p><b className="block text-slate-700">Last updated</b>{new Date(details.updatedAt).toLocaleString()}</p></section>
           </div>}
           {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-600">{error}</p>}

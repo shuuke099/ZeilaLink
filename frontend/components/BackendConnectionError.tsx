@@ -8,6 +8,7 @@ interface BackendConnectionErrorProps {
 }
 
 export default function BackendConnectionError({ message }: BackendConnectionErrorProps) {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 sm:p-8">
@@ -17,7 +18,7 @@ export default function BackendConnectionError({ message }: BackendConnectionErr
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-primary-darker mb-2">
-              Backend Server Not Running
+              {isDevelopment ? 'Backend Server Not Running' : 'Service Temporarily Unavailable'}
             </h2>
             <p className="text-primary-darker/70">
               The application cannot connect to the backend API server.
@@ -27,12 +28,14 @@ export default function BackendConnectionError({ message }: BackendConnectionErr
 
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
           <pre className="text-sm text-red-800 whitespace-pre-wrap font-mono">
-            {message || 'Connection refused: http://localhost:7000/api'}
+            {message || (isDevelopment
+              ? 'The local API server could not be reached.'
+              : 'Please try again in a few moments.')}
           </pre>
         </div>
 
         <div className="space-y-4">
-          <div>
+          {isDevelopment && <div>
             <h3 className="font-semibold text-primary-darker mb-3 flex items-center gap-2">
               <Server size={18} />
               How to Start the Backend Server:
@@ -52,7 +55,7 @@ export default function BackendConnectionError({ message }: BackendConnectionErr
               <li>Wait for the message: <span className="font-semibold text-green-600">"✅ Server running on port 7000"</span></li>
               <li>Refresh this page</li>
             </ol>
-          </div>
+          </div>}
 
           <div className="flex gap-3 pt-4 border-t border-border">
             <button
@@ -62,13 +65,15 @@ export default function BackendConnectionError({ message }: BackendConnectionErr
               <RefreshCw size={18} />
               Refresh Page
             </button>
-            <button
-              onClick={() => window.open('http://localhost:7000/health', '_blank')}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Server size={18} />
-              Test Connection
-            </button>
+            {isDevelopment && (
+              <button
+                onClick={() => window.open('/api/public/stats', '_blank', 'noopener,noreferrer')}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Server size={18} />
+                Test Connection
+              </button>
+            )}
           </div>
         </div>
       </div>

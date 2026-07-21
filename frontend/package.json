@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "aws-sdk": "^1.18.0",
     "axios": "^1.6.2",
     "date-fns": "^3.0.6",
     "dotenv": "^16.6.1",

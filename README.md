@@ -7,7 +7,7 @@ Somali Job Platform is a full-stack job, skills, and training system built for S
 - Multi-role access: `worker`, `employer`, `provider`, `admin`
 - Authentication with email verification and password reset OTP
 - Job posting, discovery, application tracking, and applicant review
-- Training publication, enrollment, completion, and certificate issuance
+- Training publication, worker enrollment, and provider-controlled certificate issuance
 - Resume and asset uploads (local disk by default)
 - Messaging and contact endpoints
 - Public stats and admin analytics/audit endpoints
@@ -18,8 +18,8 @@ Somali Job Platform is a full-stack job, skills, and training system built for S
 - Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS
 - Backend: Node.js, Express, TypeScript
 - Database: PostgreSQL + Prisma ORM
-- Auth: JWT
-- Integrations: Nodemailer (SMTP), Twilio (optional), AWS env hooks (currently disk-first uploads)
+- Auth: short-lived JWT in an HttpOnly, Secure production cookie
+- Integrations: Nodemailer (SMTP), Twilio (optional), Stripe and OpenAI (optional)
 
 ## Repository structure
 
@@ -63,7 +63,8 @@ cp .env.example .env
 
 Notes:
 - Backend loads `.env` from `backend/.env` first, otherwise `../.env` (root `.env`).
-- Frontend uses `NEXT_PUBLIC_API_URL`.
+- Production frontend traffic uses the same-origin `/api` proxy. Set
+  `INTERNAL_API_ORIGIN` to the private backend origin and `NEXT_PUBLIC_API_URL=/api`.
 
 ### 3. Set up database
 
@@ -86,30 +87,30 @@ npm run dev
 
 ## Seeded demo accounts
 
-From `backend/prisma/seed.ts`:
-
-- `admin@somalijob.com` / `admin123`
-- `worker@example.com` / `worker123`
-- `employee@example.com` / `employee123`
-- `employer@example.com` / `employer123`
-- `provider@example.com` / `provider123`
+The development seed uses clearly identified sample accounts and records. It no
+longer contains published passwords: set the five `SEED_*_PASSWORD` variables
+before running it. Production seeding is blocked unless a reviewed deployment
+explicitly sets `ALLOW_PRODUCTION_SEED=true`.
 
 ## Environment variables
 
 See `.env.example` for all keys. Important groups:
 
-- Core: `NODE_ENV`, `PORT`, `FRONTEND_URL`, `BACKEND_PUBLIC_URL`, `PUBLIC_ASSET_BASE_URL`
+- Core: `NODE_ENV`, `PORT`, `FRONTEND_URL`, `BACKEND_PUBLIC_URL`, `INTERNAL_API_ORIGIN`, `UPLOADS_ROOT`
 - Database: `DATABASE_URL`
-- Auth: `JWT_SECRET`, `JWT_EXPIRES_IN`
-- Email: `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM`, `CONTACT_EMAIL_TO`
+- Auth: independent `JWT_SECRET` and `OTP_SECRET` values (at least 32 random bytes), `JWT_EXPIRES_IN`, `AUTH_COOKIE_MAX_AGE_MS`
+- Email: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `CONTACT_EMAIL_TO`
 - Optional SMS: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `SMS_TO`
-- Optional AWS/S3: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`, `FORCE_DISK_STORAGE`
+- Proxy: `TRUST_PROXY_ADDRESSES` must contain only the production reverse-proxy IPs/CIDRs
 - AI assistant: `OPENAI_API_KEY`, `OPENAI_CHAT_MODEL`
-- Frontend public: `NEXT_PUBLIC_API_URL`
+- Optional cache: `REDIS_URL`
 
 ## Upload/storage behavior
 
-The code currently uses local disk storage by default (`backend/uploads`) even when AWS keys are present, due to SDK compatibility safeguards in `backend/src/config/aws.ts`.
+Public account images use `backend/uploads/public`; resumes and documents use
+private storage and are returned only through authenticated, ownership-checked
+download routes. Production `UPLOADS_ROOT` must be an absolute path on encrypted,
+persistent storage. Add malware scanning/CDR before accepting production documents.
 
 ## Scripts
 
@@ -128,6 +129,7 @@ The code currently uses local disk storage by default (`backend/uploads`) even w
 - `npm run prisma:migrate`
 - `npm run prisma:seed`
 - `npm run db:studio`
+- `npm run security:check-passwords` - read-only hash-format and legacy-password audit
 
 ### Frontend (`frontend/package.json`)
 
@@ -143,16 +145,18 @@ Full endpoint list is in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 ## Security notes
 
 - Do not commit real credentials in `.env`.
-- Use strong `JWT_SECRET` in non-local environments.
+- Use independent, randomly generated `JWT_SECRET` and `OTP_SECRET` values.
 - Rotate SMTP/API keys if they were exposed.
 - Restrict CORS `FRONTEND_URL` in production.
+- Use a shared Redis-backed rate-limit store before running multiple API instances.
+- Never commit user uploads. If documents were committed previously, remove them
+  from Git history using an approved retention and incident-response process.
 
 ## Deployment notes
 
-- Build backend: `cd backend && npm install && npm run build`
-- Start backend: `cd backend && npm start`
-- Build frontend: `cd frontend && npm install && npm run build`
-- Start frontend: `cd frontend && npm start`
+- Install exactly the reviewed lockfile: `pnpm install --frozen-lockfile`
+- Build both applications: `pnpm run build`
+- Start backend: `pnpm -C backend start`
+- Start frontend: `pnpm -C frontend start`
 
 Use managed PostgreSQL and configure environment variables per environment.
-# ZeilaLink

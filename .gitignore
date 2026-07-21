@@ -31,6 +31,9 @@ coverage/
 *.log
 *.err
 
+# User-uploaded files (never commit resumes, documents, or account media)
+backend/uploads/
+
 # TypeScript
 *.tsbuildinfo
 

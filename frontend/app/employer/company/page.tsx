@@ -33,22 +33,8 @@ export default function EmployerCompanyPage() {
       if (!user) return;
       try {
         const [profileResponse, dashboardResponse] = await Promise.all([
-          api
-          .get('/employers/me/profile')
-          .catch(() => ({
-            data: {
-              name: 'ZeilaLink Logistics Group',
-              description:
-                'We connect ports, warehouses, and retailers with reliable logistics services across the region.',
-              website: 'https://somlogistics.com',
-              address: 'KM4, Mogadishu',
-              logoUrl: '',
-              bannerUrl: '',
-            },
-          })),
-          api.get('/employers/me/dashboard').catch(() => ({
-            data: { activeJobs: 4, totalApplicants: 220 },
-          })),
+          api.get('/employers/me/profile'),
+          api.get('/employers/me/dashboard'),
         ]);
 
         if (!active) return;
@@ -93,7 +79,7 @@ export default function EmployerCompanyPage() {
             (!error?.response && error?.request);
           
           if (isConnectionError) {
-            errorMessage = 'Network Error: Cannot connect to server. Please ensure the backend server is running on port 7000.';
+            errorMessage = 'The company profile service is temporarily unavailable.';
           } else if (error?.response?.data?.error) {
             errorMessage = error.response.data.error;
           } else if (error?.message) {
@@ -131,7 +117,7 @@ export default function EmployerCompanyPage() {
       let errorMessage = 'Unable to update company profile. Please try again.';
       
       if (error?.isConnectionError || error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED') {
-        errorMessage = 'Network Error: Cannot connect to server. Please ensure the backend server is running on port 7000.';
+        errorMessage = 'The company profile service is temporarily unavailable.';
       } else if (error?.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error?.message) {
@@ -166,7 +152,7 @@ export default function EmployerCompanyPage() {
       let errorMessage = 'Unable to upload image. Please try a different file.';
       
       if (error?.isConnectionError || error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED') {
-        errorMessage = 'Network Error: Cannot connect to server. Please ensure the backend server is running on port 7000.';
+        errorMessage = 'The upload service is temporarily unavailable.';
       } else if (error?.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error?.message) {

@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 type Conversation = {
   userId: string;
   userName: string;
-  userEmail: string;
   avatarUrl?: string | null;
   lastMessage: any;
 };
@@ -123,7 +122,6 @@ export default function ProviderMessagesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{c.userName}</div>
-                        <div className="text-sm text-primary-darker/70 truncate">{c.userEmail}</div>
                       </div>
                     </button>
                   </li>

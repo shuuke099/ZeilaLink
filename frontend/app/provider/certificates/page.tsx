@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getSafeStoredUrl } from '@/lib/safeUrl';
 
 export default function ProviderCertificatesPage() {
   const { user } = useAuth();
@@ -20,7 +21,9 @@ export default function ProviderCertificatesPage() {
     try {
       setLoading(true);
       const res = await api.get('/trainings/provider/enrollments');
-      const withCertificates = (res.data.enrollments || []).filter((r: any) => !!r.certificateUrl);
+      const withCertificates = (res.data.enrollments || []).filter(
+        (r: any) => r.status === 'certificate_issued' && r.certificateIssued === true,
+      );
       setRows(withCertificates);
     } finally {
       setLoading(false);
@@ -51,19 +54,22 @@ export default function ProviderCertificatesPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="py-2">{r.user?.name} ({r.user?.email})</td>
-                    <td className="py-2">{r.training?.name}</td>
-                    <td className="py-2 text-primary-darker/80 break-all">
-                      {r.certificateUrl ? (
-                        <a href={r.certificateUrl} target="_blank" rel="noreferrer" className="text-primary underline">Open</a>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {rows.map((r) => {
+                  const safeCertificateUrl = getSafeStoredUrl(r.certificateUrl);
+                  return (
+                    <tr key={r.id} className="border-t">
+                      <td className="py-2">{r.user?.name} ({r.user?.email})</td>
+                      <td className="py-2">{r.training?.name}</td>
+                      <td className="py-2 text-primary-darker/80 break-all">
+                        {safeCertificateUrl ? (
+                          <a href={safeCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">Open</a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

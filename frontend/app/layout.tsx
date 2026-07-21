@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     shortcut: '/icon.png',
     apple: '/icon.png',
   },
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export default function RootLayout({
@@ -27,57 +30,30 @@ export default function RootLayout({
 }) {
   const savedLanguage = cookies().get('language')?.value;
   const initialLanguage: Language = savedLanguage === 'so' ? 'so' : 'en';
+  const nonce = headers().get('x-nonce') || undefined;
 
   return (
     <html lang={initialLanguage} translate="no" suppressHydrationWarning>
-      <head>
-        <meta name="google" content="notranslate" />
+      <body>
         <script
+          id="theme-init"
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  const stored = localStorage.getItem('theme');
-                  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  const theme = stored === 'dark' || stored === 'light' ? stored : prefersDark ? 'dark' : 'light';
-                  document.documentElement.setAttribute('data-theme', theme);
-                  if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  }
+                  var stored = localStorage.getItem('theme');
+                  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var theme = stored === 'dark' || stored === 'light' ? stored : prefersDark ? 'dark' : 'light';
+                  var root = document.documentElement;
+                  root.setAttribute('data-theme', theme);
+                  root.classList.toggle('dark', theme === 'dark');
                 } catch (e) {}
-                
-                // Suppress harmless browser extension errors
-                window.addEventListener('error', function(e) {
-                  if (e.message && (
-                    e.message.includes('disconnected port object') ||
-                    e.message.includes('Extension context invalidated') ||
-                    e.message.includes('chrome-extension://') ||
-                    e.message.includes('moz-extension://')
-                  )) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                  }
-                }, true);
-                
-                // Suppress unhandled promise rejections from extensions
-                window.addEventListener('unhandledrejection', function(e) {
-                  if (e.reason && (
-                    e.reason.message?.includes('disconnected port object') ||
-                    e.reason.message?.includes('Extension context invalidated') ||
-                    e.reason.message?.includes('chrome-extension://') ||
-                    e.reason.message?.includes('moz-extension://')
-                  )) {
-                    e.preventDefault();
-                    return false;
-                  }
-                });
               })();
             `,
           }}
         />
-      </head>
-      <body>
         <ErrorSuppressor />
         <ThemeProvider>
           <AuthProvider>

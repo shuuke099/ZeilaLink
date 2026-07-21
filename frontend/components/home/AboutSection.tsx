@@ -115,10 +115,10 @@ export default function AboutSection({ language }: AboutSectionProps) {
                 </div>
                 <div>
                   <div className="text-lg font-black text-slate-900">
-                    {isEn ? "Active Users" : "Isticmaalayaal Firfircoon"}
+                    {isEn ? "Illustrative Goal" : "Yool Tusaale ah"}
                   </div>
                   <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">
-                    {isEn ? "Monthly growth" : "Kobaca bisha"}
+                    {isEn ? "Demo metric" : "Cabbir tijaabo ah"}
                   </div>
                 </div>
               </div>

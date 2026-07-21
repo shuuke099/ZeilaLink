@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, requireApprovedOrganization } from '../middleware/auth';
 import {
   getMyDashboard,
   getMyProfile,
@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.get('/me/dashboard', authenticate, authorize('employer', 'admin'), getMyDashboard);
-router.get('/me/profile', authenticate, authorize('employer', 'admin'), getMyProfile);
-router.put('/me/profile', authenticate, authorize('employer'), updateMyProfile);
+router.get('/me/dashboard', authenticate, authorize('employer'), requireApprovedOrganization, getMyDashboard);
+router.get('/me/profile', authenticate, authorize('employer'), requireApprovedOrganization, getMyProfile);
+router.put('/me/profile', authenticate, authorize('employer'), requireApprovedOrganization, updateMyProfile);
 
 export default router;
 

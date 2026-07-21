@@ -54,6 +54,7 @@ export default function EmployerOverviewPage() {
     recentJobs: [],
   });
   const [loading, setLoading] = React.useState(true);
+  const [overviewUnavailable, setOverviewUnavailable] = React.useState(false);
   const [weeklySummary, setWeeklySummary] = React.useState<WeeklySummaryItem[]>([]);
 
   React.useEffect(() => {
@@ -62,48 +63,16 @@ export default function EmployerOverviewPage() {
       if (!user) return;
       try {
         setLoading(true);
-        const response = await api
-          .get('/employers/me/dashboard')
-          .catch(() => ({
-            data: {
-              totalEarnings: 62935,
-              earningsChange: 12.5,
-              conversionRate: 41,
-              conversionChange: 8.3,
-              totalViews: 82,
-              viewsChange: 15.2,
-              activeJobs: 4,
-              draftJobs: 2,
-              totalApplicants: 52,
-              interviewsScheduled: 8,
-              recentJobs: [
-                {
-                  id: 'fallback-1',
-                  title: 'UI Designer for Dashboard',
-                  applicants: 18,
-                  published: true,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-                {
-                  id: 'fallback-2',
-                  title: 'UX/UX Designer to Update Figma',
-                  applicants: 12,
-                  published: true,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-              ],
-            },
-          }));
+        setOverviewUnavailable(false);
+        const response = await api.get('/employers/me/dashboard');
         if (!active) return;
         setStats({
-          totalEarnings: response.data.totalEarnings ?? 62935,
-          earningsChange: response.data.earningsChange ?? 12.5,
-          conversionRate: response.data.conversionRate ?? 41,
-          conversionChange: response.data.conversionChange ?? 8.3,
-          totalViews: response.data.totalViews ?? 82,
-          viewsChange: response.data.viewsChange ?? 15.2,
+          totalEarnings: response.data.totalEarnings ?? 0,
+          earningsChange: response.data.earningsChange ?? 0,
+          conversionRate: response.data.conversionRate ?? 0,
+          conversionChange: response.data.conversionChange ?? 0,
+          totalViews: response.data.totalViews ?? 0,
+          viewsChange: response.data.viewsChange ?? 0,
           activeJobs: response.data.activeJobs ?? 0,
           draftJobs: response.data.draftJobs ?? 0,
           totalApplicants: response.data.totalApplicants ?? 0,
@@ -111,28 +80,13 @@ export default function EmployerOverviewPage() {
           recentJobs: response.data.recentJobs ?? [],
         });
 
-        // Mock weekly summary data
-        setWeeklySummary([
-          {
-            id: '1',
-            contract: 'UI Designer for Dashboard',
-            date: 'Mon, Oct 10 2023',
-            hours: '8.20',
-            amount: '$120',
-            paymentType: 'Hourly',
-          },
-          {
-            id: '2',
-            contract: 'UX/UX Designer to Update Figma',
-            date: '-',
-            hours: '-',
-            amount: '$240',
-            paymentType: 'Fixed',
-          },
-        ]);
+        // The dashboard endpoint does not provide contract/earnings history yet.
+        setWeeklySummary([]);
       } catch (error: any) {
         console.error('Failed to load employer overview', error);
         if (active) {
+          setOverviewUnavailable(true);
+          setWeeklySummary([]);
           setStats({
             totalEarnings: 0,
             earningsChange: 0,
@@ -157,18 +111,9 @@ export default function EmployerOverviewPage() {
     };
   }, [user]);
 
-  // Chart data for analytics
-  const chartData = [
-    { month: 'Jan 5', value: 50 },
-    { month: 'Jan 8', value: 60 },
-    { month: 'Jan 11', value: 75 },
-    { month: 'Jan 14', value: 55 },
-    { month: 'Jan 17', value: 90 },
-    { month: 'Jan 20', value: 80 },
-    { month: 'Jan 23', value: 85 },
-  ];
-
-  const maxValue = Math.max(...chartData.map(d => d.value));
+  // Analytics history is not currently returned by the dashboard endpoint.
+  const chartData: { month: string; value: number }[] = [];
+  const maxValue = 1;
 
   return (
     <EmployerDashboardPage
@@ -176,6 +121,15 @@ export default function EmployerOverviewPage() {
       description=""
       headerActions={null}
     >
+      {overviewUnavailable && !loading && (
+        <div
+          role="alert"
+          className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950"
+        >
+          Dashboard data is temporarily unavailable. No sample totals or financial figures are being shown.
+        </div>
+      )}
+
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         {/* Total Jobs */}
         <div className="group relative rounded-[2rem] border border-slate-100 bg-blue-50/50 p-8 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -183,7 +137,7 @@ export default function EmployerOverviewPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Total Jobs</p>
               <p className="text-4xl font-black text-blue-900 tracking-tighter">
-                {loading ? '...' : stats.activeJobs + (stats.draftJobs || 0)}
+                {loading ? '...' : overviewUnavailable ? '—' : stats.activeJobs + (stats.draftJobs || 0)}
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100/80">
@@ -199,7 +153,7 @@ export default function EmployerOverviewPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Published</p>
               <p className="text-4xl font-black text-emerald-900 tracking-tighter">
-                {loading ? '...' : stats.activeJobs}
+                {loading ? '...' : overviewUnavailable ? '—' : stats.activeJobs}
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100/80">
@@ -215,7 +169,7 @@ export default function EmployerOverviewPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Draft</p>
               <p className="text-4xl font-black text-amber-900 tracking-tighter">
-                {loading ? '...' : stats.draftJobs || 0}
+                {loading ? '...' : overviewUnavailable ? '—' : stats.draftJobs || 0}
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100/80">
@@ -231,7 +185,7 @@ export default function EmployerOverviewPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Applications</p>
               <p className="text-4xl font-black text-purple-900 tracking-tighter">
-                {loading ? '...' : stats.totalApplicants}
+                {loading ? '...' : overviewUnavailable ? '—' : stats.totalApplicants}
               </p>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100/80">
@@ -252,7 +206,7 @@ export default function EmployerOverviewPage() {
               <div>
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">Analytics Overview</h2>
                 <p className="text-xs font-semibold text-slate-400 mt-1">
-                  Updated on: Monday at 11:30 AM
+                  Live analytics appear when reporting data is available.
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -270,8 +224,13 @@ export default function EmployerOverviewPage() {
             </div>
 
             {/* Chart */}
-            <div className="relative h-64 mt-4">
-              <div className="absolute inset-0 flex items-end justify-between gap-3 px-2">
+            {chartData.length === 0 ? (
+              <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm font-semibold text-slate-500">
+                Analytics history is not available yet. No sample view data is displayed.
+              </div>
+            ) : (
+              <div className="relative h-64 mt-4">
+                <div className="absolute inset-0 flex items-end justify-between gap-3 px-2">
                 {chartData.map((item, index) => (
                   <div key={index} className="flex-1 flex flex-col items-center group cursor-pointer">
                     <div className="w-full flex items-end justify-center h-48">
@@ -288,8 +247,9 @@ export default function EmployerOverviewPage() {
                     <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-4 group-hover:text-blue-600 transition-colors">{item.month}</p>
                   </div>
                 ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Weekly Summary */}

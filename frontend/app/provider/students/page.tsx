@@ -39,7 +39,7 @@ export default function ProviderStudentsPage() {
           email: enrollment.user?.email || '',
           course: enrollment.training?.name || 'Unknown Course',
           courseId: enrollment.training?.id || '',
-          enrolledAt: enrollment.issuedAt || enrollment.createdAt || new Date().toISOString(),
+          enrolledAt: enrollment.enrolledAt || enrollment.createdAt || new Date().toISOString(),
           progress: 0, // Progress tracking can be added later
         }));
         

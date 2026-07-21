@@ -5,6 +5,31 @@ import { Plus, Upload, X, Trash2 } from 'lucide-react';
 import WorkerDashboardPage from '@/components/worker/WorkerDashboardPage';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
+import { getSafeStoredUrl } from '@/lib/safeUrl';
+
+const SafeDocumentLink = ({
+  href,
+  children,
+  className,
+}: {
+  href?: string | null;
+  children: React.ReactNode;
+  className: string;
+}) => {
+  const safeHref = getSafeStoredUrl(href);
+  if (!safeHref) return null;
+
+  return (
+    <a
+      href={safeHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+    >
+      {children}
+    </a>
+  );
+};
 
 type ResumeRecord = {
   id: string;
@@ -303,7 +328,7 @@ export default function WorkerProfilePage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'certificates');
-      const response = await api.post('/uploads', formData);
+      const response = await api.post('/uploads/private', formData);
       const uploadedUrl = response.data.url ?? response.data.publicUrl;
       if (!uploadedUrl) throw new Error('Upload response missing URL');
 
@@ -424,11 +449,9 @@ export default function WorkerProfilePage() {
                       }}
                     />
                   </label>
-                  {formState.resumeFile && (
-                    <a href={formState.resumeFile} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary hover:underline">
-                      View latest
-                    </a>
-                  )}
+                  <SafeDocumentLink href={formState.resumeFile} className="text-sm font-semibold text-primary hover:underline">
+                    View latest
+                  </SafeDocumentLink>
                 </div>
                 {resumesLoading ? (
                   <p className="mt-3 text-xs text-primary-darker/50">Loading resumes...</p>
@@ -440,9 +463,9 @@ export default function WorkerProfilePage() {
                           <p className="font-medium text-primary-darker">Resume {index + 1}</p>
                           <p className="text-xs text-primary-darker/60">Uploaded {formatDate(resume.createdAt)}</p>
                         </div>
-                        <a href={resume.s3Url} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary hover:underline">
+                        <SafeDocumentLink href={resume.s3Url} className="text-sm font-semibold text-primary hover:underline">
                           View
-                        </a>
+                        </SafeDocumentLink>
                       </li>
                     ))}
                   </ul>
@@ -584,11 +607,9 @@ export default function WorkerProfilePage() {
                     }}
                   />
                 </label>
-                {education.certificateUrl && (
-                  <a href={education.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-primary hover:underline">
-                    View uploaded certificate
-                  </a>
-                )}
+                <SafeDocumentLink href={education.certificateUrl} className="text-sm font-semibold text-primary hover:underline">
+                  View uploaded certificate
+                </SafeDocumentLink>
               </div>
               <button type="button" className="text-sm text-red-600 inline-flex items-center gap-1" onClick={() => setFormState((prev) => ({ ...prev, educations: prev.educations.filter((_, itemIndex) => itemIndex !== index) }))}>
                 <Trash2 className="h-4 w-4" />

@@ -16,6 +16,7 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   const [services, setServices] = useState<ServiceItem[]>(fallbackServices);
   const [categories, setCategories] = useState<string[]>(serviceCategories);
   const [showAllMobileFilters, setShowAllMobileFilters] = useState(false);
+  const [usingDemoData, setUsingDemoData] = useState(true);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -25,7 +26,13 @@ export default function ServiceList({ isEn }: ServiceListProps) {
         const apiCategories = Array.isArray(data?.categories) ? data.categories : [];
 
         if (apiServices.length > 0) {
-          setServices(apiServices);
+          setServices(
+            apiServices.map((service: ServiceItem) => ({
+              ...service,
+              isDemo: false,
+            })),
+          );
+          setUsingDemoData(false);
           const normalizedApiCategories = apiCategories.filter(
             (item: unknown): item is string => typeof item === 'string' && item.trim().length > 0,
           );
@@ -55,6 +62,17 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   return (
     <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen transition-colors">
       <div className="max-w-[1320px] mx-auto">
+        {usingDemoData && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-relaxed text-amber-950"
+          >
+            {isEn
+              ? 'Demo catalog — these example providers, prices, ratings, and reviews are illustrative. Booking is disabled.'
+              : 'Buuggan waa tusaale — bixiyeyaasha, qiimayaasha, qiimeynta, iyo faallooyinka waa xog tijaabo ah. Dalabku waa xiran yahay.'}
+          </div>
+        )}
+
         <div className="mb-6 space-y-3">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:hidden">
             {mobileCategories.map((category) => {
@@ -126,7 +144,7 @@ export default function ServiceList({ isEn }: ServiceListProps) {
                 <img src={item.image} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
                 <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[9px] tracking-wide font-bold uppercase bg-white/95 text-[#2d7df6] border border-slate-200">
-                  {item.badge}
+                  {item.isDemo || usingDemoData ? `Demo • ${item.badge}` : item.badge}
                 </span>
               </div>
 
@@ -156,7 +174,9 @@ export default function ServiceList({ isEn }: ServiceListProps) {
                 </div>
 
                 <div className="mt-3 block w-full text-center py-2 rounded-md bg-primary border border-primary/70 text-white text-[12px] font-semibold">
-                  {isEn ? 'View Details' : 'Faahfaahin Eeg'}
+                  {item.isDemo || usingDemoData
+                    ? (isEn ? 'Preview Demo' : 'Eeg Tusaalaha')
+                    : (isEn ? 'View Details' : 'Faahfaahin Eeg')}
                 </div>
               </div>
             </Link>

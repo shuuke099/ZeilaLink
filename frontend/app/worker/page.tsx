@@ -5,6 +5,7 @@ import { FileText, GraduationCap } from 'lucide-react';
 import WorkerDashboardPage from '@/components/worker/WorkerDashboardPage';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getSafeStoredUrl } from '@/lib/safeUrl';
 
 type ApplicationStatus = 'applied' | 'reviewed' | 'accepted' | 'rejected';
 
@@ -182,6 +183,7 @@ export default function WorkerOverviewPage() {
   }, [user]);
 
   const latestResume = resumes[0];
+  const safeLatestResumeUrl = getSafeStoredUrl(latestResume?.s3Url);
   const totalApplications =
     stats.applied + stats.reviewed + stats.accepted + stats.rejected;
 
@@ -368,14 +370,20 @@ export default function WorkerOverviewPage() {
                   Keep your CV up to date to improve your matches automatically.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                  <a
-                    href={latestResume.s3Url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex flex-1 justify-center items-center rounded-2xl bg-blue-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-blue-600 shadow-sm hover:bg-blue-100 transition-colors"
-                  >
-                    View CV
-                  </a>
+                  {safeLatestResumeUrl ? (
+                    <a
+                      href={safeLatestResumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex flex-1 justify-center items-center rounded-2xl bg-blue-50 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-blue-600 shadow-sm hover:bg-blue-100 transition-colors"
+                    >
+                      View CV
+                    </a>
+                  ) : (
+                    <span className="text-xs font-semibold text-amber-700">
+                      Resume link unavailable
+                    </span>
+                  )}
                   <a
                     href="/worker/profile"
                     className="inline-flex flex-1 justify-center items-center rounded-2xl border border-slate-200 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-slate-500 hover:border-slate-300 hover:text-slate-700 transition-all"

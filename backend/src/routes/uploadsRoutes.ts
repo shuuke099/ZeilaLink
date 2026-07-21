@@ -1,71 +1,78 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { getPublicPresignedUrl, directUploadResponse } from '../controllers/uploadController';
-import { uploadMiddleware } from '../config/aws';
-import multer from 'multer';
+import type { NextFunction, Request, Response } from "express";
+import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import multer from "multer";
+import {
+  deletePrivateDocument,
+  directUploadResponse,
+  downloadPrivateDocument,
+  getPublicPresignedUrl,
+  privateUploadResponse,
+} from "../controllers/uploadController";
+import { privateDocumentUpload, publicImageUpload } from "../config/aws";
+import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-const singleUpload = uploadMiddleware.single('file');
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as any).user?.id || "anonymous",
+  message: { error: "Too many upload attempts. Please try again later." },
+});
 
-const handleUpload =
-  (handler: (req: Request, res: Response) => void) =>
+const handleUpload = (
+  upload: ReturnType<typeof publicImageUpload.single>,
+  handler: (req: any, res: Response) => Promise<unknown>,
+) =>
   (req: Request, res: Response, next: NextFunction) => {
-    singleUpload(req, res, (err: any) => {
-      if (err) {
-        console.error('[Upload] Multer error:', {
-          message: err.message,
-          code: err.code,
-          field: err.field,
-          name: err.name,
-          stack: err.stack,
-        });
-        
-        let status = err.status || (err instanceof multer.MulterError ? 400 : 500);
-        let message = err.message || 'Upload failed';
-        
-        // Handle specific S3/client errors
-        if (err.message?.includes('this.client.send') || err.message?.includes('client.send')) {
-          console.error('[Upload] S3 client error detected, this usually means S3 is misconfigured');
-          message = 'Upload service configuration error. Please contact support or try again later.';
-          status = 500;
-        }
-        
-        // Provide more specific error messages
-        if (err instanceof multer.MulterError) {
-          if (err.code === 'LIMIT_FILE_SIZE') {
-            message = 'File size too large. Maximum size is 10MB.';
-          } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-            message = 'Unexpected file field. Please use "file" as the field name.';
-          } else if (err.code === 'LIMIT_FILE_COUNT') {
-            message = 'Too many files. Only one file is allowed.';
-          }
-        }
-        
-        return res.status(status).json({ 
-          error: message,
-          code: err.code,
-          details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-        });
+    upload(req, res, (error: any) => {
+      if (error) {
+        const status = error.status || (error instanceof multer.MulterError ? 400 : 500);
+        const message =
+          status === 413 && !(error instanceof multer.MulterError)
+            ? "Upload storage quota exceeded. Delete unused files before uploading again."
+            : error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE"
+            ? "File is too large. Maximum size is 5MB."
+            : status >= 500
+              ? "Upload failed"
+              : "Only approved image or PDF files are allowed";
+        return res.status(status).json({ error: message });
       }
-      try {
-        handler(req, res);
-      } catch (error: any) {
-        console.error('[Upload] Handler error:', error);
-        // If it's an S3 client error, provide a clearer message
-        if (error.message?.includes('this.client.send') || error.message?.includes('client.send')) {
-          return res.status(500).json({ 
-            error: 'Upload service configuration error. Please contact support.',
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-          });
-        }
-        next(error);
-      }
+      Promise.resolve(handler(req, res)).catch(next);
     });
   };
 
-// Public presign endpoint for avatar/logo uploads
-router.post('/presign', getPublicPresignedUrl);
-router.post('/direct', handleUpload(directUploadResponse));
-router.post('/', handleUpload(directUploadResponse));
+router.post("/presign", authenticate, uploadLimiter, getPublicPresignedUrl);
+router.post(
+  "/direct",
+  authenticate,
+  uploadLimiter,
+  handleUpload(publicImageUpload.single("file"), directUploadResponse),
+);
+router.post(
+  "/private",
+  authenticate,
+  uploadLimiter,
+  handleUpload(privateDocumentUpload.single("file"), privateUploadResponse),
+);
+router.get(
+  "/private/:userId/:fileId",
+  authenticate,
+  downloadPrivateDocument,
+);
+router.delete(
+  "/private/:userId/:fileId",
+  authenticate,
+  deletePrivateDocument,
+);
+router.post(
+  "/",
+  authenticate,
+  uploadLimiter,
+  handleUpload(publicImageUpload.single("file"), directUploadResponse),
+);
 
 export default router;

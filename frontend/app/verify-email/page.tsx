@@ -51,8 +51,8 @@ export default function VerifyEmailPage() {
       setResendCooldown(60);
       setResendMessage(
         language === 'en'
-          ? 'A new verification code was sent to your email.'
-          : 'Lambar xaqiijin cusub ayaa laguugu soo diray email-kaaga.',
+          ? 'If verification is required, a new code will arrive shortly.'
+          : 'Haddii xaqiijin loo baahan yahay, lambar cusub ayaa iman doona wax yar kadib.',
       );
     } catch (error: any) {
       setResendMessage(
@@ -84,12 +84,24 @@ export default function VerifyEmailPage() {
     try {
       setStatus('verifying');
       const response = await api.post('/auth/verify-email', { email, code });
+      const organizationApprovalPending =
+        (response.data.user?.role === 'employer' ||
+          response.data.user?.role === 'provider') &&
+        response.data.user?.organizationApproved !== true;
       setStatus('success');
-      setMessage(language === 'en' ? 'Email verified successfully! Redirecting to your dashboard...' : 'Email-ka si guul ah ayaa loo xaqiijiyay! Waa la wareegayaa dashboard-kaga...');
+      setMessage(
+        organizationApprovalPending
+          ? language === 'en'
+            ? 'Email verified. Your organization is now waiting for admin approval.'
+            : 'Email-ka waa la xaqiijiyay. Ururkaagu hadda wuxuu sugayaa oggolaanshaha maamulka.'
+          : language === 'en'
+            ? 'Email verified successfully! Redirecting to your dashboard...'
+            : 'Email-ka si guul ah ayaa loo xaqiijiyay! Waa la wareegayaa dashboard-kaga...',
+      );
       
-      // Store token and user if provided
-      if (response.data.token && response.data.user) {
-        updateUser(response.data.user, response.data.token);
+      // The API sets the HttpOnly session cookie; only keep display data in memory.
+      if (response.data.user) {
+        updateUser(response.data.user);
         
         // Redirect to appropriate dashboard based on user role
         const userRole = response.data.user.role;

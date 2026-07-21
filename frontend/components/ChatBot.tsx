@@ -196,6 +196,7 @@ export default function ChatBot() {
   const pathname = usePathname();
   const isEn = language === 'en';
   const isAdmin = pathname?.startsWith('/admin');
+  const isAuthPage = pathname === '/login' || pathname === '/register';
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -347,7 +348,7 @@ export default function ChatBot() {
     void requestAiReply(text, intent);
   };
 
-  if (isAdmin) return null;
+  if (isAdmin || isAuthPage) return null;
 
   return (
     <div className="fixed bottom-24 right-4 z-[100] font-poppins md:bottom-8 md:right-8">

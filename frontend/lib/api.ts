@@ -6,13 +6,7 @@ const DEFAULT_API_URL =
   process.env.NODE_ENV === "production" ? "/api" : "http://localhost:7000/api";
 
 const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
-const isLoopbackApiUrl = (value?: string) =>
-  /^(?:https?:\/\/)?(?:localhost|127(?:\.\d{1,3}){3}|\[::1\])(?::\d+)?(?:\/|$)/i.test(
-    value?.trim() || "",
-  );
-const shouldUseSameOriginApi =
-  process.env.NODE_ENV === "production" &&
-  (!configuredApiUrl || isLoopbackApiUrl(configuredApiUrl));
+const shouldUseSameOriginApi = process.env.NODE_ENV === "production";
 
 const ensureApiPath = (rawUrl?: string) => {
   if (!rawUrl) {
@@ -51,61 +45,9 @@ const baseURL = ensureApiPath(
 );
 const debugApi = process.env.NEXT_PUBLIC_API_DEBUG === "true";
 
-const isLikelyJwt = (value: string) =>
-  value.split(".").length === 3 && !/\s/.test(value);
-
-const parseJwtPayload = (token: string): Record<string, unknown> | null => {
-  try {
-    const payload = token.split(".")[1];
-    if (!payload) return null;
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = atob(normalized);
-    return JSON.parse(decoded) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const isTokenExpired = (token: string) => {
-  const payload = parseJwtPayload(token);
-  const exp = payload?.exp;
-  if (typeof exp !== "number") return false;
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  return exp <= nowInSeconds;
-};
-
-const getStoredUserRole = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { role?: string };
-    return typeof parsed.role === "string" ? parsed.role.toLowerCase() : null;
-  } catch {
-    return null;
-  }
-};
-
-const getStoredToken = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const raw = localStorage.getItem("token")?.trim();
-  if (!raw || raw === "null" || raw === "undefined") {
-    return null;
-  }
-
-  if (!isLikelyJwt(raw) || isTokenExpired(raw)) {
-    localStorage.removeItem("token");
-    return null;
-  }
-
-  return raw;
-};
-
 export const api = axios.create({
   baseURL,
+  withCredentials: true,
   timeout: 10000, // 10 second timeout
   headers: {
     "Content-Type": "application/json",
@@ -121,7 +63,8 @@ if (process.env.NODE_ENV !== "production" && debugApi) {
   }
 }
 
-// Add token to requests
+// Preserve browser-generated multipart boundaries. Authentication is supplied
+// automatically by the server-owned HttpOnly session cookie.
 api.interceptors.request.use((config) => {
   if (config.data instanceof FormData) {
     // Let the browser set proper multipart boundaries
@@ -132,28 +75,6 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  if (typeof window !== "undefined") {
-    const requestUrl: string = config.url || "";
-    const isAdminEndpoint = /(^|\/)admin(\/|$)/i.test(requestUrl);
-    const token = getStoredToken();
-    const role = getStoredUserRole();
-
-    if (isAdminEndpoint && (!token || role !== "admin")) {
-      return Promise.reject(
-        new axios.AxiosError(
-          "Blocked admin API request without valid admin session",
-          "ERR_ADMIN_SESSION_REQUIRED",
-          config,
-        ),
-      );
-    }
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (config.headers?.Authorization) {
-      delete config.headers.Authorization;
-    }
-  }
   return config;
 });
 
@@ -201,7 +122,6 @@ Then refresh this page.`;
         baseURL: error.config?.baseURL,
         message: error.message,
         code: error.code,
-        fullError: error,
       });
 
       // Show user-friendly alert in development
@@ -225,22 +145,13 @@ Then refresh this page.`;
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
         const requestUrl: string = error.config?.url || "";
-        const authHeader =
-          error.config?.headers?.Authorization ||
-          error.config?.headers?.authorization;
-        const hadBearerToken =
-          typeof authHeader === "string" && authHeader.startsWith("Bearer ");
-        const tokenInStorage = !!localStorage.getItem("token");
         const isAuthEndpoint =
-          /\/auth\/(login|register|verify-email|resend-verification|forgot-password|verify-reset-otp|reset-password)$/i.test(
+          /\/auth\/(login|register|verify-email|resend-verification|forgot-password|verify-reset-otp|reset-password|session|me|logout)$/i.test(
             requestUrl,
           );
 
-        // Avoid wiping session for public/auth-form failures. Only clear when
-        // an authenticated request is actually rejected.
-        if (!isAuthEndpoint && (hadBearerToken || tokenInStorage)) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+        if (!isAuthEndpoint) {
+          window.dispatchEvent(new Event("auth:unauthorized"));
         }
 
         const isApplyOrEnrollRequest =

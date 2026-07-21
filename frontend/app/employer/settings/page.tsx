@@ -4,6 +4,7 @@ import React from "react";
 import EmployerDashboardPage from "@/components/employer/EmployerDashboardPage";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import { getSafeStoredUrl } from "@/lib/safeUrl";
 import {
   User,
   Lock,
@@ -92,13 +93,7 @@ export default function EmployerSettingsPage() {
       setProfileName(user.name);
     }
     if (user?.avatarUrl) {
-      // Handle both full URLs and relative paths
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
-      const fullUrl = user.avatarUrl.startsWith("http")
-        ? user.avatarUrl
-        : `${baseUrl.replace("/api", "")}${user.avatarUrl}`;
-      setImagePreview(fullUrl);
+      setImagePreview(getSafeStoredUrl(user.avatarUrl));
     }
   }, [user?.name, user?.avatarUrl]);
 
@@ -251,29 +246,21 @@ export default function EmployerSettingsPage() {
         },
       });
 
-      console.log("Upload response:", response.data);
-
-      // Get the avatar URL from response
       const avatarUrl = response.data?.avatarUrl;
-
-      // Construct full URL if needed
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
-      const fullAvatarUrl = avatarUrl?.startsWith("http")
-        ? avatarUrl
-        : `${baseUrl.replace("/api", "")}${avatarUrl}`;
-
-      console.log("Full avatar URL:", fullAvatarUrl);
+      const safeAvatarUrl = getSafeStoredUrl(avatarUrl);
+      if (!safeAvatarUrl) {
+        throw new Error("The server returned an invalid image URL");
+      }
 
       // Update user in context with new avatar URL
       // Update user in context with new avatar URL
       if (avatarUrl) {
         updateUser({
-          avatarUrl: fullAvatarUrl,
+          avatarUrl: safeAvatarUrl,
         });
       }
 
-      setImagePreview(fullAvatarUrl);
+      setImagePreview(safeAvatarUrl);
       setFeedback("✅ Profile image updated successfully!");
       setSelectedFile(null);
     } catch (error: any) {

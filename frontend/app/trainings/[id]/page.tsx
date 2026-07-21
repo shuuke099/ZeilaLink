@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import { GraduationCap, Clock, DollarSign, Building2, Star, Award, MapPin, Calendar, Users, Mail, Phone, CheckCircle2, Monitor, User as UserIcon, BookOpen, FileText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/translations';
+import { getSafeMailtoUrl, getSafeStoredUrl, getSafeTelUrl } from '@/lib/safeUrl';
 
 interface Training {
   id: string;
@@ -173,6 +174,11 @@ export default function TrainingDetailPage() {
   const learningOutcomes = training?.learningOutcomes || (training?.description ? parseLearningOutcomes(training.description) : []);
   const requirements = training?.requirements || (training?.description ? parseRequirements(training.description) : []);
   const trainingFormat = getTrainingFormat();
+  const providerEmail = training?.provider?.user?.email;
+  const providerPhone = training?.provider?.user?.phone;
+  const providerEmailUrl = getSafeMailtoUrl(providerEmail);
+  const providerPhoneUrl = getSafeTelUrl(providerPhone);
+  const safeCertificateUrl = getSafeStoredUrl(training?.certificateUrl);
 
   return (
     <div className="min-h-screen bg-background">
@@ -400,25 +406,25 @@ export default function TrainingDetailPage() {
                       {language === 'en' ? 'Contact Provider' : 'La Xidhiidh Bixiyaha'}
                     </h3>
                     <div className="space-y-2">
-                      {training.provider?.user?.email && (
+                      {providerEmailUrl && providerEmail && (
                         <a
-                          href={`mailto:${training.provider.user.email}`}
+                          href={providerEmailUrl}
                           className="flex items-center gap-2 text-sm text-primary hover:text-primary-darker transition-colors"
                         >
                           <Mail size={16} />
-                          <span className="truncate">{training.provider.user.email}</span>
+                          <span className="truncate">{providerEmail}</span>
                         </a>
                       )}
-                      {training.provider?.user?.phone && (
+                      {providerPhoneUrl && providerPhone && (
                         <a
-                          href={`tel:${training.provider.user.phone}`}
+                          href={providerPhoneUrl}
                           className="flex items-center gap-2 text-sm text-primary hover:text-primary-darker transition-colors"
                         >
                           <Phone size={16} />
-                          <span>{training.provider.user.phone}</span>
+                          <span>{providerPhone}</span>
                         </a>
                       )}
-                      {(!training.provider?.user?.email && !training.provider?.user?.phone) && (
+                      {!providerEmailUrl && !providerPhoneUrl && (
                         <p className="text-xs text-primary-darker/60">
                           {language === 'en'
                             ? 'Contact information not available'
@@ -430,16 +436,16 @@ export default function TrainingDetailPage() {
                 </div>
 
                 {/* Certificate Info */}
-                {training.certificateUrl && (
+                {safeCertificateUrl && (
                   <div className="bg-white rounded-2xl sm:rounded-3xl p-6 shadow-soft">
                     <h3 className="text-lg font-semibold text-primary-darker mb-3 flex items-center gap-2">
                       <Award size={20} />
                       {language === 'en' ? 'Certificate' : 'Shahaado'}
                     </h3>
                     <a
-                      href={training.certificateUrl}
+                      href={safeCertificateUrl}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       className="text-primary hover:text-primary-darker underline text-sm"
                     >
                       {language === 'en' ? 'View Certificate Sample' : 'Eeg Tusaale Shahaado'}

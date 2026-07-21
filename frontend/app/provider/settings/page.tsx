@@ -30,11 +30,10 @@ export default function ProviderSettingsPage() {
   const [settings, setSettings] = useState<ProviderSettingsState>({
     contactEmail: '',
     supportWhatsapp: '',
-    notifyNewEnrollments: true,
-    notifyAssignments: true,
+    notifyNewEnrollments: false,
+    notifyAssignments: false,
   });
   const [settingsFeedback, setSettingsFeedback] = useState<string | null>(null);
-  const [savingSettings, setSavingSettings] = useState(false);
 
   const [profileForm, setProfileForm] = useState<ProviderProfileForm>({
     name: '',
@@ -51,23 +50,8 @@ export default function ProviderSettingsPage() {
     const loadSettings = async () => {
       if (!user) return;
       try {
-        const response = await api
-          .get('/providers/me/settings')
-          .catch(() => ({
-            data: {
-              contactEmail: user.email,
-              supportWhatsapp: '+252 61 0000000',
-              notifyNewEnrollments: true,
-              notifyAssignments: true,
-            },
-          }));
         if (!active) return;
-        setSettings({
-          contactEmail: response.data.contactEmail ?? user.email ?? '',
-          supportWhatsapp: response.data.supportWhatsapp ?? '',
-          notifyNewEnrollments: response.data.notifyNewEnrollments ?? true,
-          notifyAssignments: response.data.notifyAssignments ?? true,
-        });
+        setSettings((current) => ({ ...current, contactEmail: user.email ?? '' }));
       } catch (error) {
         console.error('Failed to load provider settings', error);
       }
@@ -105,19 +89,9 @@ export default function ProviderSettingsPage() {
     loadProfile();
   }, [user]);
 
-  const handleSaveSettings = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    try {
-      setSavingSettings(true);
-      await api.put('/providers/me/settings', settings);
-      setSettingsFeedback('Settings saved successfully.');
-    } catch (error) {
-      console.error('Failed to save settings', error);
-      setSettingsFeedback('Unable to save settings. Please try again later.');
-    } finally {
-      setSavingSettings(false);
-      setTimeout(() => setSettingsFeedback(null), 4000);
-    }
+    setSettingsFeedback('Notification preferences are not available yet.');
   };
 
   const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -210,7 +184,7 @@ export default function ProviderSettingsPage() {
         <header className="mb-6 space-y-1">
           <h2 className="text-lg font-semibold text-primary-darker">Contact & alerts</h2>
           <p className="text-sm text-primary-darker/60">
-            Keep your learners informed with up-to-date contact information and notifications.
+            Coming soon. These controls are disabled and are not saved yet.
           </p>
         </header>
 
@@ -229,6 +203,7 @@ export default function ProviderSettingsPage() {
                   }))
                 }
                 required
+                disabled
               />
             </div>
             <div>
@@ -243,6 +218,7 @@ export default function ProviderSettingsPage() {
                     supportWhatsapp: event.target.value,
                   }))
                 }
+                disabled
               />
             </div>
           </div>
@@ -259,6 +235,7 @@ export default function ProviderSettingsPage() {
                     notifyNewEnrollments: event.target.checked,
                   }))
                 }
+                disabled
               />
               <span>
                 <span className="font-semibold text-primary-darker">Notify me of new enrollments</span>
@@ -278,6 +255,7 @@ export default function ProviderSettingsPage() {
                     notifyAssignments: event.target.checked,
                   }))
                 }
+                disabled
               />
               <span>
                 <span className="font-semibold text-primary-darker">Assignment submissions</span>
@@ -289,8 +267,8 @@ export default function ProviderSettingsPage() {
           </div>
 
           <div className="flex justify-end">
-            <button type="submit" className="btn-primary" disabled={savingSettings}>
-              {savingSettings ? 'Saving…' : 'Save changes'}
+            <button type="submit" className="btn-primary" disabled>
+              Save changes
             </button>
           </div>
         </form>

@@ -148,7 +148,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
               </a>
 
               <a
-                href="mailto:Koryaal6@gmail.com"
+                href="mailto:contact@zeilalink.com"
                 className={`${SUPPORT_CARD_CLASS} min-w-0`}
               >
                 <div className={SUPPORT_ICON_CLASS}>
@@ -158,7 +158,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
                   {isEn ? "Email inquiries" : "Su'aalaha iimaylka"}
                 </p>
                 <p className="break-all text-base font-black text-heading sm:text-lg">
-                  Koryaal6@gmail.com
+                  contact@zeilalink.com
                 </p>
               </a>
 

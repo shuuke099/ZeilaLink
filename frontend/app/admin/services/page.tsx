@@ -18,7 +18,7 @@ type AdminService = {
 };
 
 export default function AdminServicesPage() {
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [services, setServices] = useState<AdminService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,13 +40,13 @@ export default function AdminServicesPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || user.role?.toLowerCase() !== 'admin' || !token) {
+    if (!user || user.role?.toLowerCase() !== 'admin') {
       setLoading(false);
       setError('Admin access required');
       return;
     }
     loadServices();
-  }, [authLoading, user, token]);
+  }, [authLoading, user]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {

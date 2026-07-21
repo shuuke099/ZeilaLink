@@ -32,7 +32,10 @@ export default function ServiceDetailPage() {
         const response = await api.get(`/services/${id}`);
 
         if (response.data) {
-          setService(response.data);
+          setService({
+            ...(response.data as ServiceItem),
+            isDemo: false,
+          });
         } else {
           setService(getServiceById(id) || null);
         }

@@ -1,6 +1,6 @@
 import '../src/config/env';
 import { PrismaClient, UserRole } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { hashPassword, validatePassword } from '../src/utils/password';
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,7 @@ type SeedUserInput = {
 };
 
 async function upsertUser(data: SeedUserInput) {
-  const passwordHash = await bcrypt.hash(data.password, 10);
+  const passwordHash = await hashPassword(data.password);
 
   return prisma.user.upsert({
     where: { email: data.email },
@@ -41,18 +41,37 @@ async function upsertUser(data: SeedUserInput) {
   });
 }
 
+const requiredSeedPassword = (name: string): string => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required before running the demo seed`);
+  }
+  const error = validatePassword(value);
+  if (error) throw new Error(`${name}: ${error}`);
+  return value;
+};
+
 async function main() {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.ALLOW_PRODUCTION_SEED !== 'true'
+  ) {
+    throw new Error(
+      'Production seeding is disabled. Set ALLOW_PRODUCTION_SEED=true only for an intentional, reviewed seed run.',
+    );
+  }
+
   const admin = await upsertUser({
     name: 'Admin User',
     email: 'admin@zeilalink.com',
-    password: 'admin123',
+    password: requiredSeedPassword('SEED_ADMIN_PASSWORD'),
     role: UserRole.admin,
   });
 
   const worker = await upsertUser({
     name: 'Abduladim Abdullahi',
     email: 'worker@example.com',
-    password: 'worker123',
+    password: requiredSeedPassword('SEED_WORKER_PASSWORD'),
     role: UserRole.worker,
     phone: '+1234567890',
     location: 'Minneapolis, MN',
@@ -63,7 +82,7 @@ async function main() {
   const employee = await upsertUser({
     name: 'Fatima Ali',
     email: 'employee@example.com',
-    password: 'employee123',
+    password: requiredSeedPassword('SEED_EMPLOYEE_PASSWORD'),
     role: UserRole.worker,
     phone: '+1234567891',
     location: 'Minneapolis, MN',
@@ -73,7 +92,7 @@ async function main() {
   const employerUser = await upsertUser({
     name: 'Sabirin Mohamed Ali',
     email: 'employer@example.com',
-    password: 'employer123',
+    password: requiredSeedPassword('SEED_EMPLOYER_PASSWORD'),
     role: UserRole.employer,
   });
 
@@ -93,7 +112,7 @@ async function main() {
   const providerUser = await upsertUser({
     name: 'Training Institute',
     email: 'provider@example.com',
-    password: 'provider123',
+    password: requiredSeedPassword('SEED_PROVIDER_PASSWORD'),
     role: UserRole.provider,
   });
 

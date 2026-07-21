@@ -10,18 +10,19 @@ import {
   Upload,
   Eye,
   Pencil,
+  ShieldCheck,
   Trash2,
 } from 'lucide-react';
 import api from '@/lib/api';
+import OrganizationApprovalModal from '@/components/admin/OrganizationApprovalModal';
+import {
+  type ApprovableAdminUser,
+  canApproveOrganization,
+} from '@/lib/adminApprovals';
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+interface UserData extends ApprovableAdminUser {
   phone?: string | null;
   location?: string | null;
-  isVerified?: boolean;
   createdAt?: string;
 }
 
@@ -31,6 +32,7 @@ type UserManagementProps = {
 
 const tabOptions = [
   { id: 'all', label: 'All Users' },
+  { id: 'pending_approval', label: 'Pending Approvals' },
   { id: 'worker', label: 'Workers' },
   { id: 'employer', label: 'Employers' },
   { id: 'trainer', label: 'Trainers' },
@@ -48,6 +50,7 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sortByNameAsc, setSortByNameAsc] = useState(true);
   const [viewingUser, setViewingUser] = useState<UserData | null>(null);
+  const [approvalTarget, setApprovalTarget] = useState<UserData | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'worker', phone: '', location: '', isVerified: true });
@@ -56,8 +59,11 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
   useEffect(() => {
     const roleParam = searchParams.get('role');
     const typeParam = searchParams.get('type');
+    const statusParam = searchParams.get('status');
 
-    if (roleParam === 'provider' && typeParam) {
+    if (statusParam === 'pending_approval') {
+      setActiveTab('pending_approval');
+    } else if (roleParam === 'provider' && typeParam) {
       setActiveTab(typeParam);
     } else if (roleParam) {
       setActiveTab(roleParam);
@@ -73,7 +79,9 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
         setError(null);
 
         const params: Record<string, string | number> = { page: 1, limit: 100 };
-        if (activeTab === 'trainer' || activeTab === 'provider') {
+        if (activeTab === 'pending_approval') {
+          params.status = 'pending_approval';
+        } else if (activeTab === 'trainer' || activeTab === 'provider') {
           params.role = 'provider';
           params.type = activeTab;
         } else if (activeTab !== 'all') {
@@ -179,6 +187,32 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleOrganizationApproved = (userId: string) => {
+    if (activeTab === 'pending_approval') {
+      setUsers((current) => current.filter((user) => user.id !== userId));
+      setTotal((current) => {
+        const nextTotal = Math.max(0, current - 1);
+        onTotalChange?.(nextTotal);
+        return nextTotal;
+      });
+      return;
+    }
+
+    setUsers((current) =>
+      current.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              organizationApproved: true,
+              organization: user.organization
+                ? { ...user.organization, verified: true }
+                : user.organization,
+            }
+          : user,
+      ),
+    );
   };
 
   return (
@@ -293,6 +327,9 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
               </tr>
             ) : (
               displayUsers.map((user) => {
+                const needsOrganizationApproval =
+                  (user.role === 'employer' || user.role === 'provider') &&
+                  !user.organizationApproved;
                 return (
                   <tr key={user.id} className="border-b border-slate-200 hover:bg-slate-50/60">
                     <td className="px-4 py-5 text-lg font-semibold text-blue-700">{user.name}</td>
@@ -301,14 +338,42 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
                     <td className="px-4 py-5 text-base text-slate-700">{user.phone || '-'}</td>
                     <td className="px-4 py-5 text-base text-slate-700">{user.location || '-'}</td>
                     <td className="px-4 py-5 text-base">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.isVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {user.isVerified ? 'Verified' : 'Unverified'}
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        !user.isVerified
+                          ? 'bg-amber-100 text-amber-700'
+                          : (user.role === 'employer' || user.role === 'provider') && !user.organizationApproved
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {!user.isVerified
+                          ? 'Email unverified'
+                          : (user.role === 'employer' || user.role === 'provider') && !user.organizationApproved
+                            ? 'Pending approval'
+                            : 'Approved'}
                       </span>
                     </td>
                     <td className="px-4 py-5 text-base text-slate-700">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</td>
                     <td className="px-4 py-5"><div className="flex justify-end gap-2">
                       <button type="button" title="View" onClick={() => setViewingUser(user)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></button>
                       <Link title="Edit" href={`/admin/users/${user.id}/edit`} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></Link>
+                      {needsOrganizationApproval && (
+                        <button
+                          type="button"
+                          title={
+                            canApproveOrganization(user)
+                              ? 'Review and approve organization'
+                              : user.isVerified
+                                ? 'Organization profile is incomplete'
+                                : 'Email verification is required before approval'
+                          }
+                          disabled={!canApproveOrganization(user) || busyId === user.id}
+                          onClick={() => setApprovalTarget(user)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-2.5 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:opacity-70"
+                        >
+                          <ShieldCheck size={16} />
+                          Approve
+                        </button>
+                      )}
                       <button type="button" title="Delete" disabled={busyId === user.id} onClick={() => handleDelete(user)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
                     </div></td>
                   </tr>
@@ -328,6 +393,13 @@ export default function UserManagement({ onTotalChange }: UserManagementProps) {
           <div className="grid grid-cols-2 gap-4 text-sm"><p><b className="block text-slate-400">Role</b>{viewingUser.role}</p><p><b className="block text-slate-400">Status</b>{viewingUser.isVerified ? 'Verified' : 'Unverified'}</p><p><b className="block text-slate-400">Phone</b>{viewingUser.phone || '-'}</p><p><b className="block text-slate-400">Location</b>{viewingUser.location || '-'}</p></div>
         </div>
       </div>}
+      {approvalTarget && (
+        <OrganizationApprovalModal
+          user={approvalTarget}
+          onClose={() => setApprovalTarget(null)}
+          onApproved={handleOrganizationApproved}
+        />
+      )}
       {createOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setCreateOpen(false)}>
         <form onSubmit={handleCreate} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
           <div className="mb-5 flex items-center justify-between"><div><h3 className="text-xl font-black text-slate-900">Create User</h3><p className="text-sm text-slate-500">Add a user without leaving the dashboard.</p></div><button type="button" onClick={() => setCreateOpen(false)} className="rounded-lg px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100">Close</button></div>

@@ -19,7 +19,6 @@
     "build:frontend": "pnpm -C frontend run build"
   },
   "devDependencies": {
-    "@types/aws-sdk": "^0.0.42",
     "concurrently": "^8.2.2",
     "kill-port": "^2.0.1",
     "rimraf": "^6.1.3"

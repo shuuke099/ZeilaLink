@@ -1,12 +1,69 @@
 import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
-import bcrypt from 'bcryptjs';
+import { hashPassword, validatePassword } from '../utils/password';
+import { presentResume } from '../utils/resume';
+import { presentEnrollment } from '../utils/certificate';
+import { invalidateCacheByPrefix } from '../utils/cache';
 
 const adminUserSelect = {
   id: true, name: true, email: true, role: true, phone: true, location: true,
   bio: true, preferredLanguage: true, isVerified: true, avatarUrl: true, createdAt: true, updatedAt: true,
 } as const;
+
+const boundedPositiveInteger = (value: unknown, fallback: number, maximum: number) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0
+    ? Math.min(parsed, maximum)
+    : fallback;
+};
+
+const isNullableString = (value: unknown): value is string | null =>
+  value === null || typeof value === 'string';
+
+const hasOwn = (value: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(value, key);
+
+const parseEmployerApprovalSnapshot = (value: unknown) => {
+  if (!value || typeof value !== 'object') return null;
+  const snapshot = value as Record<string, unknown>;
+  const nullableFields = ['logoUrl', 'bannerUrl', 'description', 'website', 'address'] as const;
+  if (
+    !hasOwn(snapshot, 'name') ||
+    typeof snapshot.name !== 'string' ||
+    !nullableFields.every((field) => hasOwn(snapshot, field) && isNullableString(snapshot[field]))
+  ) {
+    return null;
+  }
+  return {
+    name: snapshot.name,
+    logoUrl: snapshot.logoUrl as string | null,
+    bannerUrl: snapshot.bannerUrl as string | null,
+    description: snapshot.description as string | null,
+    website: snapshot.website as string | null,
+    address: snapshot.address as string | null,
+  };
+};
+
+const parseProviderApprovalSnapshot = (value: unknown) => {
+  if (!value || typeof value !== 'object') return null;
+  const snapshot = value as Record<string, unknown>;
+  if (
+    !hasOwn(snapshot, 'name') ||
+    typeof snapshot.name !== 'string' ||
+    !hasOwn(snapshot, 'logoUrl') ||
+    !isNullableString(snapshot.logoUrl) ||
+    !hasOwn(snapshot, 'description') ||
+    !isNullableString(snapshot.description)
+  ) {
+    return null;
+  }
+  return {
+    name: snapshot.name,
+    logoUrl: snapshot.logoUrl as string | null,
+    description: snapshot.description as string | null,
+  };
+};
 
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
@@ -27,9 +84,16 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
       },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
-    return res.json({ user });
+    const { userCertifications, ...userDetails } = user;
+    return res.json({
+      user: {
+        ...userDetails,
+        userCertifications: userCertifications.map(presentEnrollment),
+        resumes: user.resumes.map(presentResume),
+      },
+    });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to load user' });
+    return res.status(500).json({ error: 'Failed to load user' });
   }
 };
 
@@ -44,8 +108,9 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     if (!['worker', 'employer', 'provider', 'admin'].includes(normalizedRole)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
-    if (String(password).length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    const passwordHash = await bcrypt.hash(String(password), 10);
+    const passwordError = validatePassword(String(password));
+    if (passwordError) return res.status(400).json({ error: passwordError });
+    const passwordHash = await hashPassword(String(password));
     const user = await prisma.user.create({
       data: {
         name: String(name).trim(), email: normalizedEmail, passwordHash,
@@ -54,11 +119,11 @@ export const createUser = async (req: AuthRequest, res: Response) => {
       },
       select: adminUserSelect,
     });
-    await prisma.auditLog.create({ data: { userId: req.user!.id, action: 'admin_create_user', resourceType: 'user', resourceId: user.id, meta: { email: user.email, role: user.role } } });
+    await prisma.auditLog.create({ data: { userId: req.user!.id, action: 'admin_create_user', resourceType: 'user', resourceId: user.id, meta: { role: user.role } } });
     return res.status(201).json(user);
   } catch (error: any) {
     if (error.code === 'P2002') return res.status(400).json({ error: 'Email already exists' });
-    return res.status(500).json({ error: error.message || 'Failed to create user' });
+    return res.status(500).json({ error: 'Failed to create user' });
   }
 };
 
@@ -66,25 +131,49 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
     const { role, search, status, page = 1, limit = 20 } = req.query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+    const pageSize = boundedPositiveInteger(limit, 20, 100);
+    const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
+    const filters: any[] = [];
 
     if (role) {
       where.role = role;
     }
 
     if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { email: { contains: search as string, mode: 'insensitive' } },
-      ];
+      filters.push({
+        OR: [
+          { name: { contains: search as string, mode: 'insensitive' } },
+          { email: { contains: search as string, mode: 'insensitive' } },
+        ],
+      });
     }
 
     if (status === 'verified') {
       where.isVerified = true;
     } else if (status === 'unverified') {
       where.isVerified = false;
+    } else if (status === 'pending_approval') {
+      filters.push({
+        OR: [
+          {
+            role: 'employer',
+            isVerified: true,
+            employer: { is: { verified: false } },
+          },
+          {
+            role: 'provider',
+            isVerified: true,
+            provider: { is: { verified: false } },
+          },
+        ],
+      });
+    }
+
+    if (filters.length > 0) {
+      where.AND = filters;
     }
 
     const [users, total] = await Promise.all([
@@ -101,25 +190,84 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           avatarUrl: true,
           createdAt: true,
           updatedAt: true,
+          employer: {
+            select: {
+              id: true,
+              name: true,
+              logoUrl: true,
+              bannerUrl: true,
+              description: true,
+              website: true,
+              address: true,
+              verified: true,
+            },
+          },
+          provider: {
+            select: {
+              id: true,
+              name: true,
+              logoUrl: true,
+              description: true,
+              verified: true,
+            },
+          },
         },
         skip,
-        take: Number(limit),
+        take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.user.count({ where }),
     ]);
 
     res.json({
-      users,
+      users: users.map(({ employer, provider, ...user }) => {
+        const organization = employer
+          ? {
+              id: employer.id,
+              type: 'employer' as const,
+              name: employer.name,
+              verified: employer.verified,
+              identity: {
+                name: employer.name,
+                logoUrl: employer.logoUrl,
+                bannerUrl: employer.bannerUrl,
+                description: employer.description,
+                website: employer.website,
+                address: employer.address,
+              },
+            }
+          : provider
+            ? {
+                id: provider.id,
+                type: 'provider' as const,
+                name: provider.name,
+                verified: provider.verified,
+                identity: {
+                  name: provider.name,
+                  logoUrl: provider.logoUrl,
+                  description: provider.description,
+                },
+              }
+            : null;
+
+        return {
+          ...user,
+          organizationApproved:
+            user.role === 'employer' || user.role === 'provider'
+              ? Boolean(organization?.verified)
+              : true,
+          organization,
+        };
+      }),
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
+        page: pageNumber,
+        limit: pageSize,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to load users' });
   }
 };
 
@@ -127,7 +275,9 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
   try {
     const { published, page = 1, limit = 20 } = req.query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+    const pageSize = boundedPositiveInteger(limit, 20, 100);
+    const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
 
@@ -154,7 +304,7 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
           },
         },
         skip,
-        take: Number(limit),
+        take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.job.count({ where }),
@@ -164,13 +314,13 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       jobs,
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
+        page: pageNumber,
+        limit: pageSize,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to load jobs' });
   }
 };
 
@@ -179,18 +329,47 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { name, email, role, phone, location, bio, preferredLanguage, isVerified, avatarUrl } = req.body;
 
+    if (role !== undefined && !['worker', 'employer', 'provider', 'admin'].includes(String(role))) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    if (isVerified !== undefined && typeof isVerified !== 'boolean') {
+      return res.status(400).json({ error: 'isVerified must be a boolean' });
+    }
+    if (preferredLanguage !== undefined && !['en', 'so'].includes(String(preferredLanguage))) {
+      return res.status(400).json({ error: 'Invalid preferred language' });
+    }
+    if (
+      req.user!.id === id &&
+      ((role !== undefined && role !== 'admin') || isVerified === false)
+    ) {
+      return res.status(400).json({ error: 'Admins cannot remove their own access' });
+    }
+    if (
+      avatarUrl !== undefined &&
+      avatarUrl !== null &&
+      !(typeof avatarUrl === 'string' && (
+        (/^\/(?!\/)/.test(avatarUrl) && !avatarUrl.includes('\\')) ||
+        /^https:\/\//i.test(avatarUrl)
+      ))
+    ) {
+      return res.status(400).json({ error: 'Invalid avatar URL' });
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name }),
-        ...(email !== undefined && { email }),
+        ...(name !== undefined && { name: String(name).trim() }),
+        ...(email !== undefined && { email: String(email).trim().toLowerCase() }),
         ...(role !== undefined && { role }),
-        ...(phone !== undefined && { phone }),
-        ...(location !== undefined && { location }),
-        ...(bio !== undefined && { bio }),
+        ...(phone !== undefined && { phone: String(phone || '').trim() || null }),
+        ...(location !== undefined && { location: String(location || '').trim() || null }),
+        ...(bio !== undefined && { bio: String(bio || '').slice(0, 5000) || null }),
         ...(preferredLanguage !== undefined && { preferredLanguage }),
         ...(isVerified !== undefined && { isVerified }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(avatarUrl !== undefined && { avatarUrl: avatarUrl || null }),
       },
       select: {
         id: true,
@@ -217,7 +396,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to update user' });
   }
 };
 
@@ -242,81 +421,143 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
         action: 'admin_delete_user',
         resourceType: 'user',
         resourceId: id,
-        meta: { email: existing.email, role: existing.role },
+        meta: { role: existing.role },
       },
     });
 
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 };
 
 export const verifyEmployer = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const reviewedIdentity = parseEmployerApprovalSnapshot(req.body?.identity);
+    if (!reviewedIdentity) {
+      return res.status(400).json({ error: 'The reviewed employer profile snapshot is required' });
+    }
 
-    const employer = await prisma.employer.update({
+    const pendingEmployer = await prisma.employer.findUnique({
       where: { id },
-      data: { verified: true },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
+      select: { id: true, user: { select: { isVerified: true } } },
+    });
+    if (!pendingEmployer) return res.status(404).json({ error: 'Employer not found' });
+    if (!pendingEmployer.user.isVerified) {
+      return res.status(400).json({ error: 'Email verification is required before approval' });
+    }
+
+    const employer = await prisma.$transaction(async (transaction) => {
+      const approval = await transaction.employer.updateMany({
+        where: {
+          id,
+          verified: false,
+          ...reviewedIdentity,
+          user: { isVerified: true },
+        },
+        data: { verified: true },
+      });
+      if (approval.count !== 1) return null;
+
+      const approvedEmployer = await transaction.employer.findUniqueOrThrow({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Log action
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user!.id,
-        action: 'verify_employer',
-        resourceType: 'employer',
-        resourceId: id,
-        meta: { employerName: employer.name },
-      },
+      await transaction.auditLog.create({
+        data: {
+          userId: req.user!.id,
+          action: 'verify_employer',
+          resourceType: 'employer',
+          resourceId: id,
+          meta: { result: 'approved' },
+        },
+      });
+      return approvedEmployer;
     });
+    if (!employer) {
+      return res.status(409).json({
+        error: 'The employer profile changed. Reload and review it before approving.',
+      });
+    }
+    await invalidateCacheByPrefix(['jobs:list', 'public:stats']);
 
     res.json(employer);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to approve employer' });
   }
 };
 
 export const verifyProvider = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const reviewedIdentity = parseProviderApprovalSnapshot(req.body?.identity);
+    if (!reviewedIdentity) {
+      return res.status(400).json({ error: 'The reviewed provider profile snapshot is required' });
+    }
 
-    const provider = await prisma.provider.update({
+    const pendingProvider = await prisma.provider.findUnique({
       where: { id },
-      data: { verified: true },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
+      select: { id: true, user: { select: { isVerified: true } } },
+    });
+    if (!pendingProvider) return res.status(404).json({ error: 'Provider not found' });
+    if (!pendingProvider.user.isVerified) {
+      return res.status(400).json({ error: 'Email verification is required before approval' });
+    }
+
+    const provider = await prisma.$transaction(async (transaction) => {
+      const approval = await transaction.provider.updateMany({
+        where: {
+          id,
+          verified: false,
+          ...reviewedIdentity,
+          user: { isVerified: true },
+        },
+        data: { verified: true },
+      });
+      if (approval.count !== 1) return null;
+
+      const approvedProvider = await transaction.provider.findUniqueOrThrow({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // Log action
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user!.id,
-        action: 'verify_provider',
-        resourceType: 'provider',
-        resourceId: id,
-        meta: { providerName: provider.name },
-      },
+      await transaction.auditLog.create({
+        data: {
+          userId: req.user!.id,
+          action: 'verify_provider',
+          resourceType: 'provider',
+          resourceId: id,
+          meta: { result: 'approved' },
+        },
+      });
+      return approvedProvider;
     });
+    if (!provider) {
+      return res.status(409).json({
+        error: 'The provider profile changed. Reload and review it before approving.',
+      });
+    }
+    await invalidateCacheByPrefix(['trainings:list', 'public:stats']);
 
     res.json(provider);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to approve provider' });
   }
 };
 
@@ -324,7 +565,9 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
   try {
     const { userId, action, page = 1, limit = 50 } = req.query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+    const pageSize = boundedPositiveInteger(limit, 50, 100);
+    const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
 
@@ -348,7 +591,7 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
           },
         },
         skip,
-        take: Number(limit),
+        take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.auditLog.count({ where }),
@@ -358,39 +601,53 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
       logs,
       pagination: {
         total,
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(total / Number(limit)),
+        page: pageNumber,
+        limit: pageSize,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to load audit logs' });
   }
 };
 
 export const testEmail = async (req: AuthRequest, res: Response) => {
   try {
-    const { sendVerificationEmail } = await import('../utils/email.js');
-    const testEmail = req.body.email || process.env.EMAIL_USER || 'thaprinmohamett1333@gmail.com';
+    const { DEFAULT_CONTACT_ADDRESS, isValidEmailAddress, sendVerificationEmail } =
+      await import('../utils/email.js');
+    const requestedEmail =
+      typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    const testEmailAddress =
+      requestedEmail ||
+      process.env.CONTACT_EMAIL_TO?.trim() ||
+      DEFAULT_CONTACT_ADDRESS;
+
+    if (!isValidEmailAddress(testEmailAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'A valid test recipient email is required',
+      });
+    }
+
     const testCode = '123456';
-    
-    await sendVerificationEmail(testEmail, testCode, 'Test User');
-    
-    res.json({
+
+    await sendVerificationEmail(testEmailAddress, testCode, 'Test User');
+
+    return res.json({
       success: true,
-      message: `Test email sent successfully to ${testEmail}`,
-      code: testCode,
+      message: 'Test email accepted for delivery',
     });
   } catch (error: any) {
-    console.error('[Admin] Email test failed:', error);
-    res.status(500).json({
+    console.error('[Admin] Email test failed', {
+      code: typeof error?.code === 'string' ? error.code.slice(0, 40) : undefined,
+      responseCode:
+        typeof error?.responseCode === 'number'
+          ? error.responseCode
+          : undefined,
+    });
+    return res.status(503).json({
       success: false,
-      error: error.message || 'Failed to send test email',
-      details: process.env.NODE_ENV === 'development' ? {
-        code: error.code,
-        responseCode: error.responseCode,
-        response: error.response,
-      } : undefined,
+      error: 'Email service is currently unavailable',
     });
   }
 };
@@ -504,7 +761,10 @@ export const getMetrics = async (req: AuthRequest, res: Response) => {
       recentActivity: formattedActivity,
     });
   } catch (error: any) {
-    console.error('[Admin] Error fetching metrics:', error);
-    res.status(500).json({ error: error.message });
+    console.error('[Admin] Metrics request failed', {
+      errorType: typeof error?.name === 'string' ? error.name : 'Error',
+      code: typeof error?.code === 'string' ? error.code : undefined,
+    });
+    res.status(500).json({ error: 'Failed to load metrics' });
   }
 };

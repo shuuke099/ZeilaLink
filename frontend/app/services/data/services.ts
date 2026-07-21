@@ -20,6 +20,8 @@ export type ServiceItem = {
   expertName: string;
   expertRole: string;
   expertImage: string;
+  /** True only for bundled preview content, never for an API-backed listing. */
+  isDemo?: boolean;
 };
 
 export const serviceCategories = [
@@ -34,7 +36,7 @@ export const serviceCategories = [
   'Other',
 ];
 
-export const services: ServiceItem[] = [
+const sampleServices: ServiceItem[] = [
   {
     id: 's1',
     title: 'Professional Home Cleaning',
@@ -222,5 +224,10 @@ export const services: ServiceItem[] = [
       'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?q=80&w=300&auto=format&fit=crop',
   },
 ];
+
+export const services: ServiceItem[] = sampleServices.map((service) => ({
+  ...service,
+  isDemo: true,
+}));
 
 export const getServiceById = (id: string) => services.find((service) => service.id === id);

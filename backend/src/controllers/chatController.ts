@@ -31,8 +31,7 @@ export const assistantChat = async (req: Request, res: Response) => {
 
     if (!apiKey) {
       return res.status(503).json({
-        error: "AI service is not configured",
-        details: "Missing OPENAI_API_KEY in backend .env",
+        error: "AI service is currently unavailable",
       });
     }
 
@@ -44,7 +43,8 @@ export const assistantChat = async (req: Request, res: Response) => {
         (m: any) =>
           (m?.role === "user" || m?.role === "assistant") &&
           typeof m?.content === "string" &&
-          m.content.trim().length > 0,
+          m.content.trim().length > 0 &&
+          m.content.trim().length <= 2000,
       )
       .slice(-12)
       .map((m: any) => ({
@@ -54,6 +54,10 @@ export const assistantChat = async (req: Request, res: Response) => {
 
     if (messages.length === 0) {
       return res.status(400).json({ error: "At least one valid message is required" });
+    }
+
+    if (messages.reduce((total, message) => total + message.content.length, 0) > 8000) {
+      return res.status(400).json({ error: "Conversation is too long" });
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -71,11 +75,11 @@ export const assistantChat = async (req: Request, res: Response) => {
           ...messages,
         ],
       }),
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!response.ok) {
-      const raw = await response.text();
-      console.error("[Chat] OpenAI error:", raw);
+      console.error("[Chat] AI provider request failed", { status: response.status });
       return res.status(502).json({ error: "AI provider request failed" });
     }
 
@@ -87,8 +91,10 @@ export const assistantChat = async (req: Request, res: Response) => {
     }
 
     return res.json({ reply });
-  } catch (error: any) {
-    console.error("[Chat] assistantChat error:", error);
+  } catch (error: unknown) {
+    console.error("[Chat] assistant request failed", {
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
     return res.status(500).json({ error: "Failed to generate assistant response" });
   }
 };

@@ -40,20 +40,19 @@ export default function FeaturedOpportunitiesSection({
               </span>
             </div>
             <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-white sm:mb-6 sm:text-4xl lg:text-5xl">
-              {isEn ? "Latest Opportunities" : "Fursadihii Ugu Dambeeyay"}
+              {isEn ? "Opportunity Preview" : "Muuqaalka Fursadaha"}
             </h2>
             <p className="text-slate-300 text-lg leading-relaxed">
               {isEn
-                ? "Discover high-impact roles at leading organizations. Your next professional milestone starts here."
-                : "Ka raadi doorarka saameynta weyn leh ee ururrada hormuudka ka ah Soomaaliya. Guushaada xigta waxay halkan ka bilaabataa."}
+                ? "Preview how jobs and training programs appear on ZeilaLink, then visit each marketplace for current opportunities."
+                : "Eeg sida shaqooyinka iyo tababaradu uga muuqdaan ZeilaLink, ka dibna booqo suuqa si aad u hesho fursadaha hadda jira."}
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300 shadow-lg shadow-black/10 backdrop-blur-sm">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
             </span>
-            {isEn ? "Fresh listings, updated regularly" : "Fursado cusub oo joogto ah"}
+            {isEn ? "Demo preview • example listings" : "Tusaale • liisas tijaabo ah"}
           </div>
         </div>
 
@@ -77,14 +76,14 @@ export default function FeaturedOpportunitiesSection({
                 </div>
               </div>
               <span className="shrink-0 rounded-full border border-sky-300/15 bg-sky-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-sky-200">
-                {`${FEATURED_JOBS.length} ${isEn ? "live roles" : "shaqo"}`}
+                {`${FEATURED_JOBS.length} ${isEn ? "sample roles" : "shaqo tusaale ah"}`}
               </span>
             </div>
 
             <p className="relative mb-6 max-w-xl text-sm leading-relaxed text-slate-300">
               {isEn
-                ? "Explore verified opportunities and connect directly with employers ready to hire."
-                : "Sahami fursado la hubiyay oo si toos ah ula xiriir shaqo-bixiyeyaasha."}
+                ? "These sample roles show the marketplace layout. Open the jobs page for current employer listings."
+                : "Shaqooyinkan tijaabada ahi waxay muujinayaan qaabka suuqa. Fur bogga shaqooyinka si aad u aragto liisaska hadda jira."}
             </p>
 
             <div className="relative grid gap-4 sm:grid-cols-2">
@@ -92,7 +91,7 @@ export default function FeaturedOpportunitiesSection({
                 FEATURED_JOBS.map((job) => (
                   <Link
                     key={job.id}
-                    href={`/jobs/${job.id}`}
+                    href="/jobs"
                     className={`group flex min-h-48 flex-col rounded-2xl border border-sky-300/15 bg-[#0a1f49]/80 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300/40 hover:bg-[#0d2858] hover:shadow-sky-950/40 sm:p-5 ${FEATURED_JOBS.length % 2 === 1 ? "sm:last:col-span-2" : ""}`}
                   >
                     <div className="flex items-start gap-3">
@@ -131,8 +130,8 @@ export default function FeaturedOpportunitiesSection({
                     </div>
 
                     <div className="mt-auto flex items-center justify-between border-t border-white/[0.07] pt-4 text-[10px] font-black uppercase tracking-[0.14em] text-sky-200">
-                      <span>{isEn ? "View role" : "Eeg shaqada"}</span>
-                      <span className="text-slate-500">{isEn ? "Details" : "Faahfaahin"}</span>
+                      <span>{isEn ? "Open jobs" : "Fur shaqooyinka"}</span>
+                      <span className="text-slate-500">{isEn ? "Demo role" : "Shaqo tusaale"}</span>
                     </div>
                   </Link>
                 ))
@@ -174,14 +173,14 @@ export default function FeaturedOpportunitiesSection({
                 </div>
               </div>
               <span className="shrink-0 rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-200">
-                {`${FEATURED_TRAININGS.length} ${isEn ? "programs" : "tababar"}`}
+                {`${FEATURED_TRAININGS.length} ${isEn ? "sample program" : "tababar tusaale ah"}`}
               </span>
             </div>
 
             <p className="relative mb-6 text-sm leading-relaxed text-slate-300">
               {isEn
-                ? "Build practical, career-ready skills through trusted training providers."
-                : "Ka baro xirfado shaqo oo wax ku ool ah bixiyeyaasha tababarka la hubiyay."}
+                ? "This sample program shows the training layout. Open the training page for current providers and enrollment details."
+                : "Tababarkan tijaabada ahi wuxuu muujinayaa qaabka bogga. Fur bogga tababarada si aad u aragto bixiyeyaasha iyo diiwaangelinta hadda jirta."}
             </p>
 
             <div className="relative space-y-4">
@@ -189,7 +188,7 @@ export default function FeaturedOpportunitiesSection({
                 FEATURED_TRAININGS.map((training) => (
                   <Link
                     key={training.id}
-                    href={`/trainings/${training.id}`}
+                    href="/trainings"
                     className="group block rounded-2xl border border-emerald-300/15 bg-emerald-950/25 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/40 hover:bg-emerald-950/40 hover:shadow-emerald-950/30 sm:p-5"
                   >
                     <div className="flex items-start gap-3.5">
@@ -223,11 +222,7 @@ export default function FeaturedOpportunitiesSection({
                         {training.duration}
                       </span>
                       <span className={`rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-wider ${training.cost === 0 ? "bg-emerald-400/15 text-emerald-200" : "bg-white/[0.06] text-white"}`}>
-                        {training.cost === 0
-                          ? isEn
-                            ? "Free"
-                            : "Bilaash"
-                          : `$${training.cost}`}
+                        {isEn ? "Demo program" : "Tababar tusaale"}
                       </span>
                     </div>
                   </Link>

@@ -1,7 +1,4 @@
 import { Response } from 'express';
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
@@ -37,18 +34,29 @@ const parsePriceLabelToCents = (priceLabel: string) => {
 };
 
 const getStripeSecretKey = () => {
-  const existing = (process.env.STRIPE_SECRET_KEY || '').trim();
-  if (existing) {
-    return existing;
-  }
-
-  const localEnvPath = path.join(process.cwd(), '.env');
-  const rootEnvPath = path.join(process.cwd(), '..', '.env');
-  const candidate = fs.existsSync(localEnvPath) ? localEnvPath : rootEnvPath;
-
-  dotenv.config({ path: candidate });
   return (process.env.STRIPE_SECRET_KEY || '').trim();
 };
+
+const getFrontendOrigin = (): string => {
+  const raw = process.env.FRONTEND_URL?.trim() ||
+    (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+  if (!raw) throw new Error('FRONTEND_URL is required');
+  const parsed = new URL(raw);
+  if (
+    !['http:', 'https:'].includes(parsed.protocol) ||
+    parsed.username ||
+    parsed.password ||
+    (parsed.pathname !== '/' && parsed.pathname !== '') ||
+    parsed.search ||
+    parsed.hash ||
+    (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:')
+  ) {
+    throw new Error('FRONTEND_URL must be a plain HTTPS origin in production');
+  }
+  return parsed.origin;
+};
+
+const externalRequestSignal = () => AbortSignal.timeout(10_000);
 
 type BookingInput = {
   customerName: string;
@@ -166,7 +174,7 @@ export const getServices = async (req: AuthRequest, res: Response) => {
     res.set('X-Cache', result.hit ? 'HIT' : 'MISS');
     return res.json(result.value);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch services' });
+    return res.status(500).json({ error: 'Failed to fetch services' });
   }
 };
 
@@ -191,7 +199,7 @@ export const getServiceById = async (req: AuthRequest, res: Response) => {
     res.set('X-Cache', result.hit ? 'HIT' : 'MISS');
     return res.json(result.value);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch service' });
+    return res.status(500).json({ error: 'Failed to fetch service' });
   }
 };
 
@@ -243,7 +251,7 @@ export const createServiceBooking = async (req: AuthRequest, res: Response) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ error: 'Duplicate booking detected' });
     }
-    return res.status(500).json({ error: error.message || 'Failed to create booking' });
+    return res.status(500).json({ error: 'Failed to create booking' });
   }
 };
 
@@ -251,11 +259,11 @@ export const createServiceBookingCheckoutSession = async (req: AuthRequest, res:
   try {
     const { id } = req.params;
     const stripeSecretKey = getStripeSecretKey();
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = getFrontendOrigin();
     const currency = (process.env.STRIPE_CURRENCY || 'usd').toLowerCase();
 
     if (!stripeSecretKey) {
-      return res.status(503).json({ error: 'Stripe is not configured. Missing STRIPE_SECRET_KEY.' });
+      return res.status(503).json({ error: 'Payment service is unavailable.' });
     }
 
     const service = await prisma.service.findFirst({
@@ -310,18 +318,27 @@ export const createServiceBookingCheckoutSession = async (req: AuthRequest, res:
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: form,
+      signal: externalRequestSignal(),
     });
 
     if (!stripeResponse.ok) {
-      const stripeErrorText = await stripeResponse.text();
-      return res.status(502).json({
-        error: 'Failed to create Stripe checkout session.',
-        details: stripeErrorText,
-      });
+      return res.status(502).json({ error: 'Failed to create checkout session.' });
     }
 
     const stripeSession = await stripeResponse.json() as { id?: string; url?: string };
-    if (!stripeSession.id || !stripeSession.url) {
+    let checkoutUrl: URL | null = null;
+    try {
+      checkoutUrl = stripeSession.url ? new URL(stripeSession.url) : null;
+    } catch {
+      checkoutUrl = null;
+    }
+    if (
+      !stripeSession.id ||
+      !checkoutUrl ||
+      checkoutUrl.protocol !== 'https:' ||
+      checkoutUrl.hostname !== 'checkout.stripe.com' ||
+      Boolean(checkoutUrl.username || checkoutUrl.password)
+    ) {
       return res.status(502).json({ error: 'Stripe did not return a checkout URL.' });
     }
 
@@ -343,12 +360,12 @@ export const createServiceBookingCheckoutSession = async (req: AuthRequest, res:
     });
 
     return res.status(201).json({
-      checkoutUrl: stripeSession.url,
+      checkoutUrl: checkoutUrl.toString(),
       bookingId: booking.id,
       message: 'Checkout session created successfully.',
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to create checkout session' });
+    return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 };
 
@@ -373,7 +390,7 @@ export const getMyServiceBookings = async (req: AuthRequest, res: Response) => {
 
     return res.json({ bookings });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch bookings' });
+    return res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 };
 
@@ -383,10 +400,10 @@ export const confirmServiceBookingPayment = async (req: AuthRequest, res: Respon
     const sessionId = String(req.body?.sessionId || '').trim();
 
     if (!stripeSecretKey) {
-      return res.status(503).json({ error: 'Stripe is not configured. Missing STRIPE_SECRET_KEY.' });
+      return res.status(503).json({ error: 'Payment service is unavailable.' });
     }
 
-    if (!sessionId) {
+    if (!/^cs_[A-Za-z0-9_]{8,240}$/.test(sessionId)) {
       return res.status(400).json({ error: 'sessionId is required.' });
     }
 
@@ -395,14 +412,11 @@ export const confirmServiceBookingPayment = async (req: AuthRequest, res: Respon
       headers: {
         Authorization: `Bearer ${stripeSecretKey}`,
       },
+      signal: externalRequestSignal(),
     });
 
     if (!stripeResponse.ok) {
-      const stripeErrorText = await stripeResponse.text();
-      return res.status(502).json({
-        error: 'Failed to verify Stripe checkout session.',
-        details: stripeErrorText,
-      });
+      return res.status(502).json({ error: 'Failed to verify checkout session.' });
     }
 
     const session = await stripeResponse.json() as { payment_status?: string };
@@ -444,7 +458,7 @@ export const confirmServiceBookingPayment = async (req: AuthRequest, res: Respon
 
     return res.json({ booking: updated, message: 'Payment confirmed successfully.' });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to confirm payment' });
+    return res.status(500).json({ error: 'Failed to confirm payment' });
   }
 };
 
@@ -461,7 +475,7 @@ export const getAdminServices = async (req: AuthRequest, res: Response) => {
 
     return res.json({ services });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch admin services' });
+    return res.status(500).json({ error: 'Failed to fetch admin services' });
   }
 };
 
@@ -527,7 +541,7 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
     void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.status(201).json(service);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to create service' });
+    return res.status(500).json({ error: 'Failed to create service' });
   }
 };
 
@@ -597,7 +611,7 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
     void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.json(updated);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to update service' });
+    return res.status(500).json({ error: 'Failed to update service' });
   }
 };
 
@@ -614,7 +628,7 @@ export const deleteAdminService = async (req: AuthRequest, res: Response) => {
     void invalidateCacheByPrefix(['services:list', 'services:detail']);
     return res.json({ message: 'Service deleted successfully' });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to delete service' });
+    return res.status(500).json({ error: 'Failed to delete service' });
   }
 };
 
@@ -645,7 +659,7 @@ export const getAdminServiceBookings = async (req: AuthRequest, res: Response) =
 
     return res.json({ bookings });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message || 'Failed to fetch admin bookings' });
+    return res.status(500).json({ error: 'Failed to fetch admin bookings' });
   }
 };
 
@@ -668,6 +682,6 @@ export const updateAdminServiceBookingStatus = async (req: AuthRequest, res: Res
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Booking not found' });
     }
-    return res.status(500).json({ error: error.message || 'Failed to update booking status' });
+    return res.status(500).json({ error: 'Failed to update booking status' });
   }
 };

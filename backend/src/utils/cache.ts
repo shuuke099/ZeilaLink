@@ -1,6 +1,9 @@
+import { createHash } from 'crypto';
+
 type CacheEntry = {
   value: string;
   expiresAt: number;
+  bytes: number;
 };
 
 type RedisLike = {
@@ -15,9 +18,12 @@ type RedisLike = {
 
 type RedisConstructor = new (url: string, options: Record<string, unknown>) => RedisLike;
 
-const CACHE_PREFIX = 'zeilalink:api:v1';
+const CACHE_PREFIX = 'zeilalink:api:v2';
+const MAX_MEMORY_CACHE_ENTRIES = 250;
+const MAX_MEMORY_CACHE_BYTES = 16 * 1024 * 1024;
 const redisUrl = process.env.REDIS_URL?.trim();
 const memoryCache = new Map<string, CacheEntry>();
+let memoryCacheBytes = 0;
 
 let redisClient: RedisLike | null = null;
 let redisDisabledUntil = 0;
@@ -44,6 +50,36 @@ const normalizeForKey = (value: unknown): unknown => {
 
 const namespacedKey = (key: string) => `${CACHE_PREFIX}:${key}`;
 
+const deleteMemoryEntry = (key: string): void => {
+  const entry = memoryCache.get(key);
+  if (!entry) return;
+  memoryCache.delete(key);
+  memoryCacheBytes = Math.max(0, memoryCacheBytes - entry.bytes);
+};
+
+const putMemoryEntry = (key: string, value: string, expiresAt: number): void => {
+  const bytes = Buffer.byteLength(key, 'utf8') + Buffer.byteLength(value, 'utf8');
+  if (bytes > MAX_MEMORY_CACHE_BYTES) return;
+
+  deleteMemoryEntry(key);
+  memoryCache.set(key, { value, expiresAt, bytes });
+  memoryCacheBytes += bytes;
+
+  const now = Date.now();
+  for (const [cachedKey, entry] of memoryCache) {
+    if (entry.expiresAt <= now) deleteMemoryEntry(cachedKey);
+  }
+
+  while (
+    memoryCache.size > MAX_MEMORY_CACHE_ENTRIES ||
+    memoryCacheBytes > MAX_MEMORY_CACHE_BYTES
+  ) {
+    const oldestKey = memoryCache.keys().next().value as string | undefined;
+    if (!oldestKey) break;
+    deleteMemoryEntry(oldestKey);
+  }
+};
+
 const getRedis = async () => {
   if (!redisUrl || Date.now() < redisDisabledUntil) {
     return null;
@@ -62,18 +98,18 @@ const getRedis = async () => {
         lazyConnect: true,
         maxRetriesPerRequest: 1,
       });
-    } catch (error: any) {
+    } catch {
       redisDisabledUntil = Date.now() + 30_000;
       if (process.env.NODE_ENV !== 'test') {
-        console.warn('[Cache] ioredis is not available, using memory cache:', error.message);
+        console.warn('[Cache] ioredis is not available; using memory cache');
       }
       return null;
     }
 
-    redisClient.on('error', (error) => {
+    redisClient.on('error', () => {
       redisDisabledUntil = Date.now() + 30_000;
       if (process.env.NODE_ENV !== 'test') {
-        console.warn('[Cache] Redis unavailable, using memory cache:', error.message);
+        console.warn('[Cache] Redis unavailable; using memory cache');
       }
     });
   }
@@ -84,17 +120,20 @@ const getRedis = async () => {
     }
 
     return redisClient.status === 'ready' ? redisClient : null;
-  } catch (error: any) {
+  } catch {
     redisDisabledUntil = Date.now() + 30_000;
     if (process.env.NODE_ENV !== 'test') {
-      console.warn('[Cache] Redis connect failed, using memory cache:', error.message);
+      console.warn('[Cache] Redis connect failed; using memory cache');
     }
     return null;
   }
 };
 
-export const makeCacheKey = (namespace: string, params: Record<string, unknown> = {}) =>
-  `${namespace}:${JSON.stringify(normalizeForKey(params))}`;
+export const makeCacheKey = (namespace: string, params: Record<string, unknown> = {}) => {
+  const normalized = JSON.stringify(normalizeForKey(params));
+  const digest = createHash('sha256').update(normalized).digest('hex');
+  return `${namespace}:${digest}`;
+};
 
 export const cacheGetOrSet = async <T>(
   key: string,
@@ -118,15 +157,15 @@ export const cacheGetOrSet = async <T>(
   const now = Date.now();
   const memoryEntry = memoryCache.get(fullKey);
   if (memoryEntry && memoryEntry.expiresAt > now) {
+    memoryCache.delete(fullKey);
+    memoryCache.set(fullKey, memoryEntry);
     return { value: JSON.parse(memoryEntry.value) as T, hit: true };
   }
+  if (memoryEntry) deleteMemoryEntry(fullKey);
 
   const value = await loader();
   const serialized = JSON.stringify(value);
-  memoryCache.set(fullKey, {
-    value: serialized,
-    expiresAt: now + ttlSeconds * 1000,
-  });
+  putMemoryEntry(fullKey, serialized, now + ttlSeconds * 1000);
 
   if (redis) {
     try {
@@ -144,21 +183,28 @@ export const invalidateCacheByPrefix = async (prefixes: string[]) => {
 
   for (const key of Array.from(memoryCache.keys())) {
     if (fullPrefixes.some((prefix) => key.startsWith(prefix))) {
-      memoryCache.delete(key);
+      deleteMemoryEntry(key);
     }
   }
 
   const redis = await getRedis();
   if (!redis) return;
 
-  for (const prefix of fullPrefixes) {
-    let cursor = '0';
-    do {
-      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 100);
-      cursor = nextCursor;
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
-    } while (cursor !== '0');
+  try {
+    for (const prefix of fullPrefixes) {
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 100);
+        cursor = nextCursor;
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } while (cursor !== '0');
+    }
+  } catch {
+    redisDisabledUntil = Date.now() + 30_000;
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[Cache] Redis invalidation failed; local cache was cleared');
+    }
   }
 };

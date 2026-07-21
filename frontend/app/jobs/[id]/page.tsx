@@ -1,10 +1,12 @@
-"use client";
-
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { cache } from "react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import Navbar from "@/components/Navbar";
-import { useAuth } from "@/contexts/AuthContext";
-import api from "@/lib/api";
+import { ServerApiError, serverApiGet } from "@/lib/serverApi";
+import ApplyButton from "./ApplyButton";
+import { isValidJobId, parsePublicJob, type PublicJob } from "../jobTypes";
 import {
   Briefcase,
   Building2,
@@ -20,25 +22,73 @@ import {
   Users2,
 } from "lucide-react";
 
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  requirements?: string;
-  benefits?: string | null;
-  location: string;
-  salaryMin?: number | null;
-  salaryMax?: number | null;
-  employmentType: string;
-  remote: boolean;
-  tags?: string[];
-  createdAt: string;
-  applicationDeadline?: string | null;
-  employer: {
-    name: string;
-    logoUrl?: string | null;
-    avatarUrl?: string | null;
-    description?: string | null;
+export const dynamic = "force-dynamic";
+
+interface JobDetailPageProps {
+  params: { id: string };
+}
+
+type JobLoadResult =
+  | { status: "success"; job: PublicJob }
+  | { status: "not-found" }
+  | { status: "error" };
+
+const loadJob = cache(async (id: string): Promise<JobLoadResult> => {
+  try {
+    const response = await serverApiGet<unknown>(
+      `/jobs/${encodeURIComponent(id)}`,
+    );
+    const job = parsePublicJob(response);
+    return job ? { status: "success", job } : { status: "error" };
+  } catch (error) {
+    if (error instanceof ServerApiError && error.status === 404) {
+      return { status: "not-found" };
+    }
+    return { status: "error" };
+  }
+});
+
+const metadataDescription = (description: string) => {
+  const compact = description.replace(/\s+/g, " ").trim();
+  return compact.length > 155 ? `${compact.slice(0, 152)}...` : compact;
+};
+
+export async function generateMetadata({
+  params,
+}: JobDetailPageProps): Promise<Metadata> {
+  if (!isValidJobId(params.id)) {
+    return {
+      title: "Job Not Found | ZeilaLink",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const result = await loadJob(params.id);
+  if (result.status === "not-found") {
+    return {
+      title: "Job Not Found | ZeilaLink",
+      robots: { index: false, follow: false },
+    };
+  }
+  if (result.status === "error") {
+    return {
+      title: "Job Opportunity | ZeilaLink",
+      description: "This job listing is temporarily unavailable.",
+      robots: { index: false, follow: true },
+    };
+  }
+
+  const description = metadataDescription(result.job.description);
+  const title = `${result.job.title} at ${result.job.employer.name}`;
+
+  return {
+    title: `${title} | ZeilaLink`,
+    description,
+    openGraph: {
+      type: "article",
+      title,
+      description,
+    },
   };
 }
 
@@ -87,9 +137,9 @@ const formatSalaryRange = (min?: number | null, max?: number | null) => {
       maximumFractionDigits: 0,
     }).format(value);
 
-  if (min && max) return `${fmt(min)} - ${fmt(max)}`;
-  if (min) return `${fmt(min)}+`;
-  if (max) return `Up to ${fmt(max)}`;
+  if (min != null && max != null) return `${fmt(min)} - ${fmt(max)}`;
+  if (min != null) return `${fmt(min)}+`;
+  if (max != null) return `Up to ${fmt(max)}`;
   return "Salary negotiable";
 };
 
@@ -106,86 +156,106 @@ const formatDate = (dateString?: string | null) => {
   }
 };
 
-export default function JobDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const { user } = useAuth();
-  const [job, setJob] = useState<Job | null>(null);
-  const [loading, setLoading] = useState(true);
+export default async function JobDetailPage({ params }: JobDetailPageProps) {
+  if (!isValidJobId(params.id)) {
+    notFound();
+  }
 
-  useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/jobs/${params?.id}`);
-        const jobData = res.data.job || res.data;
-        setJob(jobData || null);
-      } catch (e) {
-        console.error("[JobDetailPage] Failed to load job:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (params?.id) fetchJob();
-  }, [params?.id]);
+  const result = await loadJob(params.id);
+  if (result.status === "not-found") {
+    notFound();
+  }
 
-  const handleApplyClick = () => {
-    const jobId = params?.id;
-    if (!jobId || typeof jobId !== "string") return;
+  if (result.status === "error") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="mx-auto max-w-4xl px-4 pb-12 pt-28 sm:px-6">
+          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-10 text-center">
+            <h1 className="text-2xl font-black text-amber-950">
+              Job details are temporarily unavailable
+            </h1>
+            <p className="mt-3 text-sm font-medium text-amber-900/80">
+              The jobs service could not be reached. This does not mean the
+              listing was removed. Please try again shortly.
+            </p>
+            <Link
+              href="/jobs"
+              className="mt-6 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-black text-white"
+            >
+              Back to jobs
+            </Link>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
-    if (!user) {
-      router.push(`/login?redirect=/jobs/${jobId}/apply`);
-      return;
-    }
+  const nonce = headers().get("x-nonce") || undefined;
 
-    router.push(`/jobs/${jobId}/apply`);
+  const { job } = result;
+  const descriptionParagraphs = toParagraphs(job.description);
+  const keyResponsibilities = toListItems(job.description);
+  const requirementItems = toListItems(job.requirements);
+  const benefitItems = toListItems(job.benefits);
+  const postedDate = formatDate(job.createdAt);
+  const deadlineDate = formatDate(job.applicationDeadline);
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description,
+    datePosted: job.createdAt,
+    ...(job.applicationDeadline
+      ? { validThrough: job.applicationDeadline }
+      : {}),
+    employmentType: job.employmentType,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.employer.name,
+    },
+    ...(job.remote
+      ? { jobLocationType: "TELECOMMUTE" }
+      : {
+          jobLocation: {
+            "@type": "Place",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: job.location,
+            },
+          },
+        }),
+    ...(job.salaryMin != null || job.salaryMax != null
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: "USD",
+            value: {
+              "@type": "QuantitativeValue",
+              ...(job.salaryMin != null ? { minValue: job.salaryMin } : {}),
+              ...(job.salaryMax != null ? { maxValue: job.salaryMax } : {}),
+              unitText: "YEAR",
+            },
+          },
+        }
+      : {}),
   };
-
-  const descriptionParagraphs = useMemo(
-    () => toParagraphs(job?.description),
-    [job?.description],
-  );
-  const keyResponsibilities = useMemo(
-    () => toListItems(job?.description),
-    [job?.description],
-  );
-  const requirementItems = useMemo(
-    () => toListItems(job?.requirements),
-    [job?.requirements],
-  );
-  const benefitItems = useMemo(
-    () => toListItems(job?.benefits),
-    [job?.benefits],
-  );
-  const postedDate = useMemo(
-    () => formatDate(job?.createdAt),
-    [job?.createdAt],
-  );
-  const deadlineDate = useMemo(
-    () =>
-      job?.applicationDeadline
-        ? formatDate(job.applicationDeadline)
-        : undefined,
-    [job?.applicationDeadline],
-  );
 
   return (
     <div className="min-h-screen bg-background">
+      <script
+        nonce={nonce}
+        suppressHydrationWarning
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <Navbar />
 
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
-        {loading ? (
-          <div className="rounded-3xl border border-border bg-white p-10">
-            <p className="text-primary-darker/70">Loading job details...</p>
-          </div>
-        ) : !job ? (
-          <div className="rounded-3xl border border-border bg-white p-10">
-            <p className="text-primary-darker/70">
-              Sorry, we could not find that job listing.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
+        <div className="space-y-6">
             <section className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="flex-1">
@@ -203,12 +273,7 @@ export default function JobDetailPage() {
                   </p>
                 </div>
 
-                <button
-                  onClick={handleApplyClick}
-                  className="btn-primary rounded-xl px-6 py-3 text-sm font-black uppercase tracking-wider"
-                >
-                  Apply Now
-                </button>
+                <ApplyButton jobId={job.id} />
               </div>
             </section>
 
@@ -400,8 +465,7 @@ export default function JobDetailPage() {
                 </section>
               </aside>
             </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -31,7 +31,8 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('language', lang);
-      document.cookie = `language=${lang}; Path=/; Max-Age=31536000; SameSite=Lax`;
+      const secureAttribute = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `language=${lang}; Path=/; Max-Age=31536000; SameSite=Lax${secureAttribute}`;
 
       // Static page copy is rendered on the server. Reload so the selected
       // language is returned in the next response without client hydration.

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, LogIn } from "lucide-react";
 import { toast } from "react-toastify";
 import { extractErrorMessage } from "@/lib/error-utils";
-import Navbar from "@/components/Navbar";
+import api from "@/lib/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -23,10 +23,10 @@ export default function LoginPage() {
   const getT = (key: string) => t(key, language);
 
   const inputClass =
-    "w-full h-10 rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-xs placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15";
+    "h-11 w-full rounded-lg border border-border bg-background px-3 text-base text-foreground outline-none transition placeholder:text-sm placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   const labelClass =
-    "mb-1.5 block text-xs font-medium tracking-wide text-muted-foreground";
+    "mb-1.5 block text-sm font-medium tracking-wide text-muted-foreground";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +41,43 @@ export default function LoginPage() {
 
       router.push("/");
     } catch (err: any) {
+      const loginErrorCode = err?.response?.data?.code;
+      const loginErrorMessage = err?.response?.data?.error;
+      const requiresEmailVerification =
+        loginErrorCode === "EMAIL_VERIFICATION_REQUIRED" ||
+        (err?.response?.status === 403 &&
+          typeof loginErrorMessage === "string" &&
+          /email not verified/i.test(loginErrorMessage));
+
+      if (requiresEmailVerification) {
+        const normalizedEmail = email.trim().toLowerCase();
+
+        try {
+          await api.post("/auth/resend-verification", {
+            email: normalizedEmail,
+          });
+          toast.info(
+            language === "en"
+              ? "If verification is required, a new code will arrive shortly."
+              : "Haddii xaqiijin loo baahan yahay, lambar cusub ayaa iman doona wax yar kadib.",
+          );
+        } catch (resendError: any) {
+          toast.error(
+            extractErrorMessage(
+              resendError,
+              language === "en"
+                ? "The code could not be sent. Use Resend Code on the verification page."
+                : "Lambarka lama diri karin. Bogga xaqiijinta ka dooro Dib u dir lambarka.",
+            ),
+          );
+        }
+
+        router.replace(
+          `/verify-email?email=${encodeURIComponent(normalizedEmail)}`,
+        );
+        return;
+      }
+
       toast.error(
         extractErrorMessage(
           err,
@@ -53,9 +90,16 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-16">
+        <Link
+          href="/"
+          className="absolute left-4 top-4 inline-flex h-11 items-center gap-2 rounded-lg px-3 text-base font-medium text-foreground transition hover:bg-muted sm:left-6 sm:top-6"
+          aria-label={language === "en" ? "Back to home" : "Ku laabo bogga hore"}
+        >
+          <ArrowLeft size={20} aria-hidden="true" />
+          <span>{language === "en" ? "Back" : "Dib u noqo"}</span>
+        </Link>
+
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm">
           {/* HEADER */}
           <div className="mb-6 text-center">
@@ -63,11 +107,11 @@ export default function LoginPage() {
               <LogIn className="text-primary" size={22} />
             </div>
 
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {getT("login")}
             </h1>
 
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Sign in to continue to your account
             </p>
           </div>
@@ -120,7 +164,7 @@ export default function LoginPage() {
                     ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
                     : "/forgot-password"
                 }
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-sm font-medium text-primary hover:underline"
               >
                 {getT("forgotPassword")}
               </Link>
@@ -130,13 +174,13 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="h-10 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 w-full rounded-lg bg-primary text-base font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? getT("loading") : getT("login")}
             </button>
 
             {/* REGISTER LINK */}
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               {getT("dontHaveAccount")}{" "}
               <Link
                 href="/register"
@@ -147,7 +191,6 @@ export default function LoginPage() {
             </p>
           </form>
         </div>
-      </div>
-    </>
+    </div>
   );
 }

@@ -57,7 +57,7 @@ export default function Footer() {
     },
     {
       label: isEn ? "Privacy Policy" : "Qaanuunka Asturnaanta",
-      href: "/about",
+      href: "/privacy",
     },
   ];
 
@@ -191,9 +191,9 @@ export default function Footer() {
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             {[
-              { label: isEn ? "Terms" : "Shuruudaha", href: "/about" },
-              { label: isEn ? "Privacy" : "Asturnaanta", href: "/about" },
-              { label: isEn ? "Cookies" : "Kukiyada", href: "/about" },
+              { label: isEn ? "Terms" : "Shuruudaha", href: "/terms" },
+              { label: isEn ? "Privacy" : "Asturnaanta", href: "/privacy" },
+              { label: isEn ? "Cookies" : "Kukiyada", href: "/cookies" },
             ].map((link) => (
               <Link
                 key={link.label}

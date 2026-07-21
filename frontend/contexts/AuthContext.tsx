@@ -17,16 +17,16 @@ export interface User {
   preferredLanguage?: string;
   avatarUrl?: string;
   phone?: string;
+  organizationApproved?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   loading: boolean;
 
   login: (email: string, password: string) => Promise<void>;
   register: (data: any) => Promise<any>;
-  logout: () => void;
+  logout: () => Promise<void>;
 
   /**
    * Updates only the supplied fields.
@@ -34,70 +34,90 @@ interface AuthContextType {
    * updateUser({ name: "New Name" });
    * updateUser({ avatarUrl: "/uploads/avatar.png" });
    */
-  updateUser: (updates: Partial<User>, nextToken?: string) => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const getResponseUser = (data: unknown): User | null => {
+  if (!data || typeof data !== "object") return null;
+
+  const candidate = "user" in data ? data.user : data;
+  if (!candidate || typeof candidate !== "object") return null;
+
+  const possibleUser = candidate as Partial<User>;
+  if (
+    typeof possibleUser.id !== "string" ||
+    typeof possibleUser.name !== "string" ||
+    typeof possibleUser.email !== "string" ||
+    typeof possibleUser.role !== "string"
+  ) {
+    return null;
+  }
+
+  return possibleUser as User;
+};
+
+let pendingSessionRequest: Promise<User | null> | null = null;
+
+const requestSessionUser = (): Promise<User | null> => {
+  if (pendingSessionRequest) return pendingSessionRequest;
+
+  const request = api
+    .get('/auth/session')
+    .then((response) => getResponseUser(response.data))
+    .catch(() => null);
+
+  pendingSessionRequest = request;
+  void request.then(() => {
+    if (pendingSessionRequest === request) {
+      pendingSessionRequest = null;
+    }
+  });
+
+  return request;
+};
 
 export const AuthProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * Load saved session
-   */
+  /** Load the server-owned HttpOnly cookie session. */
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    let active = true;
 
-    try {
-      const savedToken = localStorage.getItem("token");
-      const savedUser = localStorage.getItem("user");
+    // Remove bearer credentials left by versions that used localStorage.
+    window.localStorage.removeItem("token");
+    window.localStorage.removeItem("user");
 
-      if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      }
-    } catch (err) {
-      console.error("Failed to restore session:", err);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  /**
-   * Persist user and token
-   */
-  const persistUser = useCallback(
-    (nextUser: User | null, nextToken?: string | null) => {
-      setUser(nextUser);
-
-      if (nextToken !== undefined) {
-        setToken(nextToken);
-      }
-
-      if (typeof window === "undefined") return;
-
-      if (nextUser) {
-        localStorage.setItem("user", JSON.stringify(nextUser));
-      } else {
-        localStorage.removeItem("user");
-      }
-
-      if (nextToken !== undefined) {
-        if (nextToken) {
-          localStorage.setItem("token", nextToken);
-        } else {
-          localStorage.removeItem("token");
+    const loadSession = async () => {
+      try {
+        const sessionUser = await requestSessionUser();
+        if (active) {
+          setUser(sessionUser);
+        }
+      } catch {
+        if (active) {
+          setUser(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
         }
       }
-    },
-    [],
-  );
+    };
+
+    const handleUnauthorized = () => setUser(null);
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    void loadSession();
+
+    return () => {
+      active = false;
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, []);
 
   /**
    * Login
@@ -109,11 +129,14 @@ export const AuthProvider: React.FC<{
         password,
       });
 
-      const { token, user } = response.data;
+      const authenticatedUser = getResponseUser(response.data);
+      if (!authenticatedUser) {
+        throw new Error("Login response did not include a valid user");
+      }
 
-      persistUser(user, token);
+      setUser(authenticatedUser);
     },
-    [persistUser],
+    [],
   );
 
   /**
@@ -129,44 +152,28 @@ export const AuthProvider: React.FC<{
   /**
    * Logout
    */
-  const logout = useCallback(() => {
-    persistUser(null, null);
-
-    if (typeof window !== "undefined") {
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // Clear local UI state even if the already-expired session returns 401.
+    } finally {
+      setUser(null);
       window.location.href = "/";
     }
-  }, [persistUser]);
+  }, []);
 
   /**
    * Update only changed user fields.
    */
   const updateUser = useCallback(
-    (updates: Partial<User>, nextToken?: string) => {
+    (updates: Partial<User>) => {
       setUser((currentUser) => {
-        if (!currentUser) return currentUser;
-
-        const mergedUser: User = {
-          ...currentUser,
-          ...updates,
-        };
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(mergedUser));
-
-          if (nextToken !== undefined) {
-            if (nextToken) {
-              localStorage.setItem("token", nextToken);
-            } else {
-              localStorage.removeItem("token");
-            }
-          }
+        if (currentUser) {
+          return { ...currentUser, ...updates };
         }
 
-        if (nextToken !== undefined) {
-          setToken(nextToken);
-        }
-
-        return mergedUser;
+        return getResponseUser(updates);
       });
     },
     [],
@@ -176,7 +183,6 @@ export const AuthProvider: React.FC<{
     <AuthContext.Provider
       value={{
         user,
-        token,
         loading,
         login,
         register,

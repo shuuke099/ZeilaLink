@@ -29,8 +29,8 @@ export interface HomeStats {
   successRate: string;
 }
 
-// These cards are intentionally static so the homepage never waits for API
-// data before returning its complete server-rendered content.
+// DEMO/illustrative content: intentionally static so the homepage never waits
+// for API data. The UI must identify these records and totals as non-live.
 export const FEATURED_JOBS: HomeJob[] = [
   {
     id: "seed-job-warehouse-associate",

@@ -18,25 +18,30 @@ export default function StatsSection({ language }: StatsSectionProps) {
     <section className="home-stats-section relative overflow-hidden border-y border-white/5 bg-slate-900 py-10 sm:py-14 lg:py-16">
       <div className="home-mobile-decoration absolute inset-0 bg-[radial-gradient(circle_at_50%_0,rgba(var(--color-primary-rgb),0.15),transparent_50%)]" />
       <div className="home-section-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <p className="mb-5 text-center text-[10px] font-black uppercase tracking-[0.16em] text-amber-200 sm:mb-7 sm:text-xs">
+          {isEn
+            ? "Illustrative platform goals • demo figures, not live totals"
+            : "Yoolal tusaale ah • tirooyinkani ma aha xog toos ah"}
+        </p>
         <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {[
             {
-              label: isEn ? "Jobs Posted" : "Shaqooyin la soo dhigay",
+              label: isEn ? "Jobs Goal" : "Yoolka Shaqooyinka",
               value: HOME_STATS.jobs,
               icon: Briefcase,
             },
             {
-              label: isEn ? "Skill Trainings" : "Tababaro Xirfadeed",
+              label: isEn ? "Training Goal" : "Yoolka Tababarada",
               value: HOME_STATS.trainings,
               icon: GraduationCap,
             },
             {
-              label: isEn ? "Talented Workers" : "Shaqaale Hibo leh",
+              label: isEn ? "Community Goal" : "Yoolka Bulshada",
               value: HOME_STATS.workers,
               icon: Users,
             },
             {
-              label: isEn ? "Success Rate" : "Heerka Guusha",
+              label: isEn ? "Success Goal" : "Yoolka Guusha",
               value: HOME_STATS.successRate,
               icon: TrendingUp,
             },

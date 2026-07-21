@@ -1,8 +1,10 @@
 ﻿'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
+  ArrowRight,
   BookOpen,
   Briefcase,
   ClipboardList,
@@ -20,6 +22,11 @@ import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
+import OrganizationApprovalModal from '@/components/admin/OrganizationApprovalModal';
+import {
+  type ApprovableAdminUser,
+  canApproveOrganization,
+} from '@/lib/adminApprovals';
 
 interface AdminMetrics {
   totalUsers: number;
@@ -84,6 +91,10 @@ type AdminTraining = {
   };
 };
 
+type PendingApprovalUser = ApprovableAdminUser & {
+  createdAt?: string;
+};
+
 const buildSmoothPath = (values: number[]) => {
   if (values.length === 0) return '';
   const width = 280;
@@ -117,7 +128,7 @@ const buildSmoothPath = (values: number[]) => {
 };
 
 export default function AdminOverviewPage() {
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isAdmin = user?.role?.toLowerCase() === 'admin';
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [bookings, setBookings] = useState<ServiceBooking[]>([]);
@@ -125,6 +136,9 @@ export default function AdminOverviewPage() {
   const [workers, setWorkers] = useState<WorkerUser[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
   const [trainings, setTrainings] = useState<AdminTraining[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApprovalUser[]>([]);
+  const [pendingApprovalTotal, setPendingApprovalTotal] = useState(0);
+  const [approvalTarget, setApprovalTarget] = useState<PendingApprovalUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -132,7 +146,7 @@ export default function AdminOverviewPage() {
       return;
     }
 
-    if (!isAdmin || !token) {
+    if (!isAdmin) {
       setLoading(false);
       return;
     }
@@ -141,13 +155,16 @@ export default function AdminOverviewPage() {
       try {
         setLoading(true);
 
-        const [metricsRes, bookingsRes, jobsRes, workersRes, servicesRes, trainingsRes] = await Promise.all([
+        const [metricsRes, bookingsRes, jobsRes, workersRes, servicesRes, trainingsRes, approvalsRes] = await Promise.all([
           api.get('/admin/metrics'),
           api.get('/admin/service-bookings'),
           api.get('/admin/jobs', { params: { page: 1, limit: 30 } }),
           api.get('/admin/users', { params: { role: 'worker', page: 1, limit: 20 } }),
           api.get('/admin/services'),
           api.get('/trainings', { params: { all: true, page: 1, limit: 12 } }),
+          api.get('/admin/users', {
+            params: { status: 'pending_approval', page: 1, limit: 5 },
+          }),
         ]);
 
         setMetrics(metricsRes.data || null);
@@ -156,6 +173,10 @@ export default function AdminOverviewPage() {
         setWorkers(workersRes.data?.users || []);
         setServices(servicesRes.data?.services || []);
         setTrainings(trainingsRes.data?.trainings || []);
+        setPendingApprovals(approvalsRes.data?.users || []);
+        setPendingApprovalTotal(
+          approvalsRes.data?.pagination?.total || approvalsRes.data?.users?.length || 0,
+        );
       } catch (error) {
         if (axios.isAxiosError(error)) {
           const status = error.response?.status;
@@ -171,7 +192,7 @@ export default function AdminOverviewPage() {
     };
 
     fetchDashboardData();
-  }, [authLoading, isAdmin, token]);
+  }, [authLoading, isAdmin]);
 
   const statCards = useMemo(
     () => [
@@ -258,6 +279,11 @@ export default function AdminOverviewPage() {
     return null;
   }, [workers]);
 
+  const handleOrganizationApproved = (userId: string) => {
+    setPendingApprovals((current) => current.filter((user) => user.id !== userId));
+    setPendingApprovalTotal((current) => Math.max(0, current - 1));
+  };
+
   return (
     <AdminDashboardPage title="Dashboard" description="">
       <div className="max-w-7xl mx-auto space-y-5 pb-8">
@@ -283,6 +309,79 @@ export default function AdminOverviewPage() {
               <p className={`mt-1 text-xs font-semibold ${card.accent}`}>{card.description}</p>
             </motion.div>
           ))}
+        </section>
+
+        <section className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                  <ShieldCheck size={18} />
+                </span>
+                <div>
+                  <h2 className="text-base font-black text-slate-900">Pending organization approvals</h2>
+                  <p className="text-xs text-slate-500">
+                    Email-verified employers and providers waiting for admin review.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+                {loading ? '...' : pendingApprovalTotal} pending
+              </span>
+              <Link
+                href="/admin/users?status=pending_approval"
+                className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800"
+              >
+                View all
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {!loading && pendingApprovals.length === 0 ? (
+              <div className="rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700 lg:col-span-2">
+                No organizations are waiting for approval.
+              </div>
+            ) : (
+              pendingApprovals.map((pendingUser) => (
+                <div
+                  key={pendingUser.id}
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-black text-slate-900">
+                        {pendingUser.organization?.name || pendingUser.name}
+                      </p>
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700">
+                        {pendingUser.organization?.type || pendingUser.role}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {pendingUser.name} · {pendingUser.email}
+                    </p>
+                    {pendingUser.createdAt && (
+                      <p className="mt-1 text-[11px] font-semibold text-slate-400">
+                        Registered {new Date(pendingUser.createdAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!canApproveOrganization(pendingUser)}
+                    onClick={() => setApprovalTarget(pendingUser)}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ShieldCheck size={15} />
+                    Review & approve
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </section>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -372,11 +471,17 @@ export default function AdminOverviewPage() {
             {topApplicant ? (
               <>
                 <div className="flex items-center gap-4">
-                  <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(topApplicant.name)}&background=2f67ea&color=ffffff&bold=true`}
-                    alt={topApplicant.name}
-                    className="h-20 w-20 rounded-full object-cover border border-slate-200"
-                  />
+                  <div
+                    aria-label={topApplicant.name}
+                    className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-[#2f67ea] text-xl font-black text-white"
+                  >
+                    {topApplicant.name
+                      .split(/\s+/)
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase())
+                      .join('') || 'U'}
+                  </div>
                   <div>
                     <p className="text-lg font-black text-slate-900">{topApplicant.name}</p>
                     <p className="text-sm text-slate-500">{topApplicant.email}</p>
@@ -569,6 +674,13 @@ export default function AdminOverviewPage() {
           </div>
         </section>
       </div>
+      {approvalTarget && (
+        <OrganizationApprovalModal
+          user={approvalTarget}
+          onClose={() => setApprovalTarget(null)}
+          onApproved={handleOrganizationApproved}
+        />
+      )}
     </AdminDashboardPage>
   );
 }
