@@ -56,10 +56,29 @@ jobs:
             echo "Save PM2..."
             pm2 save
 
-            # echo "Health check..."
-            # sleep 5
+            echo "Check restarted services..."
+            wait_for_service() {
+              service_name="$1"
+              service_url="$2"
 
-            # curl -fsS https://zeilalink.com/api/health
+              for attempt in $(seq 1 12); do
+                if curl -fsS "$service_url" > /dev/null; then
+                  echo "$service_name is healthy."
+                  return 0
+                fi
+
+                echo "Waiting for $service_name ($attempt/12)..."
+                sleep 5
+              done
+
+              echo "$service_name did not become healthy."
+              pm2 status
+              pm2 logs "$service_name" --lines 100 --nostream
+              return 1
+            }
+
+            wait_for_service "zeilalink-backend" "http://127.0.0.1:7000/health"
+            wait_for_service "zeilalink-frontend" "http://127.0.0.1:3000/"
 
             echo ""
             echo "Deployment completed successfully."
