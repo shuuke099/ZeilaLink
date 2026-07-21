@@ -31,6 +31,11 @@ jobs:
 
             cd ~/apps/ZeilaLink
 
+            # The frontend proxies /api to the backend on this same server.
+            # Export these values for both `next build` and the PM2 restart.
+            export INTERNAL_API_ORIGIN="http://127.0.0.1:7000"
+            export NEXT_PUBLIC_API_URL="/api"
+
             echo "Pull latest code..."
             git pull origin main
 
