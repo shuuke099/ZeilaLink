@@ -27,12 +27,7 @@ const parseHttpOrigin = (value, variableName) => {
 };
 
 const internalApiOrigin = parseHttpOrigin(
-  process.env.INTERNAL_API_ORIGIN ||
-    (isProductionRuntime
-      ? (() => {
-          throw new Error("INTERNAL_API_ORIGIN is required for a production build.");
-        })()
-      : DEFAULT_INTERNAL_API_ORIGIN),
+  process.env.INTERNAL_API_ORIGIN || DEFAULT_INTERNAL_API_ORIGIN,
   "INTERNAL_API_ORIGIN",
 );
 

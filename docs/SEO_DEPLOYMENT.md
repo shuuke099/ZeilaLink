@@ -76,7 +76,7 @@ in public metadata and are not secrets.
 | Variable | Required | Example |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Yes | `https://zeilalink.com` |
-| `INTERNAL_API_ORIGIN` | Yes | `http://127.0.0.1:7000` |
+| `INTERNAL_API_ORIGIN` | Recommended; same-server default is built in | `http://127.0.0.1:7000` |
 | `NEXT_PUBLIC_API_URL` | Yes | `/api` |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | After Search Console setup | Verification token only |
 | `NEXT_PUBLIC_BING_SITE_VERIFICATION` | After Bing setup | Verification token only |
