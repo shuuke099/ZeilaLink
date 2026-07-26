@@ -1,14 +1,19 @@
 export type ServiceItem = {
   id: string;
+  slug?: string | null;
   title: string;
+  titleSo?: string | null;
   category: string;
+  categorySo?: string | null;
   provider: string;
+  providerSo?: string | null;
   rating: number;
   reviews: number;
   priceLabel: string;
   image: string;
   badge: string;
   description: string;
+  descriptionSo?: string | null;
   gallery: string[];
   includes: string[];
   highlights: string[];

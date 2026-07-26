@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
 import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
 import { presentResume } from '../utils/resume';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const toBoolean = (value: any): boolean =>
   value === true || value === 'true' || value === '1';
@@ -17,9 +18,13 @@ const boundedPositiveInteger = (value: unknown, fallback: number, maximum: numbe
 
 const JOB_WRITE_FIELDS = new Set([
   'title',
+  'titleSo',
   'description',
+  'descriptionSo',
   'requirements',
+  'requirementsSo',
   'benefits',
+  'benefitsSo',
   'location',
   'salaryMin',
   'salaryMax',
@@ -136,10 +141,33 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       where.employer = { verified: true, user: { isVerified: true } };
     }
 
-    if (search) {
+    if (typeof search === 'string' && search.trim()) {
+      const searchQuery = search.trim().slice(0, 200);
       where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
+        { title: { contains: searchQuery, mode: 'insensitive' } },
+        { titleSo: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } },
+        { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+        { requirements: { contains: searchQuery, mode: 'insensitive' } },
+        { requirementsSo: { contains: searchQuery, mode: 'insensitive' } },
+        { benefits: { contains: searchQuery, mode: 'insensitive' } },
+        { benefitsSo: { contains: searchQuery, mode: 'insensitive' } },
+        { location: { contains: searchQuery, mode: 'insensitive' } },
+        { employmentType: { contains: searchQuery, mode: 'insensitive' } },
+        { tags: { has: searchQuery } },
+        { tags: { has: searchQuery.toLowerCase() } },
+        {
+          employer: {
+            is: {
+              OR: [
+                { name: { contains: searchQuery, mode: 'insensitive' } },
+                { nameSo: { contains: searchQuery, mode: 'insensitive' } },
+                { description: { contains: searchQuery, mode: 'insensitive' } },
+                { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
       ];
     }
 
@@ -196,8 +224,16 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       const transformedJobs = jobs.map((job) => ({
         ...job,
         employer: {
+          id: job.employer.id,
+          slug: job.employer.slug,
           name: job.employer.name,
+          nameSo: job.employer.nameSo,
           logoUrl: job.employer.logoUrl,
+          bannerUrl: job.employer.bannerUrl,
+          description: job.employer.description,
+          descriptionSo: job.employer.descriptionSo,
+          website: job.employer.website,
+          address: job.employer.address,
           avatarUrl: null,
         },
       }));
@@ -231,8 +267,10 @@ export const getJobById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const job = await prisma.job.findUnique({
-      where: { id },
+    const job = await prisma.job.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
       include: {
         employer: {
           include: {
@@ -273,7 +311,7 @@ export const getJobById = async (req: AuthRequest, res: Response) => {
     // Increment view count
     if (publiclyVisible) {
       await prisma.job.update({
-        where: { id },
+        where: { id: job.id },
         data: { viewsCount: { increment: 1 } },
       });
       job.viewsCount += 1;
@@ -283,8 +321,16 @@ export const getJobById = async (req: AuthRequest, res: Response) => {
     const transformedJob = {
       ...job,
       employer: {
+        id: job.employer.id,
+        slug: job.employer.slug,
         name: job.employer.name,
+        nameSo: job.employer.nameSo,
         logoUrl: job.employer.logoUrl,
+        bannerUrl: job.employer.bannerUrl,
+        description: job.employer.description,
+        descriptionSo: job.employer.descriptionSo,
+        website: job.employer.website,
+        address: job.employer.address,
         avatarUrl: null,
       },
     };
@@ -318,6 +364,16 @@ export const createJob = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({
         error: 'title, description, requirements, location and employmentType are required',
       });
+    }
+
+    for (const field of ['titleSo', 'descriptionSo', 'requirementsSo', 'benefitsSo'] as const) {
+      if (
+        hasOwn(payload, field) &&
+        payload[field] !== null &&
+        typeof payload[field] !== 'string'
+      ) {
+        return res.status(400).json({ error: `${field} must be a string or null` });
+      }
     }
 
     if (
@@ -377,25 +433,37 @@ export const createJob = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Verified and approved employer account required' });
     }
 
-    const job = await prisma.job.create({
-      data: {
-        title,
-        description,
-        requirements,
-        benefits: typeof payload.benefits === 'string' ? payload.benefits.trim() || null : null,
-        employerId: employer.id,
-        location,
-        salaryMin,
-        salaryMax,
-        employmentType,
-        remote: remoteFlag,
-        tags,
-        published: publishFlag,
-        applicationDeadline,
-      },
-      include: {
-        employer: true,
-      },
+    const job = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.job.create({
+        data: {
+          title,
+          titleSo: typeof payload.titleSo === 'string' ? payload.titleSo.trim() || null : null,
+          description,
+          descriptionSo:
+            typeof payload.descriptionSo === 'string' ? payload.descriptionSo.trim() || null : null,
+          requirements,
+          requirementsSo:
+            typeof payload.requirementsSo === 'string' ? payload.requirementsSo.trim() || null : null,
+          benefits: typeof payload.benefits === 'string' ? payload.benefits.trim() || null : null,
+          benefitsSo:
+            typeof payload.benefitsSo === 'string' ? payload.benefitsSo.trim() || null : null,
+          employerId: employer.id,
+          location,
+          salaryMin,
+          salaryMax,
+          employmentType,
+          remote: remoteFlag,
+          tags,
+          published: publishFlag,
+          applicationDeadline,
+        },
+      });
+
+      return transaction.job.update({
+        where: { id: created.id },
+        data: { slug: createStableSlug(created.title, created.id, 'job') },
+        include: { employer: true },
+      });
     });
 
     void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
@@ -471,6 +539,15 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
       updateData.benefits = typeof payload.benefits === 'string' ? payload.benefits.trim() || null : null;
     }
 
+    for (const field of ['titleSo', 'descriptionSo', 'requirementsSo', 'benefitsSo'] as const) {
+      if (!hasOwn(payload, field)) continue;
+      if (payload[field] !== null && typeof payload[field] !== 'string') {
+        return res.status(400).json({ error: `${field} must be a string or null` });
+      }
+      updateData[field] =
+        typeof payload[field] === 'string' ? payload[field].trim() || null : null;
+    }
+
     for (const field of ['salaryMin', 'salaryMax'] as const) {
       if (!hasOwn(payload, field)) continue;
       const parsed = parseNullableInteger(payload[field]);
@@ -512,6 +589,14 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
       }
       updateData.applicationDeadline = parsed;
     }
+
+    const missingSlug = slugWhenMissing(
+      job.slug,
+      hasOwn(updateData, 'title') ? updateData.title : job.title,
+      job.id,
+      'job',
+    );
+    if (missingSlug) updateData.slug = missingSlug;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No supported job fields supplied' });
@@ -598,7 +683,12 @@ export const publishJob = async (req: AuthRequest, res: Response) => {
 
     const updated = await prisma.job.update({
       where: { id },
-      data: { published: true },
+      data: {
+        published: true,
+        ...(slugWhenMissing(job.slug, job.title, job.id, 'job')
+          ? { slug: createStableSlug(job.title, job.id, 'job') }
+          : {}),
+      },
     });
 
     void invalidateCacheByPrefix(['jobs:list', 'public:stats']);

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Privacy Policy | ZeilaLink",
   description: "How ZeilaLink collects, uses, and protects personal information.",
-};
+  path: "/privacy",
+  keywords: ["ZeilaLink privacy policy", "data protection"],
+});
 
 const sectionClass = "space-y-3";
 const headingClass = "text-xl font-black text-heading";
@@ -32,6 +35,7 @@ export default function PrivacyPage() {
               <li>Account and contact details, including your name, email address, phone number, and role.</li>
               <li>Profile, resume, application, employer, provider, training, and service-booking information you submit.</li>
               <li>Support and assistant messages, device information, and basic service activity needed to operate and secure the platform.</li>
+              <li>When analytics is enabled, limited usage information such as page views, device type, and approximate region used to understand and improve the platform.</li>
               <li>Payment status and transaction references from payment providers. ZeilaLink does not store complete payment-card details.</li>
             </ul>
           </section>

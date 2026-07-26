@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Star } from 'lucide-react';
+import { ChevronDown, Search, Star } from 'lucide-react';
 import Link from 'next/link';
 import { cachedApiGet } from '@/lib/api-cache';
 import { serviceCategories, services as fallbackServices } from '../data/services';
@@ -9,19 +9,35 @@ import type { ServiceItem } from '../data/services';
 
 type ServiceListProps = {
   isEn: boolean;
+  initialServices?: ServiceItem[];
+  initialCategories?: string[];
+  loadError?: boolean;
 };
 
-export default function ServiceList({ isEn }: ServiceListProps) {
+export default function ServiceList({
+  isEn,
+  initialServices = [],
+  initialCategories = [],
+  loadError = false,
+}: ServiceListProps) {
   const [activeCategory, setActiveCategory] = useState('All Services');
-  const [services, setServices] = useState<ServiceItem[]>(fallbackServices);
-  const [categories, setCategories] = useState<string[]>(serviceCategories);
+  const [search, setSearch] = useState('');
+  const hasInitialServices = initialServices.length > 0;
+  const [services, setServices] = useState<ServiceItem[]>(
+    hasInitialServices ? initialServices : fallbackServices,
+  );
+  const [categories, setCategories] = useState<string[]>(
+    initialCategories.length > 0
+      ? [...new Set([...serviceCategories, ...initialCategories])]
+      : serviceCategories,
+  );
   const [showAllMobileFilters, setShowAllMobileFilters] = useState(false);
-  const [usingDemoData, setUsingDemoData] = useState(true);
+  const [usingDemoData, setUsingDemoData] = useState(!hasInitialServices);
 
   useEffect(() => {
     const loadServices = async () => {
       try {
-        const data = await cachedApiGet<any>('/services', undefined, 60_000);
+        const data = await cachedApiGet<any>('/services?limit=100', undefined, 60_000);
         const apiServices = Array.isArray(data?.services) ? data.services : [];
         const apiCategories = Array.isArray(data?.categories) ? data.categories : [];
 
@@ -52,9 +68,32 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   }, []);
 
   const filteredServices = useMemo(() => {
-    if (activeCategory === 'All Services') return services;
-    return services.filter((item) => item.category === activeCategory);
-  }, [activeCategory, services]);
+    const query = search.trim().toLowerCase();
+
+    return services.filter((item) => {
+      if (
+        activeCategory !== 'All Services' &&
+        item.category !== activeCategory
+      ) {
+        return false;
+      }
+      if (!query) return true;
+
+      return [
+        item.title,
+        item.titleSo || '',
+        item.description,
+        item.descriptionSo || '',
+        item.provider,
+        item.providerSo || '',
+        item.category,
+        item.categorySo || '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    });
+  }, [activeCategory, search, services]);
 
   const mobileCategories = showAllMobileFilters ? categories : categories.slice(0, 4);
   const hasMoreMobileFilters = categories.length > mobileCategories.length;
@@ -62,6 +101,28 @@ export default function ServiceList({ isEn }: ServiceListProps) {
   return (
     <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen transition-colors">
       <div className="max-w-[1320px] mx-auto">
+        <div className="mb-8 max-w-3xl">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+            {isEn ? 'ZeilaLink Service Marketplace' : 'Suuqa Adeegyada ZeilaLink'}
+          </p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
+            {isEn ? 'Professional Services' : 'Adeegyada Xirfadeed'}
+          </h1>
+          <p className="mt-3 text-base leading-relaxed text-slate-600">
+            {isEn
+              ? 'Search trusted local and online services from providers serving Somali communities.'
+              : 'Ka raadi adeegyo maxalli ah iyo kuwo online ah oo ay bixiyaan adeeg-bixiyeyaal u adeegaya bulshada Soomaaliyeed.'}
+          </p>
+        </div>
+
+        {loadError && !usingDemoData && (
+          <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
+            {isEn
+              ? 'The latest service updates could not be loaded.'
+              : 'Cusboonaysiinta adeegyada ugu dambeysay lama soo dejin karin.'}
+          </div>
+        )}
+
         {usingDemoData && (
           <div
             role="status"
@@ -72,6 +133,25 @@ export default function ServiceList({ isEn }: ServiceListProps) {
               : 'Buuggan waa tusaale — bixiyeyaasha, qiimayaasha, qiimeynta, iyo faallooyinka waa xog tijaabo ah. Dalabku waa xiran yahay.'}
           </div>
         )}
+
+        <div className="relative mb-6 max-w-2xl">
+          <Search
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            size={20}
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={
+              isEn
+                ? 'Search services in English or Somali'
+                : 'Ku raadi adeegyada Af-Soomaali ama Ingiriisi'
+            }
+            aria-label={isEn ? 'Search services' : 'Raadi adeegyada'}
+            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+          />
+        </div>
 
         <div className="mb-6 space-y-3">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:hidden">
@@ -134,14 +214,23 @@ export default function ServiceList({ isEn }: ServiceListProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-          {filteredServices.map((item) => (
+          {filteredServices.map((item) => {
+            const title = !isEn && item.titleSo?.trim() ? item.titleSo : item.title;
+            const description =
+              !isEn && item.descriptionSo?.trim()
+                ? item.descriptionSo
+                : item.description;
+            const provider =
+              !isEn && item.providerSo?.trim() ? item.providerSo : item.provider;
+
+            return (
             <Link
               key={item.id}
-              href={`/services/${item.id}`}
+              href={`/services/${item.slug || item.id}`}
               className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-300/40"
             >
               <div className="relative h-36 overflow-hidden">
-                <img src={item.image} alt={item.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
                 <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[9px] tracking-wide font-bold uppercase bg-white/95 text-[#2d7df6] border border-slate-200">
                   {item.isDemo || usingDemoData ? `Demo • ${item.badge}` : item.badge}
@@ -151,13 +240,13 @@ export default function ServiceList({ isEn }: ServiceListProps) {
               <div className="p-3">
                 <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1.5">
                   <span className="w-2 h-2 rounded-full bg-slate-800" />
-                  <span className="font-medium truncate">{item.provider}</span>
+                  <span className="font-medium truncate">{provider}</span>
                 </div>
 
                 <div className="flex items-start justify-between gap-3 min-h-[70px]">
                   <div>
-                    <h3 className="font-bold text-[14px] text-slate-900 leading-[1.2] mb-1">{item.title}</h3>
-                    <p className="text-[11px] text-slate-500 leading-[1.3] max-h-8 overflow-hidden">{item.description}</p>
+                    <h2 className="font-bold text-[14px] text-slate-900 leading-[1.2] mb-1">{title}</h2>
+                    <p className="text-[11px] text-slate-500 leading-[1.3] max-h-8 overflow-hidden">{description}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] uppercase font-bold text-slate-400">{isEn ? 'Starting' : 'Ka bilaabma'}</p>
@@ -180,7 +269,8 @@ export default function ServiceList({ isEn }: ServiceListProps) {
                 </div>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
 
         {filteredServices.length === 0 && (

@@ -199,7 +199,7 @@ export default function ProviderCoursesPage() {
                       <div className="flex justify-end gap-2 flex-wrap">
                         <button
                           className="btn-secondary flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl"
-                          onClick={() => (window.location.href = `/trainings/${course.id}`)}
+                          onClick={() => (window.location.href = `/training/${course.id}`)}
                           title={language === 'en' ? 'View Details' : 'Eeg Faahfaahinta'}
                         >
                           <Eye className="h-3.5 w-3.5" />

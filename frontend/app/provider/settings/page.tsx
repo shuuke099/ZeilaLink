@@ -16,7 +16,9 @@ type ProviderSettingsState = {
 
 type ProviderProfileForm = {
   name: string;
+  nameSo: string;
   description: string;
+  descriptionSo: string;
   logoUrl: string;
   rating?: number | null;
   verified?: boolean | null;
@@ -37,7 +39,9 @@ export default function ProviderSettingsPage() {
 
   const [profileForm, setProfileForm] = useState<ProviderProfileForm>({
     name: '',
+    nameSo: '',
     description: '',
+    descriptionSo: '',
     logoUrl: '',
   });
   const [profileFeedback, setProfileFeedback] = useState<Feedback>(null);
@@ -74,7 +78,9 @@ export default function ProviderSettingsPage() {
         if (res.data) {
           setProfileForm({
             name: res.data.name || '',
+            nameSo: res.data.nameSo || '',
             description: res.data.description || '',
+            descriptionSo: res.data.descriptionSo || '',
             logoUrl: res.data.logoUrl || '',
             rating: res.data.rating ?? null,
             verified: res.data.verified ?? null,
@@ -100,7 +106,9 @@ export default function ProviderSettingsPage() {
       setProfileSaving(true);
       await api.post('/providers', {
         name: profileForm.name,
+        nameSo: profileForm.nameSo || null,
         description: profileForm.description,
+        descriptionSo: profileForm.descriptionSo || null,
         logoUrl: profileForm.logoUrl,
       });
       setProfileFeedback({ type: 'success', text: 'Profile saved successfully.' });
@@ -335,7 +343,7 @@ export default function ProviderSettingsPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-primary-darker">Institution name</label>
+                  <label className="text-sm font-medium text-primary-darker">Institution name (English)</label>
                   <input
                     className="input-field mt-2"
                     value={profileForm.name}
@@ -349,7 +357,21 @@ export default function ProviderSettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-primary-darker">Description</label>
+                  <label className="text-sm font-medium text-primary-darker">Magaca hay&apos;adda (Soomaali)</label>
+                  <input
+                    className="input-field mt-2"
+                    lang="so"
+                    value={profileForm.nameSo}
+                    onChange={(event) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        nameSo: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-primary-darker">Description (English)</label>
                   <textarea
                     className="input-field mt-2 min-h-[140px]"
                     value={profileForm.description}
@@ -360,6 +382,21 @@ export default function ProviderSettingsPage() {
                       }))
                     }
                     placeholder="Share your mission, expertise areas, and learner outcomes."
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-primary-darker">Sharaxaadda (Soomaali)</label>
+                  <textarea
+                    className="input-field mt-2 min-h-[140px]"
+                    lang="so"
+                    value={profileForm.descriptionSo}
+                    onChange={(event) =>
+                      setProfileForm((prev) => ({
+                        ...prev,
+                        descriptionSo: event.target.value,
+                      }))
+                    }
+                    placeholder="La wadaag ujeeddada, khibradda, iyo natiijooyinka ardayda."
                   />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">

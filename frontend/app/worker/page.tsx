@@ -429,7 +429,7 @@ export default function WorkerOverviewPage() {
                         {training.duration}
                       </p>
                       <a
-                        href={`/trainings/${training.id}`}
+                        href={`/training/${training.id}`}
                         className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition"
                       >
                         Preview
@@ -442,7 +442,7 @@ export default function WorkerOverviewPage() {
               <div className="mt-4 space-y-4 text-center py-4 text-xs font-medium text-slate-500">
                 <p>No specific recommendations.</p>
                 <a
-                  href="/trainings"
+                  href="/training"
                   className="inline-flex w-full justify-center items-center rounded-2xl bg-blue-50 px-4 py-3 text-xs font-black uppercase tracking-widest text-blue-600 shadow-sm hover:bg-blue-100 transition-colors"
                 >
                   Explore Catalog

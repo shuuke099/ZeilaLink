@@ -188,7 +188,7 @@ export default function FeaturedOpportunitiesSection({
                 FEATURED_TRAININGS.map((training) => (
                   <Link
                     key={training.id}
-                    href="/trainings"
+                    href="/training"
                     className="group block rounded-2xl border border-emerald-300/15 bg-emerald-950/25 p-4 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300/40 hover:bg-emerald-950/40 hover:shadow-emerald-950/30 sm:p-5"
                   >
                     <div className="flex items-start gap-3.5">
@@ -249,7 +249,7 @@ export default function FeaturedOpportunitiesSection({
             </div>
 
             <Link
-              href="/trainings"
+              href="/training"
               className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-5 py-3.5 text-sm font-black text-emerald-200 transition-all hover:border-emerald-300/40 hover:bg-emerald-500 hover:text-white"
             >
               {isEn ? "Explore training programs" : "Eeg barnaamijyada tababarka"}

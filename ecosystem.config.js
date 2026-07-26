@@ -30,6 +30,14 @@ module.exports = {
         PORT: 3000,
         INTERNAL_API_ORIGIN: "http://127.0.0.1:7000",
         NEXT_PUBLIC_API_URL: "/api",
+        NEXT_PUBLIC_SITE_URL:
+          process.env.NEXT_PUBLIC_SITE_URL || "https://zeilalink.com",
+        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:
+          process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+        NEXT_PUBLIC_BING_SITE_VERIFICATION:
+          process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || "",
+        NEXT_PUBLIC_GA_MEASUREMENT_ID:
+          process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "",
       },
     },
   ],

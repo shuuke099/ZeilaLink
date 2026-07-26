@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Cookie Policy | ZeilaLink",
   description: "How ZeilaLink uses cookies and browser storage.",
-};
+  path: "/cookies",
+  keywords: ["ZeilaLink cookie policy", "browser storage"],
+});
 
 const headingClass = "text-xl font-black text-heading";
 const paragraphClass = "text-sm leading-7 text-muted sm:text-base";
@@ -63,6 +66,11 @@ export default function CookiesPage() {
                     <td className="px-4 py-3 font-bold text-heading">Assistant history</td>
                     <td className="px-4 py-3">Keeps recent assistant messages on your device.</td>
                     <td className="px-4 py-3">Until cleared</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3 font-bold text-heading">Analytics (optional)</td>
+                    <td className="px-4 py-3">Helps us understand page usage and improve ZeilaLink when Google Analytics is configured.</td>
+                    <td className="px-4 py-3">Set by the analytics provider</td>
                   </tr>
                 </tbody>
               </table>

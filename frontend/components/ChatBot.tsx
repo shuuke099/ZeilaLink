@@ -268,7 +268,7 @@ export default function ChatBot() {
         window.location.href = '/services';
         return true;
       case 'NAV_TRAININGS':
-        window.location.href = '/trainings';
+        window.location.href = '/training';
         return true;
       case 'NAV_REGISTER':
         window.location.href = '/register';

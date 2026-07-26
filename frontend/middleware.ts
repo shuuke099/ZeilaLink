@@ -9,20 +9,44 @@ const createNonce = (): string => {
 export function middleware(request: NextRequest) {
   const nonce = createNonce();
   const isDevelopment = process.env.NODE_ENV !== "production";
+  const analyticsEnabled = /^G-[A-Z0-9]+$/i.test(
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "",
+  );
   const scriptSources = [
     "'self'",
     `'nonce-${nonce}'`,
     "'strict-dynamic'",
+    ...(analyticsEnabled ? ["https://www.googletagmanager.com"] : []),
     ...(isDevelopment ? ["'unsafe-eval'"] : []),
   ];
   const connectSources = [
     "'self'",
+    ...(analyticsEnabled
+      ? [
+          "https://www.google-analytics.com",
+          "https://*.google-analytics.com",
+          "https://analytics.google.com",
+          "https://www.googletagmanager.com",
+        ]
+      : []),
     ...(isDevelopment
       ? [
           "http://localhost:*",
           "http://127.0.0.1:*",
           "ws://localhost:*",
           "ws://127.0.0.1:*",
+        ]
+      : []),
+  ];
+  const imageSources = [
+    "'self'",
+    "data:",
+    "blob:",
+    "https://images.unsplash.com",
+    ...(analyticsEnabled
+      ? [
+          "https://www.google-analytics.com",
+          "https://*.google-analytics.com",
         ]
       : []),
   ];
@@ -36,7 +60,7 @@ export function middleware(request: NextRequest) {
     `script-src ${scriptSources.join(" ")}`,
     "script-src-attr 'none'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://images.unsplash.com",
+    `img-src ${imageSources.join(" ")}`,
     "font-src 'self' data:",
     `connect-src ${connectSources.join(" ")}`,
     "media-src 'self' blob:",
@@ -47,6 +71,7 @@ export function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-canonical-path", request.nextUrl.pathname);
   requestHeaders.set("Content-Security-Policy", policy);
 
   const response = NextResponse.next({

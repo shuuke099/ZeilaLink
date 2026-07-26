@@ -1,0 +1,28 @@
+import type { MetadataRoute } from "next";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+} from "@/lib/seo";
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: SITE_NAME,
+    short_name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#1f7fe9",
+    lang: "en",
+    categories: ["business", "education", "productivity"],
+    icons: [
+      {
+        src: "/icon.png",
+        sizes: "any",
+        type: "image/png",
+        purpose: "any",
+      },
+    ],
+  };
+}

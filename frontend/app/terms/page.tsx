@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Terms of Use | ZeilaLink",
   description: "Terms governing use of the ZeilaLink platform.",
-};
+  path: "/terms",
+  keywords: ["ZeilaLink terms", "terms of use"],
+});
 
 const sectionClass = "space-y-3";
 const headingClass = "text-xl font-black text-heading";

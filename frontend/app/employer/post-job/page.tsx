@@ -8,13 +8,18 @@ import { useAuth } from '@/contexts/AuthContext';
 
 type JobFormState = {
   title: string;
+  titleSo: string;
   description: string;
+  descriptionSo: string;
   salaryMin: string;
   salaryMax: string;
   jobType: string;
   location: string;
   category: string;
   requirements: string;
+  requirementsSo: string;
+  benefits: string;
+  benefitsSo: string;
   tags: string;
 };
 
@@ -27,13 +32,18 @@ function EmployerPostJobContent() {
   
   const [formState, setFormState] = React.useState<JobFormState>({
     title: '',
+    titleSo: '',
     description: '',
+    descriptionSo: '',
     salaryMin: '',
     salaryMax: '',
     jobType: 'Full-time',
     location: '',
     category: '',
     requirements: '',
+    requirementsSo: '',
+    benefits: '',
+    benefitsSo: '',
     tags: '',
   });
   const [submitting, setSubmitting] = React.useState(false);
@@ -54,13 +64,18 @@ function EmployerPostJobContent() {
         if (job) {
           setFormState({
             title: job.title || '',
+            titleSo: job.titleSo || '',
             description: job.description || '',
+            descriptionSo: job.descriptionSo || '',
             salaryMin: job.salaryMin?.toString() || '',
             salaryMax: job.salaryMax?.toString() || '',
             jobType: job.employmentType || 'Full-time',
             location: job.location || '',
             category: '', // Not stored in backend currently
             requirements: job.requirements || '',
+            requirementsSo: job.requirementsSo || '',
+            benefits: job.benefits || '',
+            benefitsSo: job.benefitsSo || '',
             tags: Array.isArray(job.tags) ? job.tags.join(', ') : job.tags || '',
           });
         }
@@ -87,8 +102,13 @@ function EmployerPostJobContent() {
       
       const jobData = {
         title: formState.title,
+        titleSo: formState.titleSo || null,
         description: formState.description,
+        descriptionSo: formState.descriptionSo || null,
         requirements: formState.requirements,
+        requirementsSo: formState.requirementsSo || null,
+        benefits: formState.benefits || null,
+        benefitsSo: formState.benefitsSo || null,
         location: formState.location,
         salaryMin: formState.salaryMin ? Number(formState.salaryMin) : undefined,
         salaryMax: formState.salaryMax ? Number(formState.salaryMax) : undefined,
@@ -125,13 +145,18 @@ function EmployerPostJobContent() {
         // Clear form after successful submission
         setFormState({
           title: '',
+          titleSo: '',
           description: '',
+          descriptionSo: '',
           salaryMin: '',
           salaryMax: '',
           jobType: 'Full-time',
           location: '',
           category: '',
           requirements: '',
+          requirementsSo: '',
+          benefits: '',
+          benefitsSo: '',
           tags: '',
         });
       }
@@ -159,13 +184,18 @@ function EmployerPostJobContent() {
             type="button"
             onClick={() => setFormState({
               title: '',
+              titleSo: '',
               description: '',
+              descriptionSo: '',
               salaryMin: '',
               salaryMax: '',
               jobType: 'Full-time',
               location: '',
               category: '',
               requirements: '',
+              requirementsSo: '',
+              benefits: '',
+              benefitsSo: '',
               tags: '',
             })}
           >
@@ -204,7 +234,7 @@ function EmployerPostJobContent() {
           <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-heading">
-                  Job title
+                  Job title (English)
                 </label>
                 <input
                   className="input-field mt-2"
@@ -215,6 +245,28 @@ function EmployerPostJobContent() {
                   }
                   required
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-heading">
+                  Magaca shaqada (Soomaali)
+                </label>
+                <input
+                  className="input-field mt-2"
+                  lang="so"
+                  placeholder="Maamulaha Hawlaha"
+                  value={formState.titleSo}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      titleSo: event.target.value,
+                    }))
+                  }
+                />
+                <p className="mt-1 text-xs text-muted">
+                  Adding Somali text helps candidates find this job in either
+                  language.
+                </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -312,7 +364,7 @@ function EmployerPostJobContent() {
 
           <div>
             <label className="text-sm font-medium text-heading">
-              Job description
+              Job description (English)
             </label>
             <textarea
               className="input-field mt-2 h-40"
@@ -327,7 +379,25 @@ function EmployerPostJobContent() {
 
           <div>
             <label className="text-sm font-medium text-heading">
-              Requirements
+              Faahfaahinta shaqada (Soomaali)
+            </label>
+            <textarea
+              className="input-field mt-2 h-40"
+              lang="so"
+              placeholder="Ku sharax waajibaadka, ujeeddada, iyo deegaanka shaqada."
+              value={formState.descriptionSo}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  descriptionSo: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-heading">
+              Requirements (English)
             </label>
             <textarea
               className="input-field mt-2 h-32"
@@ -338,6 +408,60 @@ function EmployerPostJobContent() {
               }
               required
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-heading">
+              Shuruudaha (Soomaali)
+            </label>
+            <textarea
+              className="input-field mt-2 h-32"
+              lang="so"
+              placeholder="Qor xirfadaha iyo waayo-aragnimada looga baahan yahay shaqadan."
+              value={formState.requirementsSo}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  requirementsSo: event.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-heading">
+                Benefits (English)
+              </label>
+              <textarea
+                className="input-field mt-2 h-28"
+                placeholder="Health cover, paid leave, learning budget..."
+                value={formState.benefits}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    benefits: event.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-heading">
+                Faa&apos;iidooyinka (Soomaali)
+              </label>
+              <textarea
+                className="input-field mt-2 h-28"
+                lang="so"
+                placeholder="Caymis caafimaad, fasax lacag leh, tababar..."
+                value={formState.benefitsSo}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    benefitsSo: event.target.value,
+                  }))
+                }
+              />
+            </div>
           </div>
 
           <div>

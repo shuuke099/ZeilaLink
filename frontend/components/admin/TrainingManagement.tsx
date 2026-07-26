@@ -190,7 +190,7 @@ export default function TrainingManagement() {
                     </td>
                     <td className="px-10 py-6 text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/trainings/${t.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
+                        <Link href={`/training/${t.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
                         <button type="button" title="Edit" disabled={busyId === t.id} onClick={() => handleEdit(t)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"><Pencil size={16} /></button>
                         <button type="button" title="Delete" disabled={busyId === t.id} onClick={() => handleDelete(t)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
                       </div>

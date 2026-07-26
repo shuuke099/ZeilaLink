@@ -1,6 +1,6 @@
-# Somali Job Platform
+# ZeilaLink
 
-Somali Job Platform is a full-stack job, skills, and training system built for Somali-speaking communities. It connects workers, employers, training providers, and admins in one bilingual (English/Somali) platform.
+ZeilaLink is a full-stack jobs, workers, skills, training, services, and business platform built for Somali-speaking communities. It connects workers, employers, training providers, service providers, and admins in one bilingual (English/Somali) platform.
 
 ## What this system includes
 
@@ -97,6 +97,7 @@ explicitly sets `ALLOW_PRODUCTION_SEED=true`.
 See `.env.example` for all keys. Important groups:
 
 - Core: `NODE_ENV`, `PORT`, `FRONTEND_URL`, `BACKEND_PUBLIC_URL`, `INTERNAL_API_ORIGIN`, `UPLOADS_ROOT`
+- Public SEO: `NEXT_PUBLIC_SITE_URL`, optional Google/Bing verification tokens, and optional `NEXT_PUBLIC_GA_MEASUREMENT_ID`
 - Database: `DATABASE_URL`
 - Auth: independent `JWT_SECRET` and `OTP_SECRET` values (at least 32 random bytes), `JWT_EXPIRES_IN`, `AUTH_COOKIE_MAX_AGE_MS`
 - Email: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `CONTACT_EMAIL_TO`
@@ -160,3 +161,7 @@ Full endpoint list is in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
 - Start frontend: `pnpm -C frontend start`
 
 Use managed PostgreSQL and configure environment variables per environment.
+
+The production domain, reverse proxy, crawl endpoints, Search Console, Bing, and
+Analytics setup are documented in [docs/SEO_DEPLOYMENT.md](docs/SEO_DEPLOYMENT.md).
+Complete the P0 domain checks there before requesting search-engine indexing.

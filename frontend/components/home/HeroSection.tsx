@@ -99,7 +99,7 @@ export default function HeroSection({ language }: HeroSectionProps) {
               />
             </Link>
             <Link
-              href="/trainings"
+              href="/training"
               prefetch={false}
               className="w-full min-w-0 bg-white border border-slate-200 hover:border-primary/40 hover:-translate-y-0.5 text-slate-700 px-4 py-3.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center sm:w-auto sm:px-8 sm:py-4 sm:text-base"
             >

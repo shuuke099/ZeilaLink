@@ -5,10 +5,12 @@ import { hashPassword, validatePassword } from '../utils/password';
 import { presentResume } from '../utils/resume';
 import { presentEnrollment } from '../utils/certificate';
 import { invalidateCacheByPrefix } from '../utils/cache';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const adminUserSelect = {
-  id: true, name: true, email: true, role: true, phone: true, location: true,
-  bio: true, preferredLanguage: true, isVerified: true, avatarUrl: true, createdAt: true, updatedAt: true,
+  id: true, slug: true, name: true, email: true, role: true, phone: true, location: true,
+  bio: true, bioSo: true, headline: true, headlineSo: true, profilePublic: true,
+  preferredLanguage: true, isVerified: true, avatarUrl: true, createdAt: true, updatedAt: true,
 } as const;
 
 const boundedPositiveInteger = (value: unknown, fallback: number, maximum: number) => {
@@ -111,7 +113,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
     const passwordError = validatePassword(String(password));
     if (passwordError) return res.status(400).json({ error: passwordError });
     const passwordHash = await hashPassword(String(password));
-    const user = await prisma.user.create({
+    let user = await prisma.user.create({
       data: {
         name: String(name).trim(), email: normalizedEmail, passwordHash,
         role: normalizedRole as any, phone: String(phone || '').trim() || null,
@@ -119,6 +121,19 @@ export const createUser = async (req: AuthRequest, res: Response) => {
       },
       select: adminUserSelect,
     });
+    if (!user.slug) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          slug: createStableSlug(
+            user.name,
+            user.id,
+            normalizedRole === 'worker' ? 'worker' : 'user',
+          ),
+        },
+        select: adminUserSelect,
+      });
+    }
     await prisma.auditLog.create({ data: { userId: req.user!.id, action: 'admin_create_user', resourceType: 'user', resourceId: user.id, meta: { role: user.role } } });
     return res.status(201).json(user);
   } catch (error: any) {
@@ -327,7 +342,21 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, role, phone, location, bio, preferredLanguage, isVerified, avatarUrl } = req.body;
+    const {
+      name,
+      email,
+      role,
+      phone,
+      location,
+      bio,
+      bioSo,
+      headline,
+      headlineSo,
+      profilePublic,
+      preferredLanguage,
+      isVerified,
+      avatarUrl,
+    } = req.body;
 
     if (role !== undefined && !['worker', 'employer', 'provider', 'admin'].includes(String(role))) {
       return res.status(400).json({ error: 'Invalid role' });
@@ -337,6 +366,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     }
     if (isVerified !== undefined && typeof isVerified !== 'boolean') {
       return res.status(400).json({ error: 'isVerified must be a boolean' });
+    }
+    if (profilePublic !== undefined && typeof profilePublic !== 'boolean') {
+      return res.status(400).json({ error: 'profilePublic must be a boolean' });
     }
     if (preferredLanguage !== undefined && !['en', 'so'].includes(String(preferredLanguage))) {
       return res.status(400).json({ error: 'Invalid preferred language' });
@@ -357,6 +389,26 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     ) {
       return res.status(400).json({ error: 'Invalid avatar URL' });
     }
+    for (const [field, value, maximum] of [
+      ['headline', headline, 200],
+      ['headlineSo', headlineSo, 200],
+      ['bio', bio, 5000],
+      ['bioSo', bioSo, 5000],
+    ] as const) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== 'string' || value.length > maximum)
+      ) {
+        return res.status(400).json({ error: `Invalid ${field}` });
+      }
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, slug: true },
+    });
+    if (!existing) return res.status(404).json({ error: 'User not found' });
 
     const updated = await prisma.user.update({
       where: { id },
@@ -367,21 +419,33 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         ...(phone !== undefined && { phone: String(phone || '').trim() || null }),
         ...(location !== undefined && { location: String(location || '').trim() || null }),
         ...(bio !== undefined && { bio: String(bio || '').slice(0, 5000) || null }),
+        ...(bioSo !== undefined && { bioSo: String(bioSo || '').slice(0, 5000) || null }),
+        ...(headline !== undefined && {
+          headline: String(headline || '').trim().slice(0, 200) || null,
+        }),
+        ...(headlineSo !== undefined && {
+          headlineSo: String(headlineSo || '').trim().slice(0, 200) || null,
+        }),
+        ...(profilePublic !== undefined && { profilePublic }),
         ...(preferredLanguage !== undefined && { preferredLanguage }),
         ...(isVerified !== undefined && { isVerified }),
         ...(avatarUrl !== undefined && { avatarUrl: avatarUrl || null }),
+        ...(slugWhenMissing(
+          existing.slug,
+          name !== undefined ? String(name).trim() : existing.name,
+          existing.id,
+          'worker',
+        )
+          ? {
+              slug: createStableSlug(
+                name !== undefined ? String(name).trim() : existing.name,
+                existing.id,
+                'worker',
+              ),
+            }
+          : {}),
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        phone: true,
-        location: true,
-        isVerified: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
+      select: adminUserSelect,
     });
 
     await prisma.auditLog.create({

@@ -86,6 +86,20 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
     { length: 4 },
     (_, index) => gallery[index % gallery.length],
   );
+  const serviceTitle =
+    !isEn && service.titleSo?.trim() ? service.titleSo : service.title;
+  const serviceDescription =
+    !isEn && service.descriptionSo?.trim()
+      ? service.descriptionSo
+      : service.description;
+  const serviceProvider =
+    !isEn && service.providerSo?.trim()
+      ? service.providerSo
+      : service.provider;
+  const serviceCategory =
+    !isEn && service.categorySo?.trim()
+      ? service.categorySo
+      : service.category;
 
   useEffect(() => {
     setForm((prev) => ({
@@ -294,7 +308,7 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
     <section className="pt-6 pb-16 px-4 sm:px-6 lg:px-8 bg-background transition-colors">
       <div className="max-w-7xl mx-auto">
         <div className="mb-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-          {service.category} | {service.provider}
+          {serviceCategory} | {serviceProvider}
         </div>
 
         {service.isDemo && (
@@ -308,7 +322,7 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
           </div>
         )}
 
-        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{service.title}</h1>
+        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{serviceTitle}</h1>
 
         <div className="flex items-center gap-2 text-sm text-slate-600 mb-6">
           <Star size={14} className="text-yellow-500 fill-yellow-500" />
@@ -322,30 +336,30 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
               {renderGalleryImage(
                 0,
                 'col-span-2 h-80 rounded-xl',
-                service.title,
+                serviceTitle,
               )}
               <div className="grid gap-3">
                 {renderGalleryImage(
                   1,
                   'h-[154px] rounded-xl',
-                  `${service.title} gallery 2`,
+                  `${serviceTitle} gallery 2`,
                 )}
                 {renderGalleryImage(
                   2,
                   'h-[154px] rounded-xl',
-                  `${service.title} gallery 3`,
+                  `${serviceTitle} gallery 3`,
                 )}
               </div>
               {renderGalleryImage(
                 3,
                 'col-span-3 h-48 rounded-xl',
-                `${service.title} gallery 4`,
+                `${serviceTitle} gallery 4`,
               )}
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <h2 className="text-xl font-black text-slate-900 mb-3">{isEn ? 'About this service' : 'Ku saabsan adeeggan'}</h2>
-              <p className="text-slate-600 leading-relaxed">{service.description}</p>
+              <p className="text-slate-600 leading-relaxed">{serviceDescription}</p>
 
               <div className="grid sm:grid-cols-3 gap-3 mt-6">
                 {highlights.map((item) => (
@@ -369,10 +383,10 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4">
-              <img src={service.expertImage || service.image} alt={service.expertName || service.provider} className="w-16 h-16 rounded-lg object-cover" />
+              <img src={service.expertImage || service.image} alt={service.expertName || serviceProvider} className="w-16 h-16 rounded-lg object-cover" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{isEn ? 'Meet your expert' : 'La kulan khabiirka'}</p>
-                <h4 className="font-bold text-slate-900">{service.expertName || service.provider}</h4>
+                <h4 className="font-bold text-slate-900">{service.expertName || serviceProvider}</h4>
                 <p className="text-sm text-slate-600">{service.expertRole || (isEn ? 'Service Consultant' : 'La-taliye adeeg')}</p>
               </div>
             </div>
@@ -512,6 +526,37 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
             </div>
           </aside>
         </div>
+
+        {service.descriptionSo && (
+          <details className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+            <summary className="cursor-pointer font-bold text-slate-900">
+              {isEn ? 'Akhri af-Soomaali' : 'Read in English'}
+            </summary>
+            <h2 className="mt-4 text-xl font-black text-slate-900">
+              {isEn ? service.titleSo || service.title : service.title}
+            </h2>
+            <p className="mt-3 whitespace-pre-line leading-relaxed text-slate-600">
+              {isEn ? service.descriptionSo : service.description}
+            </p>
+          </details>
+        )}
+
+        <section className="mt-6 rounded-2xl border border-primary/15 bg-primary/5 p-6">
+          <h2 className="text-lg font-black text-slate-900">
+            {isEn ? 'Explore more on ZeilaLink' : 'Wax badan ka eeg ZeilaLink'}
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-4 text-sm font-bold">
+            <a href="/services" className="text-primary hover:underline">
+              {isEn ? 'More services' : 'Adeegyo kale'}
+            </a>
+            <a href="/businesses" className="text-primary hover:underline">
+              {isEn ? 'Business directory' : 'Liiska ganacsiyada'}
+            </a>
+            <a href="/workers" className="text-primary hover:underline">
+              {isEn ? 'Worker profiles' : 'Bogagga shaqaalaha'}
+            </a>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -538,7 +583,7 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
         >
           <img
             src={gallery[activeGalleryIndex]}
-            alt={`${service.title} ${activeGalleryIndex + 1}`}
+            alt={`${serviceTitle} ${activeGalleryIndex + 1}`}
             className="max-h-[calc(100dvh-7rem)] max-w-full rounded-xl object-contain shadow-2xl sm:max-h-[calc(100dvh-6rem)]"
           />
 
@@ -579,8 +624,8 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
             <p className="text-xs text-slate-600 mt-1">{isEn ? 'Payment received via Stripe.' : 'Lacagta waxaa lagu helay Stripe.'}</p>
           </div>
           <div className="p-5 space-y-3 text-sm text-slate-700">
-            <p><span className="font-semibold text-slate-900">{isEn ? 'Service:' : 'Adeegga:'}</span> {paidBooking.service?.title || service.title}</p>
-            <p><span className="font-semibold text-slate-900">{isEn ? 'Provider:' : 'Bixiyaha:'}</span> {paidBooking.service?.provider || service.provider}</p>
+            <p><span className="font-semibold text-slate-900">{isEn ? 'Service:' : 'Adeegga:'}</span> {paidBooking.service?.title || serviceTitle}</p>
+            <p><span className="font-semibold text-slate-900">{isEn ? 'Provider:' : 'Bixiyaha:'}</span> {paidBooking.service?.provider || serviceProvider}</p>
             <p><span className="font-semibold text-slate-900">{isEn ? 'Price:' : 'Qiimaha:'}</span> {paidBooking.service?.priceLabel || service.priceLabel}</p>
             <p><span className="font-semibold text-slate-900">{isEn ? 'Booking ID:' : 'Lambarka Dalabka:'}</span> {paidBooking.id}</p>
             <p><span className="font-semibold text-slate-900">{isEn ? 'Logged-in name:' : 'Magaca akoonka:'}</span> {paidBooking.customerName}</p>

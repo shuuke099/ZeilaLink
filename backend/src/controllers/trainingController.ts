@@ -4,14 +4,18 @@ import { AuthRequest } from '../middleware/auth';
 import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
 import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
 import { normalizeCertificateUrl, presentEnrollment } from '../utils/certificate';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const TRAINING_WRITE_FIELDS = new Set([
   'name',
+  'nameSo',
   'category', // Accepted for backwards compatibility; Training currently has no category column.
   'skillId',
   'duration',
+  'durationSo',
   'cost',
   'description',
+  'descriptionSo',
   'certificateUrl',
   'imageUrl',
   'providesCertificate',
@@ -119,10 +123,38 @@ export const getTrainings = async (req: AuthRequest, res: Response) => {
       where.provider = { verified: true, user: { isVerified: true } };
     }
 
-    if (search) {
+    if (typeof search === 'string' && search.trim()) {
+      const searchQuery = search.trim().slice(0, 200);
       where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+        { nameSo: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } },
+        { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+        { duration: { contains: searchQuery, mode: 'insensitive' } },
+        { durationSo: { contains: searchQuery, mode: 'insensitive' } },
+        {
+          provider: {
+            is: {
+              OR: [
+                { name: { contains: searchQuery, mode: 'insensitive' } },
+                { nameSo: { contains: searchQuery, mode: 'insensitive' } },
+                { description: { contains: searchQuery, mode: 'insensitive' } },
+                { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
+        {
+          skill: {
+            is: {
+              OR: [
+                { name: { contains: searchQuery, mode: 'insensitive' } },
+                { description: { contains: searchQuery, mode: 'insensitive' } },
+                { category: { contains: searchQuery, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
       ];
     }
 
@@ -165,9 +197,12 @@ export const getTrainings = async (req: AuthRequest, res: Response) => {
         ...training,
         provider: {
           id: training.provider.id,
+          slug: training.provider.slug,
           name: training.provider.name,
+          nameSo: training.provider.nameSo,
           logoUrl: training.provider.logoUrl,
           description: training.provider.description,
+          descriptionSo: training.provider.descriptionSo,
           rating: training.provider.rating,
           verified: training.provider.verified,
         },
@@ -206,8 +241,10 @@ export const getTrainingById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const training = await prisma.training.findUnique({
-      where: { id },
+    const training = await prisma.training.findFirst({
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
       include: {
         provider: {
           include: {
@@ -250,7 +287,7 @@ export const getTrainingById = async (req: AuthRequest, res: Response) => {
       const existing = await prisma.userCertification.findFirst({
         where: {
           userId: req.user.id,
-          trainingId: id,
+          trainingId: training.id,
         },
         select: { id: true },
       });
@@ -262,9 +299,12 @@ export const getTrainingById = async (req: AuthRequest, res: Response) => {
       ...training,
       provider: {
         id: training.provider.id,
+        slug: training.provider.slug,
         name: training.provider.name,
+        nameSo: training.provider.nameSo,
         logoUrl: training.provider.logoUrl,
         description: training.provider.description,
+        descriptionSo: training.provider.descriptionSo,
         rating: training.provider.rating,
         verified: training.provider.verified,
       },
@@ -294,6 +334,16 @@ export const createTraining = async (req: AuthRequest, res: Response) => {
     const description = typeof payload.description === 'string' ? payload.description.trim() : '';
     if (!name || !duration || !description) {
       return res.status(400).json({ error: 'name, duration and description are required' });
+    }
+
+    for (const field of ['nameSo', 'durationSo', 'descriptionSo'] as const) {
+      if (
+        hasOwn(payload, field) &&
+        payload[field] !== null &&
+        typeof payload[field] !== 'string'
+      ) {
+        return res.status(400).json({ error: `${field} must be a string or null` });
+      }
     }
 
     const cost = hasOwn(payload, 'cost') ? Number(payload.cost) : 0;
@@ -342,23 +392,38 @@ export const createTraining = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Verified and approved provider account required' });
     }
 
-    const training = await prisma.training.create({
-      data: {
-        name,
-        providerId: provider.id,
-        skillId: typeof payload.skillId === 'string' ? payload.skillId.trim() || null : null,
-        duration,
-        cost,
-        description,
-        certificateUrl: typeof payload.certificateUrl === 'string' ? payload.certificateUrl.trim() || null : null,
-        imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl.trim() || null : null,
-        providesCertificate: providesCertificateFlag,
-        published: publishFlag,
-      },
-      include: {
-        provider: true,
-        skill: true,
-      },
+    const training = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.training.create({
+        data: {
+          name,
+          nameSo: typeof payload.nameSo === 'string' ? payload.nameSo.trim() || null : null,
+          providerId: provider.id,
+          skillId: typeof payload.skillId === 'string' ? payload.skillId.trim() || null : null,
+          duration,
+          durationSo:
+            typeof payload.durationSo === 'string' ? payload.durationSo.trim() || null : null,
+          cost,
+          description,
+          descriptionSo:
+            typeof payload.descriptionSo === 'string' ? payload.descriptionSo.trim() || null : null,
+          certificateUrl:
+            typeof payload.certificateUrl === 'string'
+              ? payload.certificateUrl.trim() || null
+              : null,
+          imageUrl: typeof payload.imageUrl === 'string' ? payload.imageUrl.trim() || null : null,
+          providesCertificate: providesCertificateFlag,
+          published: publishFlag,
+        },
+      });
+
+      return transaction.training.update({
+        where: { id: created.id },
+        data: { slug: createStableSlug(created.name, created.id, 'training') },
+        include: {
+          provider: true,
+          skill: true,
+        },
+      });
     });
 
     void invalidateCacheByPrefix(['trainings:list', 'public:stats']);
@@ -418,6 +483,15 @@ export const updateTraining = async (req: AuthRequest, res: Response) => {
       updates[field] = value;
     }
 
+    for (const field of ['nameSo', 'durationSo', 'descriptionSo'] as const) {
+      if (!hasOwn(payload, field)) continue;
+      if (payload[field] !== null && typeof payload[field] !== 'string') {
+        return res.status(400).json({ error: `${field} must be a string or null` });
+      }
+      updates[field] =
+        typeof payload[field] === 'string' ? payload[field].trim() || null : null;
+    }
+
     if (hasOwn(payload, 'cost')) {
       const cost = Number(payload.cost);
       if (!Number.isFinite(cost) || cost < 0) {
@@ -442,6 +516,14 @@ export const updateTraining = async (req: AuthRequest, res: Response) => {
       }
       updates[field] = typeof payload[field] === 'string' ? payload[field].trim() || null : null;
     }
+
+    const missingSlug = slugWhenMissing(
+      training.slug,
+      hasOwn(updates, 'name') ? updates.name : training.name,
+      training.id,
+      'training',
+    );
+    if (missingSlug) updates.slug = missingSlug;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No supported training fields supplied' });
@@ -503,7 +585,7 @@ export const enrollInTraining = async (req: AuthRequest, res: Response) => {
 
     const training = await prisma.training.findFirst({
       where: {
-        id,
+        OR: [{ id }, { slug: id }],
         published: true,
         provider: { verified: true, user: { isVerified: true } },
       },
@@ -517,7 +599,7 @@ export const enrollInTraining = async (req: AuthRequest, res: Response) => {
     const existing = await prisma.userCertification.findFirst({
       where: {
         userId: req.user!.id,
-        trainingId: id,
+        trainingId: training.id,
       },
     });
 
@@ -528,7 +610,7 @@ export const enrollInTraining = async (req: AuthRequest, res: Response) => {
     const enrollment = await prisma.userCertification.create({
       data: {
         userId: req.user!.id,
-        trainingId: id,
+        trainingId: training.id,
         skillId: training.skillId || null,
         // Enrollment is not completion and must never create a certificate.
         certificateUrl: null,
@@ -539,7 +621,7 @@ export const enrollInTraining = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    recordTrainingEvent(req, 'training.enroll', id, 'success', {
+    recordTrainingEvent(req, 'training.enroll', training.id, 'success', {
       enrollmentId: enrollment.id,
     });
     res.status(201).json({
@@ -694,16 +776,47 @@ export const adminUpdateTraining = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const existing = await prisma.training.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ error: 'Training not found' });
-    const { name, category, duration, description, cost, published } = req.body;
+    const {
+      name,
+      nameSo,
+      category,
+      duration,
+      durationSo,
+      description,
+      descriptionSo,
+      cost,
+      published,
+    } = req.body;
     const updated = await prisma.training.update({
       where: { id },
       data: {
         ...(name !== undefined && { name: String(name).trim() }),
+        ...(nameSo !== undefined && { nameSo: String(nameSo || '').trim() || null }),
         ...(category !== undefined && { category: String(category).trim() }),
         ...(duration !== undefined && { duration: String(duration).trim() }),
+        ...(durationSo !== undefined && {
+          durationSo: String(durationSo || '').trim() || null,
+        }),
         ...(description !== undefined && { description: String(description).trim() }),
+        ...(descriptionSo !== undefined && {
+          descriptionSo: String(descriptionSo || '').trim() || null,
+        }),
         ...(cost !== undefined && { cost: Math.max(0, Number(cost) || 0) }),
         ...(published !== undefined && { published: Boolean(published) }),
+        ...(slugWhenMissing(
+          existing.slug,
+          name !== undefined ? String(name).trim() : existing.name,
+          existing.id,
+          'training',
+        )
+          ? {
+              slug: createStableSlug(
+                name !== undefined ? String(name).trim() : existing.name,
+                existing.id,
+                'training',
+              ),
+            }
+          : {}),
       },
     });
     void invalidateCacheByPrefix(['trainings:list', 'trainings:detail', 'public:stats']);
@@ -711,9 +824,12 @@ export const adminUpdateTraining = async (req: AuthRequest, res: Response) => {
       source: 'admin',
       fields: [
         ['name', name],
+        ['nameSo', nameSo],
         ['category', category],
         ['duration', duration],
+        ['durationSo', durationSo],
         ['description', description],
+        ['descriptionSo', descriptionSo],
         ['cost', cost],
         ['published', published],
       ]

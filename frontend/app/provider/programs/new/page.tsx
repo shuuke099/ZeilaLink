@@ -9,9 +9,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 type ProgramFormState = {
   name: string;
+  nameSo: string;
   category: string;
   duration: string;
+  durationSo: string;
   description: string;
+  descriptionSo: string;
   cost: string;
   providesCertificate: boolean;
   imageUrl?: string;
@@ -31,9 +34,12 @@ export default function ProviderNewProgramPage() {
   const { language } = useLanguage();
   const [formState, setFormState] = React.useState<ProgramFormState>({
     name: '',
+    nameSo: '',
     category: '',
     duration: '',
+    durationSo: '',
     description: '',
+    descriptionSo: '',
     cost: '',
     providesCertificate: true,
     location: '',
@@ -54,9 +60,12 @@ export default function ProviderNewProgramPage() {
   const resetCourseFields = React.useCallback(() => {
     setFormState((prev) => ({
       name: '',
+      nameSo: '',
       category: '',
       duration: '',
+      durationSo: '',
       description: '',
+      descriptionSo: '',
       cost: '',
       providesCertificate: true,
       location: '',
@@ -185,9 +194,12 @@ export default function ProviderNewProgramPage() {
 
       await api.post('/trainings', {
         name: formState.name,
+        nameSo: formState.nameSo || null,
         category: formState.category,
         duration: formState.duration,
+        durationSo: formState.durationSo || null,
         description: finalDescription,
+        descriptionSo: formState.descriptionSo || null,
         cost: Number(formState.cost) || 0,
         providesCertificate: formState.providesCertificate,
         imageUrl: formState.imageUrl,
@@ -240,7 +252,7 @@ export default function ProviderNewProgramPage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="text-sm font-semibold text-primary-darker mb-2 block">
-                {language === 'en' ? 'Training Title' : 'Cinwaanka Tababarka'} <span className="text-red-500">*</span>
+                Training title (English) <span className="text-red-500">*</span>
               </label>
               <input
                 className="input-field rounded-xl"
@@ -250,6 +262,23 @@ export default function ProviderNewProgramPage() {
                   setFormState((prev) => ({ ...prev, name: event.target.value }))
                 }
                 required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold text-primary-darker mb-2 block">
+                Cinwaanka tababarka (Soomaali)
+              </label>
+              <input
+                className="input-field rounded-xl"
+                lang="so"
+                placeholder="tusaale, Horumarinta React-ka Sare"
+                value={formState.nameSo}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    nameSo: event.target.value,
+                  }))
+                }
               />
             </div>
             <div>
@@ -274,7 +303,7 @@ export default function ProviderNewProgramPage() {
             </div>
             <div>
               <label className="text-sm font-semibold text-primary-darker mb-2 block">
-                {language === 'en' ? 'Duration' : 'Waqtiga'} <span className="text-red-500">*</span>
+                Duration (English) <span className="text-red-500">*</span>
               </label>
               <input
                 className="input-field rounded-xl"
@@ -286,9 +315,26 @@ export default function ProviderNewProgramPage() {
                 required
               />
             </div>
+            <div>
+              <label className="text-sm font-semibold text-primary-darker mb-2 block">
+                Muddada (Soomaali)
+              </label>
+              <input
+                className="input-field rounded-xl"
+                lang="so"
+                placeholder="tusaale, 4 toddobaad ama 30 saacadood"
+                value={formState.durationSo}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    durationSo: event.target.value,
+                  }))
+                }
+              />
+            </div>
             <div className="md:col-span-2">
               <label className="text-sm font-semibold text-primary-darker mb-2 block">
-                {language === 'en' ? 'Description' : 'Sharaxaada'} <span className="text-red-500">*</span>
+                Description (English) <span className="text-red-500">*</span>
               </label>
               <textarea
                 className="input-field rounded-xl h-32"
@@ -301,6 +347,27 @@ export default function ProviderNewProgramPage() {
                 }
                 required
               />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-semibold text-primary-darker mb-2 block">
+                Sharaxaadda (Soomaali)
+              </label>
+              <textarea
+                className="input-field rounded-xl h-32"
+                lang="so"
+                placeholder="Ku sharax nuxurka koorsada, ujeeddooyinka barashada, iyo dadka loogu talagalay."
+                value={formState.descriptionSo}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    descriptionSo: event.target.value,
+                  }))
+                }
+              />
+              <p className="mt-1 text-xs text-primary-darker/60">
+                Somali content lets learners search and read the program in
+                either language.
+              </p>
             </div>
             <div>
               <label className="text-sm font-semibold text-primary-darker mb-2 block">

@@ -22,6 +22,7 @@ import {
   recordAuditEvent,
   requestAuditMeta,
 } from '../utils/audit';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const MAXIMUM_OTP_ATTEMPTS = 5;
 const DUMMY_PASSWORD_HASH =
@@ -112,6 +113,7 @@ export const register = async (req: Request, res: Response) => {
       password,
       role,
       organizationName,
+      organizationNameSo,
       phone,
       address,
       location,
@@ -141,6 +143,8 @@ export const register = async (req: Request, res: Response) => {
     const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : 'worker';
     const normalizedOrganizationName =
       typeof organizationName === 'string' ? organizationName.trim() : '';
+    const normalizedOrganizationNameSo =
+      typeof organizationNameSo === 'string' ? organizationNameSo.trim() : '';
 
     if (!PUBLIC_REGISTRATION_ROLES.has(normalizedRole)) {
       return res.status(400).json({ error: 'Invalid public registration role' });
@@ -181,6 +185,7 @@ export const register = async (req: Request, res: Response) => {
     if (
       normalizedName.length > 200 ||
       normalizedOrganizationName.length > 200 ||
+      normalizedOrganizationNameSo.length > 200 ||
       normalizedEmail.length > 254 ||
       normalizedPhone.length > 50 ||
       (normalizedAddress?.length || 0) > 500
@@ -237,27 +242,51 @@ export const register = async (req: Request, res: Response) => {
           verificationExpires: expires,
         },
       });
+      const publicUser = await transaction.user.update({
+        where: { id: createdUser.id },
+        data: {
+          slug: createStableSlug(
+            createdUser.name,
+            createdUser.id,
+            normalizedRole === 'worker' ? 'worker' : 'user',
+          ),
+        },
+      });
 
       if (normalizedRole === 'employer') {
-        await transaction.employer.create({
+        const createdEmployer = await transaction.employer.create({
           data: {
             userId: createdUser.id,
             name: normalizedOrganizationName,
+            nameSo: normalizedOrganizationNameSo || null,
             address: normalizedAddress || null,
             verified: false,
           },
         });
+        await transaction.employer.update({
+          where: { id: createdEmployer.id },
+          data: {
+            slug: createStableSlug(createdEmployer.name, createdEmployer.id, 'business'),
+          },
+        });
       } else if (normalizedRole === 'provider') {
-        await transaction.provider.create({
+        const createdProvider = await transaction.provider.create({
           data: {
             contactUserId: createdUser.id,
             name: normalizedOrganizationName,
+            nameSo: normalizedOrganizationNameSo || null,
             verified: false,
+          },
+        });
+        await transaction.provider.update({
+          where: { id: createdProvider.id },
+          data: {
+            slug: createStableSlug(createdProvider.name, createdProvider.id, 'provider'),
           },
         });
       }
 
-      return createdUser;
+      return publicUser;
     });
 
     let verificationDelivered = true;
@@ -424,6 +453,7 @@ export const login = async (req: Request, res: Response) => {
       message: 'Login successful',
       user: {
         id: user.id,
+        slug: user.slug,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -443,6 +473,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       where: { id: req.user!.id },
       select: {
         id: true,
+        slug: true,
         name: true,
         email: true,
         role: true,
@@ -469,6 +500,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
     return res.json({
       user: {
         id: user.id,
+        slug: user.slug,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -568,6 +600,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
       message: 'Email verified successfully',
       user: {
         id: user.id,
+        slug: user.slug,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -654,12 +687,17 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
       where: { id: userId },
       select: {
         id: true,
+        slug: true,
         name: true,
         email: true,
         role: true,
         phone: true,
         location: true,
         bio: true,
+        bioSo: true,
+        headline: true,
+        headlineSo: true,
+        profilePublic: true,
         avatarUrl: true,
         preferredLanguage: true,
         isVerified: true,
@@ -698,6 +736,10 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       phone,
       location,
       bio,
+      bioSo,
+      headline,
+      headlineSo,
+      profilePublic,
       preferredLanguage,
       avatarUrl,
       experiences,
@@ -713,11 +755,28 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     ) {
       return res.status(400).json({ error: 'Profile contains too many entries' });
     }
+    if (profilePublic !== undefined && typeof profilePublic !== 'boolean') {
+      return res.status(400).json({ error: 'profilePublic must be a boolean' });
+    }
 
     const normalizeText = (value: unknown) =>
       typeof value === 'string' ? value.trim() : '';
     const normalizedAvatarUrl =
       avatarUrl === undefined ? undefined : normalizeText(avatarUrl) || null;
+    for (const [field, value, maximum] of [
+      ['headline', headline, 200],
+      ['headlineSo', headlineSo, 200],
+      ['bio', bio, 5000],
+      ['bioSo', bioSo, 5000],
+    ] as const) {
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== 'string' || value.length > maximum)
+      ) {
+        return res.status(400).json({ error: `Invalid ${field}` });
+      }
+    }
     const asDate = (value: unknown): Date | null => {
       if (!value || typeof value !== 'string') return null;
       const parsed = new Date(value);
@@ -753,13 +812,18 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid avatar URL' });
     }
 
-    const previousAvatar =
-      avatarUrl !== undefined
-        ? await prisma.user.findUnique({
-            where: { id: userId },
-            select: { avatarUrl: true },
-          })
-        : null;
+    const existingProfile = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        slug: true,
+        avatarUrl: true,
+      },
+    });
+    if (!existingProfile) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const previousAvatar = avatarUrl !== undefined ? existingProfile : null;
 
     const unsafeCertificate = Array.isArray(educations)
       ? educations.some((entry: any) => {
@@ -837,9 +901,29 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
           ...(name && { name: normalizeText(name) }),
           ...(phone !== undefined && { phone: normalizeText(phone) || null }),
           ...(location !== undefined && { location: normalizeText(location) || null }),
-          ...(bio !== undefined && { bio }),
+          ...(bio !== undefined && { bio: normalizeText(bio) || null }),
+          ...(bioSo !== undefined && { bioSo: normalizeText(bioSo) || null }),
+          ...(headline !== undefined && { headline: normalizeText(headline) || null }),
+          ...(headlineSo !== undefined && {
+            headlineSo: normalizeText(headlineSo) || null,
+          }),
+          ...(profilePublic !== undefined && { profilePublic }),
           ...(derivedPreferredLanguage && { preferredLanguage: derivedPreferredLanguage }),
           ...(avatarUrl !== undefined && { avatarUrl: normalizedAvatarUrl }),
+          ...(slugWhenMissing(
+            existingProfile.slug,
+            name ? normalizeText(name) : existingProfile.name,
+            userId,
+            'worker',
+          )
+            ? {
+                slug: createStableSlug(
+                  name ? normalizeText(name) : existingProfile.name,
+                  userId,
+                  'worker',
+                ),
+              }
+            : {}),
         },
       });
 
@@ -885,12 +969,17 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         where: { id: userId },
         select: {
           id: true,
+          slug: true,
           name: true,
           email: true,
           role: true,
           phone: true,
           location: true,
           bio: true,
+          bioSo: true,
+          headline: true,
+          headlineSo: true,
+          profilePublic: true,
           avatarUrl: true,
           preferredLanguage: true,
           workerExperiences: {
@@ -1125,18 +1214,38 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     if (!name || name.trim().length === 0) {
       return res.status(400).json({ error: 'Name is required' });
     }
+    const normalizedName = name.trim();
+    const existing = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, slug: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { name: name.trim() },
+      data: {
+        name: normalizedName,
+        ...(slugWhenMissing(existing.slug, normalizedName, existing.id, 'worker')
+          ? {
+              slug: createStableSlug(normalizedName, existing.id, 'worker'),
+            }
+          : {}),
+      },
       select: {
         id: true,
+        slug: true,
         name: true,
         email: true,
         role: true,
         phone: true,
         location: true,
         bio: true,
+        bioSo: true,
+        headline: true,
+        headlineSo: true,
+        profilePublic: true,
         avatarUrl: true,
         preferredLanguage: true,
       },

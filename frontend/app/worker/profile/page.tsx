@@ -78,7 +78,11 @@ type ProfileFormState = {
   name: string;
   email: string;
   location: string;
+  headline: string;
+  headlineSo: string;
   bio: string;
+  bioSo: string;
+  profilePublic: boolean;
   skills: string[];
   profilePhoto?: string;
   resumeFile?: string;
@@ -136,7 +140,11 @@ export default function WorkerProfilePage() {
     name: user?.name ?? '',
     email: user?.email ?? '',
     location: '',
+    headline: '',
+    headlineSo: '',
     bio: '',
+    bioSo: '',
+    profilePublic: false,
     skills: [],
     profilePhoto: user?.avatarUrl ?? undefined,
     experiences: [],
@@ -185,7 +193,11 @@ export default function WorkerProfilePage() {
           name: profile?.name ?? formState.name,
           email: profile?.email ?? formState.email,
           location: profile?.location ?? '',
+          headline: profile?.headline ?? '',
+          headlineSo: profile?.headlineSo ?? '',
           bio: profile?.bio ?? '',
+          bioSo: profile?.bioSo ?? '',
+          profilePublic: Boolean(profile?.profilePublic),
           profilePhoto: profile?.avatarUrl ?? formState.profilePhoto,
           resumeFile: resumeRecords[0]?.s3Url ?? formState.resumeFile,
           experiences: Array.isArray(profile?.workerExperiences)
@@ -251,7 +263,11 @@ export default function WorkerProfilePage() {
         name: formState.name,
         email: formState.email,
         location: formState.location,
+        headline: formState.headline,
+        headlineSo: formState.headlineSo,
         bio: formState.bio,
+        bioSo: formState.bioSo,
+        profilePublic: formState.profilePublic,
         skills: formState.skills,
         avatarUrl: formState.profilePhoto,
         resumeUrl: formState.resumeFile,
@@ -434,6 +450,43 @@ export default function WorkerProfilePage() {
               </div>
 
               <div>
+                <label className="text-sm font-medium text-primary-darker">
+                  Professional headline (English)
+                </label>
+                <input
+                  type="text"
+                  className="input-field mt-2"
+                  placeholder="Full-stack developer"
+                  value={formState.headline}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      headline: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-primary-darker">
+                  Cinwaanka xirfadda (Soomaali)
+                </label>
+                <input
+                  type="text"
+                  lang="so"
+                  className="input-field mt-2"
+                  placeholder="Horumariye full-stack ah"
+                  value={formState.headlineSo}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      headlineSo: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
                 <label className="text-sm font-medium text-primary-darker">Resume (PDF)</label>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <label className="input-field flex cursor-pointer items-center gap-2">
@@ -478,15 +531,66 @@ export default function WorkerProfilePage() {
               </div>
             </div>
 
-            <div className="mt-5">
-              <label className="text-sm font-medium text-primary-darker">Bio</label>
-              <textarea
-                className="input-field mt-2 h-32 resize-none"
-                placeholder="Tell employers about your experience, strengths, and goals."
-                value={formState.bio}
-                onChange={(event) => setFormState((prev) => ({ ...prev, bio: event.target.value }))}
-              />
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-sm font-medium text-primary-darker">
+                  Bio (English)
+                </label>
+                <textarea
+                  className="input-field mt-2 h-32 resize-none"
+                  placeholder="Tell employers about your experience, strengths, and goals."
+                  value={formState.bio}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      bio: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-primary-darker">
+                  Taariikh kooban (Soomaali)
+                </label>
+                <textarea
+                  className="input-field mt-2 h-32 resize-none"
+                  lang="so"
+                  placeholder="U sheeg shaqo-bixiyeyaasha waayo-aragnimadaada, awoodahaaga, iyo yoolalkaaga."
+                  value={formState.bioSo}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      bioSo: event.target.value,
+                    }))
+                  }
+                />
+              </div>
             </div>
+
+            <label className="mt-5 flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/5 p-4">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 rounded border-primary/30 text-primary"
+                checked={formState.profilePublic}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    profilePublic: event.target.checked,
+                  }))
+                }
+              />
+              <span>
+                <span className="block text-sm font-semibold text-primary-darker">
+                  Publish my worker profile
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-primary-darker/60">
+                  Your name, headline, bio, location, skills, education, and
+                  work history can appear at a public ZeilaLink URL. Your
+                  email, phone, resume files, and application history stay
+                  private.
+                </span>
+              </span>
+            </label>
           </article>
         </section>
 

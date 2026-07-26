@@ -2,6 +2,7 @@ import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const normalizeStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -131,10 +132,19 @@ export const getServices = async (req: AuthRequest, res: Response) => {
     }
 
     if (typeof search === 'string' && search.trim()) {
+      const searchQuery = search.trim().slice(0, 200);
       where.OR = [
-        { title: { contains: search.trim(), mode: 'insensitive' } },
-        { provider: { contains: search.trim(), mode: 'insensitive' } },
-        { description: { contains: search.trim(), mode: 'insensitive' } },
+        { title: { contains: searchQuery, mode: 'insensitive' } },
+        { titleSo: { contains: searchQuery, mode: 'insensitive' } },
+        { provider: { contains: searchQuery, mode: 'insensitive' } },
+        { description: { contains: searchQuery, mode: 'insensitive' } },
+        { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+        { category: { contains: searchQuery, mode: 'insensitive' } },
+        { badge: { contains: searchQuery, mode: 'insensitive' } },
+        { packageName: { contains: searchQuery, mode: 'insensitive' } },
+        { packageDescription: { contains: searchQuery, mode: 'insensitive' } },
+        { expertName: { contains: searchQuery, mode: 'insensitive' } },
+        { expertRole: { contains: searchQuery, mode: 'insensitive' } },
       ];
     }
 
@@ -185,7 +195,7 @@ export const getServiceById = async (req: AuthRequest, res: Response) => {
     const result = await cacheGetOrSet(`services:detail:${id}`, 60, () =>
       prisma.service.findFirst({
         where: {
-          id,
+          OR: [{ id }, { slug: id }],
           published: true,
         },
       }),
@@ -208,7 +218,10 @@ export const createServiceBooking = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const service = await prisma.service.findFirst({
-      where: { id, published: true },
+      where: {
+        published: true,
+        OR: [{ id }, { slug: id }],
+      },
       select: { id: true, title: true },
     });
 
@@ -267,8 +280,11 @@ export const createServiceBookingCheckoutSession = async (req: AuthRequest, res:
     }
 
     const service = await prisma.service.findFirst({
-      where: { id, published: true },
-      select: { id: true, title: true, priceLabel: true },
+      where: {
+        published: true,
+        OR: [{ id }, { slug: id }],
+      },
+      select: { id: true, slug: true, title: true, priceLabel: true },
     });
 
     if (!service) {
@@ -294,8 +310,9 @@ export const createServiceBookingCheckoutSession = async (req: AuthRequest, res:
 
     const form = new URLSearchParams();
     form.append('mode', 'payment');
-    form.append('success_url', `${frontendUrl}/services/${service.id}?booking=success&session_id={CHECKOUT_SESSION_ID}`);
-    form.append('cancel_url', `${frontendUrl}/services/${service.id}?booking=cancelled`);
+    const publicServiceIdentifier = service.slug || service.id;
+    form.append('success_url', `${frontendUrl}/services/${publicServiceIdentifier}?booking=success&session_id={CHECKOUT_SESSION_ID}`);
+    form.append('cancel_url', `${frontendUrl}/services/${publicServiceIdentifier}?booking=cancelled`);
     form.append('customer_email', bookingInput.customerEmail);
     form.append('payment_intent_data[description]', `Service booking for ${service.title}`);
     form.append('line_items[0][price_data][currency]', currency);
@@ -506,36 +523,43 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
       ? req.body.advancedConfig
       : {};
 
-    const service = await prisma.service.create({
-      data: {
-        title,
-        titleSo: titleSo || null,
-        category,
-        provider,
-        rating: toNumber(req.body?.rating, 0),
-        reviews: Math.max(0, toNumber(req.body?.reviews, 0)),
-        priceLabel,
-        image,
-        badge: String(req.body?.badge || category).trim(),
-        description,
-        descriptionSo: descriptionSo || null,
-        availabilityMode,
-        slaResponse: slaResponse || null,
-        gallery: galleryInput.length > 0 ? galleryInput : [image],
-        attachments,
-        advancedConfig,
-        includes,
-        highlights,
-        packageName: String(req.body?.packageName || '').trim() || null,
-        packageDescription: String(req.body?.packageDescription || '').trim() || null,
-        revisions: String(req.body?.revisions || '').trim() || null,
-        deliveryTime: String(req.body?.deliveryTime || '').trim() || null,
-        support: String(req.body?.support || '').trim() || null,
-        expertName: String(req.body?.expertName || '').trim() || null,
-        expertRole: String(req.body?.expertRole || '').trim() || null,
-        expertImage: String(req.body?.expertImage || '').trim() || null,
-        published: publishFlag,
-      },
+    const service = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.service.create({
+        data: {
+          title,
+          titleSo: titleSo || null,
+          category,
+          provider,
+          rating: toNumber(req.body?.rating, 0),
+          reviews: Math.max(0, toNumber(req.body?.reviews, 0)),
+          priceLabel,
+          image,
+          badge: String(req.body?.badge || category).trim(),
+          description,
+          descriptionSo: descriptionSo || null,
+          availabilityMode,
+          slaResponse: slaResponse || null,
+          gallery: galleryInput.length > 0 ? galleryInput : [image],
+          attachments,
+          advancedConfig,
+          includes,
+          highlights,
+          packageName: String(req.body?.packageName || '').trim() || null,
+          packageDescription: String(req.body?.packageDescription || '').trim() || null,
+          revisions: String(req.body?.revisions || '').trim() || null,
+          deliveryTime: String(req.body?.deliveryTime || '').trim() || null,
+          support: String(req.body?.support || '').trim() || null,
+          expertName: String(req.body?.expertName || '').trim() || null,
+          expertRole: String(req.body?.expertRole || '').trim() || null,
+          expertImage: String(req.body?.expertImage || '').trim() || null,
+          published: publishFlag,
+        },
+      });
+
+      return transaction.service.update({
+        where: { id: created.id },
+        data: { slug: createStableSlug(created.title, created.id, 'service') },
+      });
     });
 
     void invalidateCacheByPrefix(['services:list', 'services:detail']);
@@ -605,6 +629,20 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
         published: req.body?.published !== undefined || mode
           ? publishFlag
           : undefined,
+        ...(slugWhenMissing(
+          existing.slug,
+          typeof req.body?.title === 'string' ? req.body.title.trim() : existing.title,
+          existing.id,
+          'service',
+        )
+          ? {
+              slug: createStableSlug(
+                typeof req.body?.title === 'string' ? req.body.title.trim() : existing.title,
+                existing.id,
+                'service',
+              ),
+            }
+          : {}),
       },
     });
 

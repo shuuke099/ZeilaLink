@@ -41,11 +41,19 @@ export default function Footer() {
     },
     {
       label: isEn ? "Skill Training" : "Tababar Xirfado",
-      href: "/trainings",
+      href: "/training",
     },
     {
       label: isEn ? "Find Services" : "Raadi Adeegyo",
       href: "/services",
+    },
+    {
+      label: isEn ? "Find Workers" : "Raadi Shaqaale",
+      href: "/workers",
+    },
+    {
+      label: isEn ? "Business Directory" : "Liiska Ganacsiyada",
+      href: "/businesses",
     },
   ];
 

@@ -86,7 +86,7 @@ export const prefetchPublicRouteData = (href: string) => {
 
   if (route === '/jobs') {
     prefetches.push(cachedApiGet('/jobs'));
-  } else if (route === '/trainings') {
+  } else if (route === '/training' || route === '/trainings') {
     prefetches.push(cachedApiGet('/trainings'));
   } else if (route === '/services') {
     prefetches.push(cachedApiGet('/services', undefined, 60_000));

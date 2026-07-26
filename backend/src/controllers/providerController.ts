@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
 import { invalidateCacheByPrefix } from '../utils/cache';
+import { createStableSlug } from '../utils/slug';
 
 const safeOptionalUrl = (value: unknown): string | null | undefined => {
   if (value === undefined) return undefined;
@@ -28,7 +29,9 @@ export const getProviders = async (req: AuthRequest, res: Response) => {
     if (search) {
       where.OR = [
         { name: { contains: search as string, mode: 'insensitive' } },
+        { nameSo: { contains: search as string, mode: 'insensitive' } },
         { description: { contains: search as string, mode: 'insensitive' } },
+        { descriptionSo: { contains: search as string, mode: 'insensitive' } },
       ];
     }
 
@@ -43,8 +46,11 @@ export const getProviders = async (req: AuthRequest, res: Response) => {
       where,
       select: {
         id: true,
+        slug: true,
         name: true,
+        nameSo: true,
         description: true,
+        descriptionSo: true,
         logoUrl: true,
         rating: true,
         verified: true,
@@ -68,8 +74,8 @@ export const getProviderById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const provider = await prisma.provider.findUnique({
-      where: { id },
+    const provider = await prisma.provider.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
       include: {
         user: {
               select: {
@@ -107,8 +113,11 @@ export const getProviderById = async (req: AuthRequest, res: Response) => {
 
     return res.json({
       id: provider.id,
+      slug: provider.slug,
       name: provider.name,
+      nameSo: provider.nameSo,
       description: provider.description,
+      descriptionSo: provider.descriptionSo,
       logoUrl: provider.logoUrl,
       rating: provider.rating,
       verified: provider.verified,
@@ -122,13 +131,27 @@ export const getProviderById = async (req: AuthRequest, res: Response) => {
 
 export const createProvider = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, description, logoUrl } = req.body;
+    const { name, nameSo, description, descriptionSo, logoUrl } = req.body;
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     if (!normalizedName || normalizedName.length > 200) {
       return res.status(400).json({ error: 'Provider name must contain 1 to 200 characters' });
     }
     if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 5000)) {
       return res.status(400).json({ error: 'Invalid provider description' });
+    }
+    if (
+      nameSo !== undefined &&
+      nameSo !== null &&
+      (typeof nameSo !== 'string' || nameSo.length > 200)
+    ) {
+      return res.status(400).json({ error: 'Invalid Somali provider name' });
+    }
+    if (
+      descriptionSo !== undefined &&
+      descriptionSo !== null &&
+      (typeof descriptionSo !== 'string' || descriptionSo.length > 5000)
+    ) {
+      return res.status(400).json({ error: 'Invalid Somali provider description' });
     }
     const normalizedLogo = safeOptionalUrl(logoUrl);
     if (logoUrl !== undefined && normalizedLogo === undefined) {
@@ -139,19 +162,32 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
       where: { contactUserId: req.user!.id },
       select: {
         id: true,
+        slug: true,
         name: true,
+        nameSo: true,
         description: true,
+        descriptionSo: true,
         logoUrl: true,
         verified: true,
       },
     });
     const normalizedDescription =
       typeof description === 'string' ? description.trim() || null : null;
+    const normalizedNameSo = typeof nameSo === 'string' ? nameSo.trim() || null : null;
+    const normalizedDescriptionSo =
+      typeof descriptionSo === 'string' ? descriptionSo.trim() || null : null;
     const changedIdentityFields = existingProvider
       ? [
           ...(existingProvider.name !== normalizedName ? ['name'] : []),
+          ...(nameSo !== undefined && existingProvider.nameSo !== normalizedNameSo
+            ? ['nameSo']
+            : []),
           ...(description !== undefined && existingProvider.description !== normalizedDescription
             ? ['description']
+            : []),
+          ...(descriptionSo !== undefined &&
+          existingProvider.descriptionSo !== normalizedDescriptionSo
+            ? ['descriptionSo']
             : []),
           ...(logoUrl !== undefined && existingProvider.logoUrl !== normalizedLogo
             ? ['logoUrl']
@@ -162,25 +198,41 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
       existingProvider?.verified && changedIdentityFields.length > 0,
     );
 
-    const provider = await prisma.provider.upsert({
+    let provider = await prisma.provider.upsert({
       where: { contactUserId: req.user!.id },
       update: {
         name: normalizedName,
+        ...(nameSo !== undefined && { nameSo: normalizedNameSo }),
         ...(description !== undefined && {
           description: normalizedDescription,
+        }),
+        ...(descriptionSo !== undefined && {
+          descriptionSo: normalizedDescriptionSo,
         }),
         ...(logoUrl !== undefined && { logoUrl: normalizedLogo }),
         ...(changedIdentityFields.length > 0 && { verified: false }),
       },
       create: {
         name: normalizedName,
+        nameSo: normalizedNameSo,
         contactUserId: req.user!.id,
         description: typeof description === 'string' ? description.trim() || null : null,
+        descriptionSo: normalizedDescriptionSo,
         logoUrl: normalizedLogo,
         verified: false,
       },
       include: { user: { select: { name: true, email: true } } },
     });
+
+    if (!provider.slug) {
+      provider = await prisma.provider.update({
+        where: { id: provider.id },
+        data: {
+          slug: createStableSlug(provider.name, provider.id, 'provider'),
+        },
+        include: { user: { select: { name: true, email: true } } },
+      });
+    }
 
     if (changedIdentityFields.length > 0) {
       await invalidateCacheByPrefix(['trainings:list', 'public:stats']);
@@ -237,9 +289,10 @@ export const getProviderCourses = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const provider = await prisma.provider.findUnique({
-      where: { id },
+    const provider = await prisma.provider.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
       select: {
+        id: true,
         contactUserId: true,
         verified: true,
         user: { select: { isVerified: true } },
@@ -252,7 +305,7 @@ export const getProviderCourses = async (req: AuthRequest, res: Response) => {
     }
 
     const trainings = await prisma.training.findMany({
-      where: { providerId: id, published: true },
+      where: { providerId: provider.id, published: true },
       include: {
         skill: true,
         _count: {

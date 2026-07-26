@@ -71,7 +71,7 @@ export default function CapabilitiesSection({
               bg: "bg-emerald-50",
               linkTextEn: "Browse Programs",
               linkTextSo: "Baro Xirfado",
-              href: "/trainings",
+              href: "/training",
             },
 
             {

@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id                  String              @id @default(cuid())
+  slug                String?             @unique
   name                String
   email               String              @unique
   passwordHash        String              @map("password_hash")
@@ -16,6 +17,10 @@ model User {
   phone               String?
   location            String?
   bio                 String?
+  bioSo               String?             @map("bio_so")
+  headline            String?
+  headlineSo          String?             @map("headline_so")
+  profilePublic       Boolean             @default(false) @map("profile_public")
   preferredLanguage   String              @default("en") @map("preferred_language")
   isVerified          Boolean             @default(false) @map("is_verified")
   createdAt           DateTime            @default(now()) @map("created_at")
@@ -39,32 +44,42 @@ model User {
   workerPreference    WorkerPreference?
 
   @@index([role, createdAt])
+  @@index([role, isVerified, profilePublic, createdAt])
   @@map("users")
 }
 
 model Employer {
-  id          String   @id @default(cuid())
-  userId      String   @unique @map("user_id")
-  name        String
-  logoUrl     String?  @map("logo_url")
-  verified    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  address     String?
-  bannerUrl   String?  @map("banner_url")
-  description String?
-  website     String?
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobs        Job[]
+  id            String   @id @default(cuid())
+  slug          String?  @unique
+  userId        String   @unique @map("user_id")
+  name          String
+  nameSo        String?  @map("name_so")
+  logoUrl       String?  @map("logo_url")
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+  address       String?
+  bannerUrl     String?  @map("banner_url")
+  description   String?
+  descriptionSo String?  @map("description_so")
+  website       String?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs          Job[]
 
+  @@index([verified, createdAt])
   @@map("employers")
 }
 
 model Job {
   id                  String        @id @default(cuid())
+  slug                String?       @unique
   title               String
+  titleSo             String?       @map("title_so")
   description         String
+  descriptionSo       String?       @map("description_so")
   requirements        String
+  requirementsSo      String?       @map("requirements_so")
   benefits            String?
+  benefitsSo          String?       @map("benefits_so")
   employerId          String        @map("employer_id")
   location            String
   salaryMin           Int?          @map("salary_min")
@@ -115,6 +130,7 @@ model Application {
 
 model Service {
   id                 String           @id @default(cuid())
+  slug               String?          @unique
   title              String
   category           String
   provider           String
@@ -272,12 +288,16 @@ model Skill {
 
 model Training {
   id                  String              @id @default(cuid())
+  slug                String?             @unique
   name                String
+  nameSo              String?             @map("name_so")
   providerId          String              @map("provider_id")
   skillId             String?             @map("skill_id")
   duration            String
+  durationSo          String?             @map("duration_so")
   cost                Float               @default(0)
   description         String
+  descriptionSo       String?             @map("description_so")
   certificateUrl      String?             @map("certificate_url")
   published           Boolean             @default(false)
   createdAt           DateTime            @default(now()) @map("created_at")
@@ -297,9 +317,12 @@ model Training {
 
 model Provider {
   id            String     @id @default(cuid())
+  slug          String?    @unique
   name          String
+  nameSo        String?    @map("name_so")
   contactUserId String     @unique @map("contact_user_id")
   description   String?
+  descriptionSo String?    @map("description_so")
   logoUrl       String?    @map("logo_url")
   rating        Float      @default(0)
   verified      Boolean    @default(false)
@@ -307,6 +330,7 @@ model Provider {
   user          User       @relation(fields: [contactUserId], references: [id], onDelete: Cascade)
   trainings     Training[]
 
+  @@index([verified, createdAt])
   @@map("providers")
 }
 

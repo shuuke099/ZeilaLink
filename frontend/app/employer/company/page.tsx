@@ -9,7 +9,9 @@ import { Upload, Building2, Globe2, MapPin, UserRound } from 'lucide-react';
 
 type CompanyFormState = {
   name: string;
+  nameSo: string;
   description: string;
+  descriptionSo: string;
   website: string;
   address: string;
   logoUrl?: string;
@@ -20,7 +22,9 @@ export default function EmployerCompanyPage() {
   const { user, updateUser } = useAuth();
   const [formState, setFormState] = React.useState<CompanyFormState>({
     name: '',
+    nameSo: '',
     description: '',
+    descriptionSo: '',
     website: '',
     address: '',
   });
@@ -42,7 +46,9 @@ export default function EmployerCompanyPage() {
         const profileData = profileResponse.data;
         setFormState({
           name: profileData.name ?? '',
+          nameSo: profileData.nameSo ?? '',
           description: profileData.description ?? '',
+          descriptionSo: profileData.descriptionSo ?? '',
           website: profileData.website ?? '',
           address: profileData.address ?? '',
           logoUrl: profileData.logoUrl ?? '',
@@ -202,7 +208,7 @@ export default function EmployerCompanyPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-heading">
-                  Company name
+                  Company name (English)
                 </label>
                 <input
                   className="input-field mt-2"
@@ -211,6 +217,23 @@ export default function EmployerCompanyPage() {
                     setFormState((prev) => ({ ...prev, name: event.target.value }))
                   }
                   required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-heading">
+                  Magaca shirkadda (Soomaali)
+                </label>
+                <input
+                  className="input-field mt-2"
+                  lang="so"
+                  value={formState.nameSo}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      nameSo: event.target.value,
+                    }))
+                  }
                 />
               </div>
 
@@ -252,7 +275,7 @@ export default function EmployerCompanyPage() {
 
               <div>
                 <label className="text-sm font-medium text-heading">
-                  Description
+                  Description (English)
                 </label>
                 <textarea
                   className="input-field mt-2 h-40"
@@ -269,6 +292,28 @@ export default function EmployerCompanyPage() {
                 <p className="mt-1 flex items-center gap-2 text-xs text-muted">
                   <UserRound className="h-3.5 w-3.5 text-primary" />
                   Highlight your mission, culture, and the impact your team delivers.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-heading">
+                  Sharaxaadda (Soomaali)
+                </label>
+                <textarea
+                  className="input-field mt-2 h-40"
+                  lang="so"
+                  placeholder="La wadaag ujeeddada, dhaqanka, iyo saamaynta shirkaddaada."
+                  value={formState.descriptionSo}
+                  onChange={(event) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      descriptionSo: event.target.value,
+                    }))
+                  }
+                />
+                <p className="mt-1 text-xs text-muted">
+                  Somali content makes the public business page searchable in
+                  both languages.
                 </p>
               </div>
             </div>

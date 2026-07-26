@@ -15,7 +15,12 @@ import {
 import { formatDistance } from "date-fns";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/contexts/LanguageContext";
-import type { PublicJob } from "./jobTypes";
+import { cachedApiGet } from "@/lib/api-cache";
+import {
+  getLocalizedJobText,
+  parseJobsResponse,
+  type PublicJob,
+} from "./jobTypes";
 
 type SalaryFilter = "all" | "0-500" | "500-1000" | "1000+";
 type SortFilter = "newest" | "oldest" | "salary-high" | "salary-low";
@@ -52,6 +57,7 @@ export default function JobsClient({
 }: JobsClientProps) {
   const { language } = useLanguage();
 
+  const [jobs, setJobs] = useState(initialJobs);
   const [search, setSearch] = useState("");
   const [searchDraft, setSearchDraft] = useState("");
   const [locationDraft, setLocationDraft] = useState("");
@@ -63,19 +69,29 @@ export default function JobsClient({
 
   const [salaryRange, setSalaryRange] = useState<SalaryFilter>("all");
   const [sortBy, setSortBy] = useState<SortFilter>("newest");
+  const [searching, setSearching] = useState(false);
+  const [searchLoadError, setSearchLoadError] = useState(false);
 
   const filteredAndSortedJobs = useMemo(() => {
     const query = search.trim().toLowerCase();
     const locationQuery = filters.location.trim().toLowerCase();
 
-    const filtered = initialJobs.filter((job) => {
+    const filtered = jobs.filter((job) => {
       if (query) {
         const searchable = [
           job.title,
+          job.titleSo || "",
           job.description,
+          job.descriptionSo || "",
+          job.requirements || "",
+          job.requirementsSo || "",
+          job.benefits || "",
+          job.benefitsSo || "",
           job.employer?.name || "",
+          job.employer?.nameSo || "",
           job.location || "",
           job.employmentType || "",
+          ...(job.tags || []),
         ]
           .join(" ")
           .toLowerCase();
@@ -130,7 +146,7 @@ export default function JobsClient({
 
     return sorted;
   }, [
-    initialJobs,
+    jobs,
     salaryRange,
     sortBy,
     search,
@@ -138,9 +154,33 @@ export default function JobsClient({
     filters.employmentType,
   ]);
 
-  const applySearch = () => {
-    setSearch(searchDraft.trim());
-    setFilters((prev) => ({ ...prev, location: locationDraft.trim() }));
+  const applySearch = async () => {
+    const nextSearch = searchDraft.trim();
+    const nextLocation = locationDraft.trim();
+    setSearch(nextSearch);
+    setFilters((prev) => ({ ...prev, location: nextLocation }));
+    setSearching(true);
+    setSearchLoadError(false);
+
+    try {
+      const params = new URLSearchParams({ limit: "100" });
+      if (nextSearch) params.set("search", nextSearch);
+      if (nextLocation) params.set("location", nextLocation);
+      const response = await cachedApiGet<unknown>(
+        `/jobs?${params.toString()}`,
+        undefined,
+        15_000,
+      );
+      const parsed = parseJobsResponse(response);
+      if (!parsed) throw new Error("Invalid jobs response");
+      setJobs(parsed);
+    } catch {
+      // Keep the server-rendered records available as a useful fallback.
+      setJobs(initialJobs);
+      setSearchLoadError(true);
+    } finally {
+      setSearching(false);
+    }
   };
 
   return (
@@ -170,7 +210,7 @@ export default function JobsClient({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              applySearch();
+              void applySearch();
             }}
             className="rounded-2xl border border-slate-300 bg-white p-2 shadow-[0_6px_16px_rgba(15,23,42,0.12)] sm:rounded-[2rem] sm:p-3"
           >
@@ -209,10 +249,17 @@ export default function JobsClient({
 
               <button
                 type="submit"
+                disabled={searching}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1757c8] px-5 text-sm font-black text-white transition hover:bg-[#1148a8] active:scale-[0.99] md:ml-3 md:w-auto md:rounded-2xl md:px-10 md:text-xl"
               >
                 <Search className="h-4 w-4 md:hidden" />
-                {language === "en" ? "Search" : "Raadi"}
+                {searching
+                  ? language === "en"
+                    ? "Searching..."
+                    : "Waa la raadinayaa..."
+                  : language === "en"
+                    ? "Search"
+                    : "Raadi"}
               </button>
             </div>
           </form>
@@ -287,6 +334,8 @@ export default function JobsClient({
               setSearchDraft("");
               setLocationDraft("");
               setSearch("");
+              setJobs(initialJobs);
+              setSearchLoadError(false);
               setFilters({ location: "", employmentType: "", remote: "" });
               setSalaryRange("all");
               setSortBy("newest");
@@ -297,7 +346,18 @@ export default function JobsClient({
           </button>
         </section>
 
-        {loadError ? (
+        {(loadError || searchLoadError) && jobs.length > 0 && (
+          <p
+            role="status"
+            className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950"
+          >
+            {language === "en"
+              ? "Live search is temporarily unavailable, so these results use the latest jobs already loaded."
+              : "Raadinta tooska ah hadda lama heli karo; natiijooyinkani waxay adeegsanayaan shaqooyinkii ugu dambeeyay ee la soo geliyay."}
+          </p>
+        )}
+
+        {loadError && jobs.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-10 text-center">
             <p className="text-base font-black text-amber-950">
               {language === "en"
@@ -313,7 +373,7 @@ export default function JobsClient({
         ) : filteredAndSortedJobs.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-dashed border-border bg-white p-16 text-center">
             <p className="text-base font-semibold text-primary-darker">
-              {initialJobs.length === 0
+              {jobs.length === 0
                 ? language === "en"
                   ? "There are no published jobs available right now."
                   : "Hadda ma jiraan shaqooyin la daabacay."
@@ -325,9 +385,13 @@ export default function JobsClient({
         ) : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {filteredAndSortedJobs.map((job) => {
+              const localized = getLocalizedJobText(job, language);
               return (
                 <div key={job.id}>
-                  <Link href={`/jobs/${job.id}`} className="group block h-full">
+                  <Link
+                    href={`/jobs/${job.slug || job.id}`}
+                    className="group block h-full"
+                  >
                     <article className="flex h-full flex-col rounded-3xl border border-border bg-white p-5 text-primary-darker shadow-soft transition-all duration-300 group-hover:-translate-y-1">
                       <div className="mb-4 flex items-start justify-between">
                         <div className="flex items-center gap-3">
@@ -340,7 +404,7 @@ export default function JobsClient({
                                   job.employer.logoUrl ??
                                   undefined
                                 }
-                                alt={job.employer.name}
+                                alt={`${localized.employerName} logo`}
                                 loading="lazy"
                                 decoding="async"
                                 className="h-full w-full object-cover"
@@ -354,7 +418,7 @@ export default function JobsClient({
                           </div>
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-darker/50">
-                              {job.employer.name}
+                              {localized.employerName}
                             </p>
                             <p className="text-xs font-bold text-primary-darker/70">
                               {job.remote ? "Remote Friendly" : job.location}
@@ -369,11 +433,11 @@ export default function JobsClient({
                       </div>
 
                       <h3 className="text-lg font-black leading-tight text-primary-darker">
-                        {job.title}
+                        {localized.title}
                       </h3>
 
                       <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-primary-darker/70">
-                        {job.description}
+                        {localized.description}
                       </p>
 
                       <div className="mt-5 flex flex-wrap items-center gap-2">

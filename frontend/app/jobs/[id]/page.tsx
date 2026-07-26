@@ -1,12 +1,18 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
+import { notFound, permanentRedirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
 import Navbar from "@/components/Navbar";
 import { ServerApiError, serverApiGet } from "@/lib/serverApi";
+import { absoluteUrl } from "@/lib/seo";
 import ApplyButton from "./ApplyButton";
-import { isValidJobId, parsePublicJob, type PublicJob } from "../jobTypes";
+import {
+  getLocalizedJobText,
+  isValidJobId,
+  parsePublicJob,
+  type PublicJob,
+} from "../jobTypes";
 import {
   Briefcase,
   Building2,
@@ -80,14 +86,52 @@ export async function generateMetadata({
 
   const description = metadataDescription(result.job.description);
   const title = `${result.job.title} at ${result.job.employer.name}`;
+  const canonicalPath = `/jobs/${result.job.slug || result.job.id}`;
+  const somaliDescription = result.job.descriptionSo
+    ? metadataDescription(result.job.descriptionSo)
+    : "";
+  const bilingualDescription = somaliDescription
+    ? metadataDescription(`${description} ${somaliDescription}`)
+    : description;
 
   return {
     title: `${title} | ZeilaLink`,
-    description,
+    description: bilingualDescription,
+    keywords: [
+      result.job.title,
+      result.job.titleSo,
+      result.job.location,
+      result.job.employer.name,
+      result.job.employer.nameSo,
+      "Somalia jobs",
+      "Shaqooyin Soomaaliya",
+      ...(result.job.tags || []),
+    ].filter((keyword): keyword is string => Boolean(keyword)),
+    alternates: {
+      canonical: canonicalPath,
+    },
     openGraph: {
       type: "article",
       title,
-      description,
+      description: bilingualDescription,
+      url: canonicalPath,
+      siteName: "ZeilaLink",
+      locale: "en_SO",
+      alternateLocale: ["so_SO"],
+      images: [
+        {
+          url: absoluteUrl("/opengraph-image"),
+          width: 1200,
+          height: 630,
+          alt: `${result.job.title} at ${result.job.employer.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: bilingualDescription,
+      images: [absoluteUrl("/twitter-image")],
     },
   };
 }
@@ -143,10 +187,10 @@ const formatSalaryRange = (min?: number | null, max?: number | null) => {
   return "Salary negotiable";
 };
 
-const formatDate = (dateString?: string | null) => {
+const formatDate = (dateString?: string | null, locale = "en-US") => {
   if (!dateString) return undefined;
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(locale, {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -157,6 +201,10 @@ const formatDate = (dateString?: string | null) => {
 };
 
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
+  const savedLanguage = cookies().get("language")?.value;
+  const language = savedLanguage === "so" ? "so" : "en";
+  const isEn = language === "en";
+
   if (!isValidJobId(params.id)) {
     notFound();
   }
@@ -173,17 +221,20 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         <div className="mx-auto max-w-4xl px-4 pb-12 pt-28 sm:px-6">
           <section className="rounded-3xl border border-amber-200 bg-amber-50 p-10 text-center">
             <h1 className="text-2xl font-black text-amber-950">
-              Job details are temporarily unavailable
+              {isEn
+                ? "Job details are temporarily unavailable"
+                : "Faahfaahinta shaqada hadda lama heli karo"}
             </h1>
             <p className="mt-3 text-sm font-medium text-amber-900/80">
-              The jobs service could not be reached. This does not mean the
-              listing was removed. Please try again shortly.
+              {isEn
+                ? "The jobs service could not be reached. This does not mean the listing was removed. Please try again shortly."
+                : "Adeegga shaqooyinka lama gaari karo. Tani macnaheedu ma aha in shaqada la saaray. Fadlan wax yar kadib isku day."}
             </p>
             <Link
               href="/jobs"
               className="mt-6 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-black text-white"
             >
-              Back to jobs
+              {isEn ? "Back to jobs" : "Ku laabo shaqooyinka"}
             </Link>
           </section>
         </div>
@@ -191,21 +242,45 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     );
   }
 
-  const nonce = headers().get("x-nonce") || undefined;
-
   const { job } = result;
-  const descriptionParagraphs = toParagraphs(job.description);
-  const keyResponsibilities = toListItems(job.description);
-  const requirementItems = toListItems(job.requirements);
-  const benefitItems = toListItems(job.benefits);
-  const postedDate = formatDate(job.createdAt);
-  const deadlineDate = formatDate(job.applicationDeadline);
+  if (job.slug && params.id !== job.slug) {
+    permanentRedirect(`/jobs/${job.slug}`);
+  }
 
-  const structuredData = {
+  const nonce = headers().get("x-nonce") || undefined;
+  const localized = getLocalizedJobText(job, language);
+  const descriptionParagraphs = toParagraphs(localized.description);
+  const keyResponsibilities = toListItems(localized.description);
+  const requirementItems = toListItems(localized.requirements);
+  const benefitItems = toListItems(localized.benefits);
+  const postedDate = formatDate(job.createdAt, isEn ? "en-US" : "so-SO");
+  const deadlineDate = formatDate(
+    job.applicationDeadline,
+    isEn ? "en-US" : "so-SO",
+  );
+  const canonicalPath = `/jobs/${job.slug || job.id}`;
+  const configuredSiteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    "https://zeilalink.com";
+  const canonicalUrl = `${configuredSiteUrl}${canonicalPath}`;
+  const businessPath = job.employer.slug
+    ? `/businesses/${job.employer.slug}`
+    : null;
+
+  const jobStructuredData = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
     title: job.title,
-    description: job.description,
+    description: job.descriptionSo
+      ? `${job.description}\n\n${job.descriptionSo}`
+      : job.description,
+    url: canonicalUrl,
+    identifier: {
+      "@type": "PropertyValue",
+      name: "ZeilaLink",
+      value: job.id,
+    },
+    inLanguage: job.descriptionSo ? ["en", "so"] : ["en"],
     datePosted: job.createdAt,
     ...(job.applicationDeadline
       ? { validThrough: job.applicationDeadline }
@@ -214,6 +289,10 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     hiringOrganization: {
       "@type": "Organization",
       name: job.employer.name,
+      ...(businessPath
+        ? { url: `${configuredSiteUrl}${businessPath}` }
+        : {}),
+      ...(job.employer.logoUrl ? { logo: job.employer.logoUrl } : {}),
     },
     ...(job.remote
       ? { jobLocationType: "TELECOMMUTE" }
@@ -242,6 +321,31 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
       : {}),
   };
 
+  const breadcrumbStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: isEn ? "Home" : "Bogga Hore",
+        item: configuredSiteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: isEn ? "Jobs" : "Shaqooyin",
+        item: `${configuredSiteUrl}/jobs`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: localized.title,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <script
@@ -249,13 +353,31 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          __html: JSON.stringify([
+            jobStructuredData,
+            breadcrumbStructuredData,
+          ]).replace(/</g, "\\u003c"),
         }}
       />
       <Navbar />
 
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-6">
+            <nav
+              aria-label={isEn ? "Breadcrumb" : "Jidka bogga"}
+              className="flex flex-wrap items-center gap-2 text-sm font-semibold text-primary-darker/65"
+            >
+              <Link href="/" className="hover:text-primary">
+                {isEn ? "Home" : "Bogga Hore"}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <Link href="/jobs" className="hover:text-primary">
+                {isEn ? "Jobs" : "Shaqooyin"}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">{localized.title}</span>
+            </nav>
+
             <section className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="flex-1">
@@ -264,12 +386,13 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     {job.location}
                   </div>
                   <h1 className="text-4xl font-black tracking-tight text-primary-darker">
-                    {job.title}
+                    {localized.title}
                   </h1>
                   <p className="mt-2 text-sm font-semibold text-primary-darker/70">
-                    {job.employer?.name}
+                    {localized.employerName}
                     <span className="mx-2 text-primary-darker/40">•</span>
-                    {formatSalaryRange(job.salaryMin, job.salaryMax)} / year
+                    {formatSalaryRange(job.salaryMin, job.salaryMax)}{" "}
+                    {isEn ? "/ year" : "/ sanadkii"}
                   </p>
                 </div>
 
@@ -281,7 +404,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               <div className="space-y-6">
                 <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
                   <h2 className="mb-4 text-xl font-black text-primary-darker">
-                    Job Description
+                    {isEn ? "Job Description" : "Faahfaahinta Shaqada"}
                   </h2>
                   <div className="space-y-4 text-[15px] leading-relaxed text-primary-darker/80">
                     {descriptionParagraphs.map((paragraph, index) => (
@@ -293,7 +416,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 {keyResponsibilities.length > 1 && (
                   <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
                     <h2 className="mb-4 text-xl font-black text-primary-darker">
-                      Key Responsibilities
+                      {isEn
+                        ? "Key Responsibilities"
+                        : "Mas'uuliyadaha Muhiimka ah"}
                     </h2>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {keyResponsibilities.slice(0, 4).map((item, index) => {
@@ -318,7 +443,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 {requirementItems.length > 0 && (
                   <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
                     <h2 className="mb-4 text-xl font-black text-primary-darker">
-                      Qualifications & Skills
+                      {isEn
+                        ? "Qualifications & Skills"
+                        : "Aqoonta iyo Xirfadaha"}
                     </h2>
                     <ul className="space-y-3">
                       {requirementItems.map((item, index) => (
@@ -340,7 +467,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 {benefitItems.length > 0 && (
                   <section className="rounded-3xl border border-primary/20 bg-primary p-6 text-white sm:p-8">
                     <h2 className="mb-4 text-xl font-black text-white">
-                      Perks & Benefits
+                      {isEn
+                        ? "Perks & Benefits"
+                        : "Gunnooyinka iyo Faa'iidooyinka"}
                     </h2>
                     <div className="grid gap-3 sm:grid-cols-3">
                       {benefitItems.slice(0, 6).map((item, index) => (
@@ -361,16 +490,18 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               <aside className="space-y-6">
                 <section className="rounded-3xl border border-border bg-white p-6">
                   <h3 className="text-lg font-black text-primary-darker">
-                    Job Summary
+                    {isEn ? "Job Summary" : "Soo Koobidda Shaqada"}
                   </h3>
                   <div className="mt-5 space-y-4">
                     <div className="flex items-start gap-3 text-sm text-primary-darker/80">
                       <CalendarDays size={16} className="mt-0.5 text-primary" />
                       <div>
                         <p className="font-black text-primary-darker">
-                          Posted on
+                          {isEn ? "Posted on" : "La daabacay"}
                         </p>
-                        <p>{postedDate ?? "Recently"}</p>
+                        <p>
+                          {postedDate ?? (isEn ? "Recently" : "Dhowaan")}
+                        </p>
                       </div>
                     </div>
 
@@ -378,7 +509,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                       <Briefcase size={16} className="mt-0.5 text-primary" />
                       <div>
                         <p className="font-black text-primary-darker">
-                          Job Type
+                          {isEn ? "Job Type" : "Nooca Shaqada"}
                         </p>
                         <p>{job.employmentType}</p>
                       </div>
@@ -388,7 +519,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                       <DollarSign size={16} className="mt-0.5 text-primary" />
                       <div>
                         <p className="font-black text-primary-darker">
-                          Salary Range
+                          {isEn ? "Salary Range" : "Xadka Mushaharka"}
                         </p>
                         <p>{formatSalaryRange(job.salaryMin, job.salaryMax)}</p>
                       </div>
@@ -398,11 +529,11 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                       <MapPin size={16} className="mt-0.5 text-primary" />
                       <div>
                         <p className="font-black text-primary-darker">
-                          Location
+                          {isEn ? "Location" : "Goobta"}
                         </p>
                         <p>
                           {job.remote
-                            ? `${job.location} (Remote option)`
+                            ? `${job.location} (${isEn ? "Remote option" : "Shaqo fog"})`
                             : job.location}
                         </p>
                       </div>
@@ -413,7 +544,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                         <Clock3 size={16} className="mt-0.5 text-primary" />
                         <div>
                           <p className="font-black text-primary-darker">
-                            Deadline
+                            {isEn
+                              ? "Deadline"
+                              : "Waqtiga Kama Dambaysta ah"}
                           </p>
                           <p>{deadlineDate}</p>
                         </div>
@@ -424,7 +557,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
                 <section className="rounded-3xl border border-border bg-white p-6">
                   <h3 className="mb-4 text-lg font-black text-primary-darker">
-                    About {job.employer?.name}
+                    {isEn ? "About" : "Ku saabsan"} {localized.employerName}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -437,7 +570,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                               job.employer.logoUrl ??
                               undefined
                             }
-                            alt={job.employer.name}
+                            alt={`${localized.employerName} logo`}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -445,26 +578,83 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                         )}
                       </div>
                       <p className="font-black text-primary-darker">
-                        {job.employer?.name}
+                        {localized.employerName}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 text-sm font-semibold text-primary-darker/80">
                       <Globe size={15} className="text-primary" />
-                      {job.remote ? "Remote-friendly employer" : job.location}
+                      {job.remote
+                        ? isEn
+                          ? "Remote-friendly employer"
+                          : "Shaqo-bixiye oggol shaqada fog"
+                        : job.location}
                     </div>
 
-                    {job.employer?.description && (
+                    {localized.employerDescription && (
                       <p className="text-sm leading-relaxed text-primary-darker/80">
-                        {job.employer.description.length > 220
-                          ? `${job.employer.description.slice(0, 220)}...`
-                          : job.employer.description}
+                        {localized.employerDescription.length > 220
+                          ? `${localized.employerDescription.slice(0, 220)}...`
+                          : localized.employerDescription}
                       </p>
+                    )}
+
+                    {businessPath && (
+                      <Link
+                        href={businessPath}
+                        className="inline-flex text-sm font-black text-primary hover:underline"
+                      >
+                        {isEn
+                          ? "View business profile"
+                          : "Eeg bogga ganacsiga"}
+                      </Link>
                     )}
                   </div>
                 </section>
               </aside>
             </div>
+
+            {(job.descriptionSo || job.titleSo) && (
+              <details className="rounded-3xl border border-border bg-white p-6">
+                <summary className="cursor-pointer text-base font-black text-primary-darker">
+                  {isEn ? "Akhri af-Soomaali" : "Read in English"}
+                </summary>
+                <div className="mt-4 space-y-3 text-sm leading-relaxed text-primary-darker/80">
+                  <h2 className="text-xl font-black text-primary-darker">
+                    {isEn ? job.titleSo || job.title : job.title}
+                  </h2>
+                  <p className="whitespace-pre-line">
+                    {isEn
+                      ? job.descriptionSo || job.description
+                      : job.description}
+                  </p>
+                </div>
+              </details>
+            )}
+
+            <section className="rounded-3xl border border-primary/15 bg-primary/5 p-6">
+              <h2 className="text-lg font-black text-primary-darker">
+                {isEn
+                  ? "Explore more on ZeilaLink"
+                  : "Wax badan ka eeg ZeilaLink"}
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
+                <Link href="/jobs" className="text-primary hover:underline">
+                  {isEn ? "More jobs" : "Shaqooyin kale"}
+                </Link>
+                <Link href="/workers" className="text-primary hover:underline">
+                  {isEn ? "Worker profiles" : "Bogagga shaqaalaha"}
+                </Link>
+                <Link href="/training" className="text-primary hover:underline">
+                  {isEn ? "Training programs" : "Barnaamijyada tababarka"}
+                </Link>
+                <Link href="/services" className="text-primary hover:underline">
+                  {isEn
+                    ? "Professional services"
+                    : "Adeegyada xirfadeed"}
+                </Link>
+              </div>
+            </section>
         </div>
       </div>
     </div>

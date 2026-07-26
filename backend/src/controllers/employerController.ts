@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
 import { invalidateCacheByPrefix } from '../utils/cache';
+import { createStableSlug, slugWhenMissing } from '../utils/slug';
 
 const ensureEmployerProfile = async (userId: string) => {
   let employer = await prisma.employer.findUnique({
@@ -15,12 +16,21 @@ const ensureEmployerProfile = async (userId: string) => {
       select: { name: true, email: true },
     });
 
-    employer = await prisma.employer.create({
-      data: {
-        userId,
-        name: userRecord?.name?.trim() || userRecord?.email || 'My company',
-        verified: false,
-      },
+    employer = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.employer.create({
+        data: {
+          userId,
+          name: userRecord?.name?.trim() || userRecord?.email || 'My company',
+          verified: false,
+        },
+      });
+
+      return transaction.employer.update({
+        where: { id: created.id },
+        data: {
+          slug: createStableSlug(created.name, created.id, 'business'),
+        },
+      });
     });
   }
 
@@ -96,10 +106,13 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
 
     res.json({
       id: employer.id,
+      slug: employer.slug,
       name: employer.name,
+      nameSo: employer.nameSo,
       logoUrl: employer.logoUrl,
       bannerUrl: employer.bannerUrl,
       description: employer.description,
+      descriptionSo: employer.descriptionSo,
       website: employer.website,
       address: employer.address,
       verified: employer.verified,
@@ -113,7 +126,16 @@ export const getMyProfile = async (req: AuthRequest, res: Response) => {
 export const updateMyProfile = async (req: AuthRequest, res: Response) => {
   try {
     const employer = await ensureEmployerProfile(req.user!.id);
-    const { name, logoUrl, bannerUrl, description, website, address } = req.body;
+    const {
+      name,
+      nameSo,
+      logoUrl,
+      bannerUrl,
+      description,
+      descriptionSo,
+      website,
+      address,
+    } = req.body;
 
     const normalizedName = typeof name === 'string' ? name.trim() : undefined;
     if (name !== undefined && (!normalizedName || normalizedName.length > 200)) {
@@ -121,6 +143,7 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
     }
     for (const [label, value, maximum] of [
       ['description', description, 5000],
+      ['descriptionSo', descriptionSo, 5000],
       ['address', address, 500],
     ] as const) {
       if (value !== undefined && value !== null && (typeof value !== 'string' || value.length > maximum)) {
@@ -132,7 +155,18 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
     const normalizedWebsite = safeOptionalUrl(website);
     const normalizedDescription =
       typeof description === 'string' ? description.trim() || null : null;
+    const normalizedNameSo =
+      typeof nameSo === 'string' ? nameSo.trim() || null : null;
+    const normalizedDescriptionSo =
+      typeof descriptionSo === 'string' ? descriptionSo.trim() || null : null;
     const normalizedAddress = typeof address === 'string' ? address.trim() || null : null;
+    if (
+      nameSo !== undefined &&
+      nameSo !== null &&
+      (typeof nameSo !== 'string' || nameSo.length > 200)
+    ) {
+      return res.status(400).json({ error: 'Invalid Somali company name' });
+    }
     if (
       (logoUrl !== undefined && normalizedLogo === undefined) ||
       (bannerUrl !== undefined && normalizedBanner === undefined) ||
@@ -143,10 +177,14 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
 
     const changedIdentityFields = [
       ...(name !== undefined && employer.name !== normalizedName ? ['name'] : []),
+      ...(nameSo !== undefined && employer.nameSo !== normalizedNameSo ? ['nameSo'] : []),
       ...(logoUrl !== undefined && employer.logoUrl !== normalizedLogo ? ['logoUrl'] : []),
       ...(bannerUrl !== undefined && employer.bannerUrl !== normalizedBanner ? ['bannerUrl'] : []),
       ...(description !== undefined && employer.description !== normalizedDescription
         ? ['description']
+        : []),
+      ...(descriptionSo !== undefined && employer.descriptionSo !== normalizedDescriptionSo
+        ? ['descriptionSo']
         : []),
       ...(website !== undefined && employer.website !== normalizedWebsite ? ['website'] : []),
       ...(address !== undefined && employer.address !== normalizedAddress ? ['address'] : []),
@@ -158,11 +196,27 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
         where: { id: employer.id },
         data: {
           ...(name !== undefined && { name: normalizedName }),
+          ...(nameSo !== undefined && { nameSo: normalizedNameSo }),
           ...(logoUrl !== undefined && { logoUrl: normalizedLogo }),
           ...(bannerUrl !== undefined && { bannerUrl: normalizedBanner }),
           ...(description !== undefined && { description: normalizedDescription }),
+          ...(descriptionSo !== undefined && { descriptionSo: normalizedDescriptionSo }),
           ...(website !== undefined && { website: normalizedWebsite }),
           ...(address !== undefined && { address: normalizedAddress }),
+          ...(slugWhenMissing(
+            employer.slug,
+            name !== undefined ? normalizedName : employer.name,
+            employer.id,
+            'business',
+          )
+            ? {
+                slug: createStableSlug(
+                  name !== undefined ? normalizedName : employer.name,
+                  employer.id,
+                  'business',
+                ),
+              }
+            : {}),
           ...(changedIdentityFields.length > 0 && { verified: false }),
         },
       });
@@ -200,10 +254,13 @@ export const updateMyProfile = async (req: AuthRequest, res: Response) => {
       message: 'Employer profile updated successfully.',
       profile: {
         id: updated.id,
+        slug: updated.slug,
         name: updated.name,
+        nameSo: updated.nameSo,
         logoUrl: updated.logoUrl,
         bannerUrl: updated.bannerUrl,
         description: updated.description,
+        descriptionSo: updated.descriptionSo,
         website: updated.website,
         address: updated.address,
         verified: updated.verified,

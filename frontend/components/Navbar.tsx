@@ -72,7 +72,9 @@ export default function Navbar() {
     { name: getT("home"), href: "/" },
     { name: getT("jobs"), href: "/jobs" },
     { name: getT("services"), href: "/services" },
-    { name: getT("trainings"), href: "/trainings" },
+    { name: getT("trainings"), href: "/training" },
+    { name: getT("workers"), href: "/workers", wideOnly: true },
+    { name: getT("businesses"), href: "/businesses", wideOnly: true },
     { name: getT("about"), href: "/about" },
     { name: getT("contact"), href: "/contact" },
   ];
@@ -111,7 +113,11 @@ export default function Navbar() {
           <div className="hidden md:flex flex-grow justify-center">
             <div className="flex items-center space-x-1">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive =
+                  link.href === "/"
+                    ? pathname === "/"
+                    : pathname === link.href ||
+                      pathname.startsWith(`${link.href}/`);
                 return (
                   <Link
                     key={link.href}
@@ -120,7 +126,7 @@ export default function Navbar() {
                     onPointerEnter={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
                     onTouchStart={() => prefetchRoute(link.href)}
-                    className={`px-4 py-2 text-sm font-medium transition-all rounded-lg relative group ${
+                    className={`${link.wideOnly ? "hidden xl:inline-flex" : ""} px-3 py-2 text-sm font-medium transition-all rounded-lg relative group ${
                       isActive
                         ? "text-primary"
                         : `${navTextColor} hover:text-primary`
@@ -262,7 +268,7 @@ export default function Navbar() {
             { name: getT("home"), href: "/", icon: Home },
             { name: getT("jobs"), href: "/jobs", icon: Briefcase },
             { name: getT("services"), href: "/services", icon: Wrench },
-            { name: getT("trainings"), href: "/trainings", icon: GraduationCap },
+            { name: getT("trainings"), href: "/training", icon: GraduationCap },
             {
               name: user ? "Account" : language === "en" ? "Sign In" : "Soo gal",
               href: user ? `/${user.role}` : "/login",
