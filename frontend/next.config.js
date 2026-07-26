@@ -129,6 +129,22 @@ module.exports = (phase) => {
       remotePatterns,
     },
 
+    async redirects() {
+      return [
+        {
+          source: "/:path*",
+          has: [
+            {
+              type: "host",
+              value: "www\\.zeilalink\\.com",
+            },
+          ],
+          destination: "https://zeilalink.com/:path*",
+          permanent: true,
+        },
+      ];
+    },
+
     async headers() {
       return [
         {
@@ -140,10 +156,6 @@ module.exports = (phase) => {
 
     async rewrites() {
       return [
-        {
-          source: "/favicon.ico",
-          destination: "/icon.png",
-        },
         {
           source: "/api/:path*",
           destination: `${internalApiOrigin}/api/:path*`,

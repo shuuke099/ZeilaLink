@@ -54,14 +54,6 @@ export function generateMetadata(): Metadata {
     alternates: {
       canonical,
     },
-    icons: {
-      icon: [
-        { url: '/icon.png', type: 'image/png' },
-        { url: '/favicon.ico', type: 'image/x-icon' },
-      ],
-      shortcut: '/favicon.ico',
-      apple: '/icon.png',
-    },
     formatDetection: {
       email: false,
       address: false,
@@ -114,7 +106,9 @@ export default function RootLayout({
         url: absoluteUrl('/'),
         logo: {
           '@type': 'ImageObject',
-          url: absoluteUrl('/icon.png'),
+          url: absoluteUrl('/icon-512.png'),
+          width: 512,
+          height: 512,
         },
         description: SITE_DESCRIPTION,
         email: SITE_CONTACT_EMAIL,
