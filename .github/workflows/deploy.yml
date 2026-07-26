@@ -46,13 +46,18 @@ jobs:
             echo "Install dependencies..."
             pnpm install --frozen-lockfile
 
-            echo "Run Prisma migrations..."
+            echo "Generate Prisma Client..."
             cd backend
-            pnpm prisma migrate deploy
+            pnpm prisma generate
             cd ..
 
             echo "Build application..."
             pnpm build
+
+            echo "Run Prisma migrations..."
+            cd backend
+            pnpm prisma migrate deploy
+            cd ..
 
             echo "Restart PM2..."
             pm2 restart ecosystem.config.js --update-env

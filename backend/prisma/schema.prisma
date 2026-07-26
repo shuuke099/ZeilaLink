@@ -103,6 +103,9 @@ model Job {
   @@index([location])
   @@index([salaryMin])
   @@index([salaryMax])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "jobs_title_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "jobs_description_trgm_idx")
+  @@index([tags], type: Gin, map: "jobs_tags_gin_idx")
   @@map("jobs")
 }
 
@@ -165,6 +168,9 @@ model Service {
   @@index([published, createdAt])
   @@index([published, category])
   @@index([category])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "services_title_trgm_idx")
+  @@index([provider(ops: raw("gin_trgm_ops"))], type: Gin, map: "services_provider_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "services_description_trgm_idx")
   @@map("services")
 }
 
@@ -312,6 +318,8 @@ model Training {
   @@index([providerId, createdAt])
   @@index([skillId, createdAt])
   @@index([published, cost])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "trainings_name_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "trainings_description_trgm_idx")
   @@map("trainings")
 }
 
