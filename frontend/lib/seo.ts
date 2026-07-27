@@ -4,7 +4,7 @@ export const SITE_NAME = "ZeilaLink";
 export const DEFAULT_SITE_ORIGIN = "https://zeilalink.com";
 
 export const SITE_TITLE =
-  "ZeilaLink | Jobs, Training, Workers, Services & Businesses";
+  "ZeilaLink | Jobs, Training, Services & Business Directory for Somali & East African Communities";
 export const SITE_DESCRIPTION_EN =
   "ZeilaLink connects Somali communities with jobs, skilled workers, training programs, trusted services, and businesses.";
 export const SITE_DESCRIPTION_SO =
@@ -13,13 +13,26 @@ export const SITE_DESCRIPTION = `${SITE_DESCRIPTION_EN} ${SITE_DESCRIPTION_SO}`;
 
 export const SITE_KEYWORDS = [
   "ZeilaLink",
+
+  // English
   "Somali jobs",
-  "jobs in Somalia",
-  "Somali workers",
+  "Minnesota jobs",
+  "Minneapolis jobs",
+  "St Paul jobs",
+  "African jobs",
+  "East African jobs",
+  "jobs in Minnesota",
   "skilled workers",
   "training programs",
-  "Somali businesses",
   "professional services",
+  "business directory",
+  "resume help",
+  "career services",
+  "employment",
+  "job search",
+  "Somali businesses",
+
+  // Somali
   "shaqooyin",
   "shaqaale",
   "tababaro",
@@ -53,8 +66,7 @@ const toOrigin = (value: string | undefined): URL | null => {
 };
 
 export const SITE_URL =
-  toOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
-  new URL(DEFAULT_SITE_ORIGIN);
+  toOrigin(process.env.NEXT_PUBLIC_SITE_URL) ?? new URL(DEFAULT_SITE_ORIGIN);
 export const SITE_ORIGIN = SITE_URL.origin;
 
 const safePath = (path: string): string => {

@@ -78,8 +78,8 @@ export default function Navbar() {
     { name: getT("services"), href: "/services" },
     { name: getT("trainings"), href: "/training" },
     // Temporarily hidden until the public directories are ready.
-    // { name: getT("workers"), href: "/workers", wideOnly: true },
-    // { name: getT("businesses"), href: "/businesses", wideOnly: true },
+    { name: getT("workers"), href: "/workers", wideOnly: true },
+    { name: getT("businesses"), href: "/businesses", wideOnly: true },
     { name: getT("about"), href: "/about" },
     { name: getT("contact"), href: "/contact" },
   ];
