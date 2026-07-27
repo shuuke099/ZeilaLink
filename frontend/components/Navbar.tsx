@@ -68,13 +68,18 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
+  const navLinks: Array<{
+    name: string;
+    href: string;
+    wideOnly?: boolean;
+  }> = [
     { name: getT("home"), href: "/" },
     { name: getT("jobs"), href: "/jobs" },
     { name: getT("services"), href: "/services" },
     { name: getT("trainings"), href: "/training" },
-    { name: getT("workers"), href: "/workers", wideOnly: true },
-    { name: getT("businesses"), href: "/businesses", wideOnly: true },
+    // Temporarily hidden until the public directories are ready.
+    // { name: getT("workers"), href: "/workers", wideOnly: true },
+    // { name: getT("businesses"), href: "/businesses", wideOnly: true },
     { name: getT("about"), href: "/about" },
     { name: getT("contact"), href: "/contact" },
   ];
