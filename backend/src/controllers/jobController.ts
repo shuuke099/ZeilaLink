@@ -1,15 +1,23 @@
-import { Response } from 'express';
-import prisma from '../config/database';
-import { AuthRequest } from '../middleware/auth';
-import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
-import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from '../utils/cache';
-import { presentResume } from '../utils/resume';
-import { createStableSlug, slugWhenMissing } from '../utils/slug';
+import { Response } from "express";
+import prisma from "../config/database";
+import { AuthRequest } from "../middleware/auth";
+import { recordAuditEvent, requestAuditMeta } from "../utils/audit";
+import {
+  cacheGetOrSet,
+  invalidateCacheByPrefix,
+  makeCacheKey,
+} from "../utils/cache";
+import { presentResume } from "../utils/resume";
+import { createStableSlug, slugWhenMissing } from "../utils/slug";
 
 const toBoolean = (value: any): boolean =>
-  value === true || value === 'true' || value === '1';
+  value === true || value === "true" || value === "1";
 
-const boundedPositiveInteger = (value: unknown, fallback: number, maximum: number) => {
+const boundedPositiveInteger = (
+  value: unknown,
+  fallback: number,
+  maximum: number,
+) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0
     ? Math.min(parsed, maximum)
@@ -17,43 +25,43 @@ const boundedPositiveInteger = (value: unknown, fallback: number, maximum: numbe
 };
 
 const JOB_WRITE_FIELDS = new Set([
-  'title',
-  'titleSo',
-  'description',
-  'descriptionSo',
-  'requirements',
-  'requirementsSo',
-  'benefits',
-  'benefitsSo',
-  'location',
-  'salaryMin',
-  'salaryMax',
-  'employmentType',
-  'jobType',
-  'remote',
-  'tags',
-  'applicationDeadline',
-  'published',
+  "title",
+  "titleSo",
+  "description",
+  "descriptionSo",
+  "requirements",
+  "requirementsSo",
+  "benefits",
+  "benefitsSo",
+  "location",
+  "salaryMin",
+  "salaryMax",
+  "employmentType",
+  "jobType",
+  "remote",
+  "tags",
+  "applicationDeadline",
+  "published",
 ]);
 
 const hasOwn = (value: Record<string, unknown>, key: string) =>
   Object.prototype.hasOwnProperty.call(value, key);
 
 const parseBooleanInput = (value: unknown): boolean | undefined => {
-  if (value === true || value === 'true' || value === '1') return true;
-  if (value === false || value === 'false' || value === '0') return false;
+  if (value === true || value === "true" || value === "1") return true;
+  if (value === false || value === "false" || value === "0") return false;
   return undefined;
 };
 
 const parseNullableInteger = (value: unknown): number | null | undefined => {
-  if (value === null || value === '') return null;
+  if (value === null || value === "") return null;
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 };
 
 const parseNullableDate = (value: unknown): Date | null | undefined => {
-  if (value === null || value === '') return null;
-  if (typeof value !== 'string') return undefined;
+  if (value === null || value === "") return null;
+  if (typeof value !== "string") return undefined;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 };
@@ -61,16 +69,17 @@ const parseNullableDate = (value: unknown): Date | null | undefined => {
 const parseTags = (value: unknown): string[] | undefined => {
   const values = Array.isArray(value)
     ? value
-    : typeof value === 'string'
-      ? value.split(',')
+    : typeof value === "string"
+      ? value.split(",")
       : null;
 
-  if (!values || values.some((tag) => typeof tag !== 'string')) return undefined;
+  if (!values || values.some((tag) => typeof tag !== "string"))
+    return undefined;
   return values.map((tag) => tag.trim()).filter(Boolean);
 };
 
 const getWritePayload = (body: unknown): Record<string, unknown> | null => {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   return body as Record<string, unknown>;
 };
 
@@ -78,14 +87,14 @@ const recordJobEvent = (
   req: AuthRequest,
   action: string,
   resourceId: string | null,
-  result: 'success' | 'denied',
+  result: "success" | "denied",
   meta: Record<string, unknown> = {},
 ) => {
-  if (result === 'denied') req.authorizationDenialAudited = true;
+  if (result === "denied") req.authorizationDenialAudited = true;
   recordAuditEvent({
     userId: req.user?.id || null,
     action,
-    resourceType: 'job',
+    resourceType: "job",
     resourceId: resourceId ? resourceId.slice(0, 128) : null,
     meta: { ...requestAuditMeta(req), ...meta, result },
   });
@@ -112,9 +121,9 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
     const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
-    
+
     // If employer requests their own jobs (mine=true or employerId matches)
-    if (req.user?.role === 'employer') {
+    if (req.user?.role === "employer") {
       const mineFlag = toBoolean(mine);
       if (mineFlag || employerId) {
         const employer = await prisma.employer.findUnique({
@@ -125,10 +134,10 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
           // Show both published and unpublished for own jobs
           // Don't filter by published
         } else {
-          recordJobEvent(req, 'job.list', null, 'denied', {
-            reason: 'employer_profile_required',
+          recordJobEvent(req, "job.list", null, "denied", {
+            reason: "employer_profile_required",
           });
-          return res.status(403).json({ error: 'Employer profile not found' });
+          return res.status(403).json({ error: "Employer profile not found" });
         }
       } else {
         // Public job listing - only show published jobs
@@ -141,29 +150,31 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       where.employer = { verified: true, user: { isVerified: true } };
     }
 
-    if (typeof search === 'string' && search.trim()) {
+    if (typeof search === "string" && search.trim()) {
       const searchQuery = search.trim().slice(0, 200);
       where.OR = [
-        { title: { contains: searchQuery, mode: 'insensitive' } },
-        { titleSo: { contains: searchQuery, mode: 'insensitive' } },
-        { description: { contains: searchQuery, mode: 'insensitive' } },
-        { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
-        { requirements: { contains: searchQuery, mode: 'insensitive' } },
-        { requirementsSo: { contains: searchQuery, mode: 'insensitive' } },
-        { benefits: { contains: searchQuery, mode: 'insensitive' } },
-        { benefitsSo: { contains: searchQuery, mode: 'insensitive' } },
-        { location: { contains: searchQuery, mode: 'insensitive' } },
-        { employmentType: { contains: searchQuery, mode: 'insensitive' } },
+        { title: { contains: searchQuery, mode: "insensitive" } },
+        { titleSo: { contains: searchQuery, mode: "insensitive" } },
+        { description: { contains: searchQuery, mode: "insensitive" } },
+        { descriptionSo: { contains: searchQuery, mode: "insensitive" } },
+        { requirements: { contains: searchQuery, mode: "insensitive" } },
+        { requirementsSo: { contains: searchQuery, mode: "insensitive" } },
+        { benefits: { contains: searchQuery, mode: "insensitive" } },
+        { benefitsSo: { contains: searchQuery, mode: "insensitive" } },
+        { location: { contains: searchQuery, mode: "insensitive" } },
+        { employmentType: { contains: searchQuery, mode: "insensitive" } },
         { tags: { has: searchQuery } },
         { tags: { has: searchQuery.toLowerCase() } },
         {
           employer: {
             is: {
               OR: [
-                { name: { contains: searchQuery, mode: 'insensitive' } },
-                { nameSo: { contains: searchQuery, mode: 'insensitive' } },
-                { description: { contains: searchQuery, mode: 'insensitive' } },
-                { descriptionSo: { contains: searchQuery, mode: 'insensitive' } },
+                { name: { contains: searchQuery, mode: "insensitive" } },
+                { nameSo: { contains: searchQuery, mode: "insensitive" } },
+                { description: { contains: searchQuery, mode: "insensitive" } },
+                {
+                  descriptionSo: { contains: searchQuery, mode: "insensitive" },
+                },
               ],
             },
           },
@@ -172,7 +183,7 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
     }
 
     if (location) {
-      where.location = { contains: location as string, mode: 'insensitive' };
+      where.location = { contains: location as string, mode: "insensitive" };
     }
 
     if (employmentType) {
@@ -216,7 +227,7 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
           },
           skip,
           take: pageSize,
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         }),
         prisma.job.count({ where }),
       ]);
@@ -250,16 +261,27 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
     };
 
     const publicCacheable = !toBoolean(mine) && !employerId;
-    const cacheKey = makeCacheKey('jobs:list', req.query as Record<string, unknown>);
+    const cacheKey = makeCacheKey(
+      "jobs:list",
+      req.query as Record<string, unknown>,
+    );
     const result = publicCacheable
       ? await cacheGetOrSet(cacheKey, 30, loadJobs)
       : { value: await loadJobs(), hit: false };
 
-    res.set('Cache-Control', publicCacheable ? 'public, max-age=15, stale-while-revalidate=60' : 'private, no-store');
-    res.set('X-Cache', publicCacheable ? (result.hit ? 'HIT' : 'MISS') : 'BYPASS');
+    res.set(
+      "Cache-Control",
+      publicCacheable
+        ? "public, max-age=15, stale-while-revalidate=60"
+        : "private, no-store",
+    );
+    res.set(
+      "X-Cache",
+      publicCacheable ? (result.hit ? "HIT" : "MISS") : "BYPASS",
+    );
     res.json(result.value);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load jobs' });
+    res.status(500).json({ error: "Failed to load jobs" });
   }
 };
 
@@ -288,24 +310,24 @@ export const getJobById = async (req: AuthRequest, res: Response) => {
     });
 
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      return res.status(404).json({ error: "Job not found" });
     }
 
     const publiclyVisible =
       job.published && job.employer.verified && job.employer.user.isVerified;
     if (!publiclyVisible) {
       const canViewDraft =
-        req.user?.role === 'admin' ||
-        (req.user?.role === 'employer' && job.employer.userId === req.user.id);
+        req.user?.role === "admin" ||
+        (req.user?.role === "employer" && job.employer.userId === req.user.id);
 
       if (!canViewDraft) {
-        recordJobEvent(req, 'job.read', id, 'denied', {
-          reason: 'published_approved_employer_or_ownership_required',
+        recordJobEvent(req, "job.read", id, "denied", {
+          reason: "published_approved_employer_or_ownership_required",
         });
-        return res.status(404).json({ error: 'Job not found' });
+        return res.status(404).json({ error: "Job not found" });
       }
 
-      res.set('Cache-Control', 'private, no-store');
+      res.set("Cache-Control", "private, no-store");
     }
 
     // Increment view count
@@ -337,7 +359,7 @@ export const getJobById = async (req: AuthRequest, res: Response) => {
 
     res.json(transformedJob);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load job' });
+    res.status(500).json({ error: "Failed to load job" });
   }
 };
 
@@ -345,70 +367,111 @@ export const createJob = async (req: AuthRequest, res: Response) => {
   try {
     const payload = getWritePayload(req.body);
     if (!payload) {
-      return res.status(400).json({ error: 'Invalid job payload' });
+      return res.status(400).json({ error: "Invalid job payload" });
     }
 
-    const unsupportedFields = Object.keys(payload).filter((field) => !JOB_WRITE_FIELDS.has(field));
+    const unsupportedFields = Object.keys(payload).filter(
+      (field) => !JOB_WRITE_FIELDS.has(field),
+    );
     if (unsupportedFields.length > 0) {
-      return res.status(400).json({ error: 'Unsupported job fields', fields: unsupportedFields });
+      return res
+        .status(400)
+        .json({ error: "Unsupported job fields", fields: unsupportedFields });
     }
 
-    const title = typeof payload.title === 'string' ? payload.title.trim() : '';
-    const description = typeof payload.description === 'string' ? payload.description.trim() : '';
-    const requirements = typeof payload.requirements === 'string' ? payload.requirements.trim() : '';
-    const location = typeof payload.location === 'string' ? payload.location.trim() : '';
-    const employmentTypeRaw = payload.employmentType ?? payload.jobType ?? 'Full-time';
-    const employmentType = typeof employmentTypeRaw === 'string' ? employmentTypeRaw.trim() : '';
+    const title = typeof payload.title === "string" ? payload.title.trim() : "";
+    const description =
+      typeof payload.description === "string" ? payload.description.trim() : "";
+    const requirements =
+      typeof payload.requirements === "string"
+        ? payload.requirements.trim()
+        : "";
+    const location =
+      typeof payload.location === "string" ? payload.location.trim() : "";
+    const employmentTypeRaw =
+      payload.employmentType ?? payload.jobType ?? "Full-time";
+    const employmentType =
+      typeof employmentTypeRaw === "string" ? employmentTypeRaw.trim() : "";
 
-    if (!title || !description || !requirements || !location || !employmentType) {
+    if (
+      !title ||
+      !description ||
+      !requirements ||
+      !location ||
+      !employmentType
+    ) {
       return res.status(400).json({
-        error: 'title, description, requirements, location and employmentType are required',
+        error:
+          "title, description, requirements, location and employmentType are required",
       });
     }
 
-    for (const field of ['titleSo', 'descriptionSo', 'requirementsSo', 'benefitsSo'] as const) {
+    for (const field of [
+      "titleSo",
+      "descriptionSo",
+      "requirementsSo",
+      "benefitsSo",
+    ] as const) {
       if (
         hasOwn(payload, field) &&
         payload[field] !== null &&
-        typeof payload[field] !== 'string'
+        typeof payload[field] !== "string"
       ) {
-        return res.status(400).json({ error: `${field} must be a string or null` });
+        return res
+          .status(400)
+          .json({ error: `${field} must be a string or null` });
       }
     }
 
     if (
-      hasOwn(payload, 'benefits') &&
+      hasOwn(payload, "benefits") &&
       payload.benefits !== null &&
-      typeof payload.benefits !== 'string'
+      typeof payload.benefits !== "string"
     ) {
-      return res.status(400).json({ error: 'benefits must be a string or null' });
+      return res
+        .status(400)
+        .json({ error: "benefits must be a string or null" });
     }
 
     const salaryMin = parseNullableInteger(payload.salaryMin ?? null);
     const salaryMax = parseNullableInteger(payload.salaryMax ?? null);
     if (salaryMin === undefined || salaryMax === undefined) {
-      return res.status(400).json({ error: 'Salary values must be non-negative integers' });
+      return res
+        .status(400)
+        .json({ error: "Salary values must be non-negative integers" });
     }
     if (salaryMin !== null && salaryMax !== null && salaryMin > salaryMax) {
-      return res.status(400).json({ error: 'salaryMin cannot be greater than salaryMax' });
+      return res
+        .status(400)
+        .json({ error: "salaryMin cannot be greater than salaryMax" });
     }
 
-    const remoteFlag = hasOwn(payload, 'remote') ? parseBooleanInput(payload.remote) : false;
-    const publishFlag = hasOwn(payload, 'published') ? parseBooleanInput(payload.published) : false;
+    const remoteFlag = hasOwn(payload, "remote")
+      ? parseBooleanInput(payload.remote)
+      : false;
+    const publishFlag = hasOwn(payload, "published")
+      ? parseBooleanInput(payload.published)
+      : false;
     if (remoteFlag === undefined || publishFlag === undefined) {
-      return res.status(400).json({ error: 'remote and published must be boolean values' });
+      return res
+        .status(400)
+        .json({ error: "remote and published must be boolean values" });
     }
 
-    const tags = hasOwn(payload, 'tags') ? parseTags(payload.tags) : [];
+    const tags = hasOwn(payload, "tags") ? parseTags(payload.tags) : [];
     if (!tags) {
-      return res.status(400).json({ error: 'tags must be a string or an array of strings' });
+      return res
+        .status(400)
+        .json({ error: "tags must be a string or an array of strings" });
     }
 
-    const applicationDeadline = hasOwn(payload, 'applicationDeadline')
+    const applicationDeadline = hasOwn(payload, "applicationDeadline")
       ? parseNullableDate(payload.applicationDeadline)
       : null;
     if (applicationDeadline === undefined) {
-      return res.status(400).json({ error: 'applicationDeadline must be a valid date' });
+      return res
+        .status(400)
+        .json({ error: "applicationDeadline must be a valid date" });
     }
 
     const employer = await prisma.employer.findUnique({
@@ -421,32 +484,46 @@ export const createJob = async (req: AuthRequest, res: Response) => {
     });
 
     if (!employer) {
-      recordJobEvent(req, 'job.create', null, 'denied', {
-        reason: 'employer_profile_required',
+      recordJobEvent(req, "job.create", null, "denied", {
+        reason: "employer_profile_required",
       });
-      return res.status(403).json({ error: 'Employer profile required' });
+      return res.status(403).json({ error: "Employer profile required" });
     }
     if (!employer.user.isVerified || !employer.verified) {
-      recordJobEvent(req, 'job.create', null, 'denied', {
-        reason: 'verified_approved_employer_required',
+      recordJobEvent(req, "job.create", null, "denied", {
+        reason: "verified_approved_employer_required",
       });
-      return res.status(403).json({ error: 'Verified and approved employer account required' });
+      return res
+        .status(403)
+        .json({ error: "Verified and approved employer account required" });
     }
 
     const job = await prisma.$transaction(async (transaction) => {
       const created = await transaction.job.create({
         data: {
           title,
-          titleSo: typeof payload.titleSo === 'string' ? payload.titleSo.trim() || null : null,
+          titleSo:
+            typeof payload.titleSo === "string"
+              ? payload.titleSo.trim() || null
+              : null,
           description,
           descriptionSo:
-            typeof payload.descriptionSo === 'string' ? payload.descriptionSo.trim() || null : null,
+            typeof payload.descriptionSo === "string"
+              ? payload.descriptionSo.trim() || null
+              : null,
           requirements,
           requirementsSo:
-            typeof payload.requirementsSo === 'string' ? payload.requirementsSo.trim() || null : null,
-          benefits: typeof payload.benefits === 'string' ? payload.benefits.trim() || null : null,
+            typeof payload.requirementsSo === "string"
+              ? payload.requirementsSo.trim() || null
+              : null,
+          benefits:
+            typeof payload.benefits === "string"
+              ? payload.benefits.trim() || null
+              : null,
           benefitsSo:
-            typeof payload.benefitsSo === 'string' ? payload.benefitsSo.trim() || null : null,
+            typeof payload.benefitsSo === "string"
+              ? payload.benefitsSo.trim() || null
+              : null,
           employerId: employer.id,
           location,
           salaryMin,
@@ -461,21 +538,23 @@ export const createJob = async (req: AuthRequest, res: Response) => {
 
       return transaction.job.update({
         where: { id: created.id },
-        data: { slug: createStableSlug(created.title, created.id, 'job') },
+        data: { slug: createStableSlug(created.title, created.id, "job") },
         include: { employer: true },
       });
     });
 
-    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
-    recordJobEvent(req, 'job.create', job.id, 'success', {
+    void invalidateCacheByPrefix(["jobs:list", "public:stats"]);
+    recordJobEvent(req, "job.create", job.id, "success", {
       published: job.published,
     });
     if (job.published) {
-      recordJobEvent(req, 'job.publish', job.id, 'success', { source: 'create' });
+      recordJobEvent(req, "job.publish", job.id, "success", {
+        source: "create",
+      });
     }
     res.status(201).json(job);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to create job' });
+    res.status(500).json({ error: "Failed to create job" });
   }
 };
 
@@ -484,12 +563,16 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const payload = getWritePayload(req.body);
     if (!payload) {
-      return res.status(400).json({ error: 'Invalid job payload' });
+      return res.status(400).json({ error: "Invalid job payload" });
     }
 
-    const unsupportedFields = Object.keys(payload).filter((field) => !JOB_WRITE_FIELDS.has(field));
+    const unsupportedFields = Object.keys(payload).filter(
+      (field) => !JOB_WRITE_FIELDS.has(field),
+    );
     if (unsupportedFields.length > 0) {
-      return res.status(400).json({ error: 'Unsupported job fields', fields: unsupportedFields });
+      return res
+        .status(400)
+        .json({ error: "Unsupported job fields", fields: unsupportedFields });
     }
 
     // Check ownership
@@ -499,107 +582,151 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
     });
 
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      return res.status(404).json({ error: "Job not found" });
     }
 
     if (job.employer.userId !== req.user!.id) {
-      recordJobEvent(req, 'job.update', id, 'denied', {
-        reason: 'job_ownership_required',
+      recordJobEvent(req, "job.update", id, "denied", {
+        reason: "job_ownership_required",
       });
-      return res.status(403).json({ error: 'Not authorized' });
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     if (!job.employer.verified) {
-      recordJobEvent(req, 'job.update', id, 'denied', {
-        reason: 'employer_approval_required',
+      recordJobEvent(req, "job.update", id, "denied", {
+        reason: "employer_approval_required",
       });
-      return res.status(403).json({ error: 'Employer approval required' });
+      return res.status(403).json({ error: "Employer approval required" });
     }
 
     const updateData: Record<string, unknown> = {};
-    for (const field of ['title', 'description', 'requirements', 'location', 'employmentType'] as const) {
+    for (const field of [
+      "title",
+      "description",
+      "requirements",
+      "location",
+      "employmentType",
+    ] as const) {
       if (!hasOwn(payload, field)) continue;
-      const value = typeof payload[field] === 'string' ? payload[field].trim() : '';
+      const value =
+        typeof payload[field] === "string" ? payload[field].trim() : "";
       if (!value) {
-        return res.status(400).json({ error: `${field} must be a non-empty string` });
+        return res
+          .status(400)
+          .json({ error: `${field} must be a non-empty string` });
       }
       updateData[field] = value;
     }
 
-    if (hasOwn(payload, 'jobType') && !hasOwn(payload, 'employmentType')) {
-      const value = typeof payload.jobType === 'string' ? payload.jobType.trim() : '';
-      if (!value) return res.status(400).json({ error: 'jobType must be a non-empty string' });
+    if (hasOwn(payload, "jobType") && !hasOwn(payload, "employmentType")) {
+      const value =
+        typeof payload.jobType === "string" ? payload.jobType.trim() : "";
+      if (!value)
+        return res
+          .status(400)
+          .json({ error: "jobType must be a non-empty string" });
       updateData.employmentType = value;
     }
 
-    if (hasOwn(payload, 'benefits')) {
-      if (payload.benefits !== null && typeof payload.benefits !== 'string') {
-        return res.status(400).json({ error: 'benefits must be a string or null' });
+    if (hasOwn(payload, "benefits")) {
+      if (payload.benefits !== null && typeof payload.benefits !== "string") {
+        return res
+          .status(400)
+          .json({ error: "benefits must be a string or null" });
       }
-      updateData.benefits = typeof payload.benefits === 'string' ? payload.benefits.trim() || null : null;
+      updateData.benefits =
+        typeof payload.benefits === "string"
+          ? payload.benefits.trim() || null
+          : null;
     }
 
-    for (const field of ['titleSo', 'descriptionSo', 'requirementsSo', 'benefitsSo'] as const) {
+    for (const field of [
+      "titleSo",
+      "descriptionSo",
+      "requirementsSo",
+      "benefitsSo",
+    ] as const) {
       if (!hasOwn(payload, field)) continue;
-      if (payload[field] !== null && typeof payload[field] !== 'string') {
-        return res.status(400).json({ error: `${field} must be a string or null` });
+      if (payload[field] !== null && typeof payload[field] !== "string") {
+        return res
+          .status(400)
+          .json({ error: `${field} must be a string or null` });
       }
       updateData[field] =
-        typeof payload[field] === 'string' ? payload[field].trim() || null : null;
+        typeof payload[field] === "string"
+          ? payload[field].trim() || null
+          : null;
     }
 
-    for (const field of ['salaryMin', 'salaryMax'] as const) {
+    for (const field of ["salaryMin", "salaryMax"] as const) {
       if (!hasOwn(payload, field)) continue;
       const parsed = parseNullableInteger(payload[field]);
       if (parsed === undefined) {
-        return res.status(400).json({ error: `${field} must be a non-negative integer or null` });
+        return res
+          .status(400)
+          .json({ error: `${field} must be a non-negative integer or null` });
       }
       updateData[field] = parsed;
     }
 
-    const nextSalaryMin = hasOwn(updateData, 'salaryMin') ? updateData.salaryMin : job.salaryMin;
-    const nextSalaryMax = hasOwn(updateData, 'salaryMax') ? updateData.salaryMax : job.salaryMax;
+    const nextSalaryMin = hasOwn(updateData, "salaryMin")
+      ? updateData.salaryMin
+      : job.salaryMin;
+    const nextSalaryMax = hasOwn(updateData, "salaryMax")
+      ? updateData.salaryMax
+      : job.salaryMax;
     if (
-      typeof nextSalaryMin === 'number' &&
-      typeof nextSalaryMax === 'number' &&
+      typeof nextSalaryMin === "number" &&
+      typeof nextSalaryMax === "number" &&
       nextSalaryMin > nextSalaryMax
     ) {
-      return res.status(400).json({ error: 'salaryMin cannot be greater than salaryMax' });
+      return res
+        .status(400)
+        .json({ error: "salaryMin cannot be greater than salaryMax" });
     }
 
-    for (const field of ['remote', 'published'] as const) {
+    for (const field of ["remote", "published"] as const) {
       if (!hasOwn(payload, field)) continue;
       const parsed = parseBooleanInput(payload[field]);
       if (parsed === undefined) {
-        return res.status(400).json({ error: `${field} must be a boolean value` });
+        return res
+          .status(400)
+          .json({ error: `${field} must be a boolean value` });
       }
       updateData[field] = parsed;
     }
 
-    if (hasOwn(payload, 'tags')) {
+    if (hasOwn(payload, "tags")) {
       const parsed = parseTags(payload.tags);
-      if (!parsed) return res.status(400).json({ error: 'tags must be a string or an array of strings' });
+      if (!parsed)
+        return res
+          .status(400)
+          .json({ error: "tags must be a string or an array of strings" });
       updateData.tags = parsed;
     }
 
-    if (hasOwn(payload, 'applicationDeadline')) {
+    if (hasOwn(payload, "applicationDeadline")) {
       const parsed = parseNullableDate(payload.applicationDeadline);
       if (parsed === undefined) {
-        return res.status(400).json({ error: 'applicationDeadline must be a valid date or null' });
+        return res
+          .status(400)
+          .json({ error: "applicationDeadline must be a valid date or null" });
       }
       updateData.applicationDeadline = parsed;
     }
 
     const missingSlug = slugWhenMissing(
       job.slug,
-      hasOwn(updateData, 'title') ? updateData.title : job.title,
+      hasOwn(updateData, "title") ? updateData.title : job.title,
       job.id,
-      'job',
+      "job",
     );
     if (missingSlug) updateData.slug = missingSlug;
 
     if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ error: 'No supported job fields supplied' });
+      return res
+        .status(400)
+        .json({ error: "No supported job fields supplied" });
     }
 
     const updated = await prisma.job.update({
@@ -607,18 +734,22 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
       data: updateData,
     });
 
-    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
-    recordJobEvent(req, 'job.update', updated.id, 'success', {
+    void invalidateCacheByPrefix(["jobs:list", "public:stats"]);
+    recordJobEvent(req, "job.update", updated.id, "success", {
       fields: Object.keys(updateData),
     });
     if (!job.published && updated.published) {
-      recordJobEvent(req, 'job.publish', updated.id, 'success', { source: 'update' });
+      recordJobEvent(req, "job.publish", updated.id, "success", {
+        source: "update",
+      });
     } else if (job.published && !updated.published) {
-      recordJobEvent(req, 'job.unpublish', updated.id, 'success', { source: 'update' });
+      recordJobEvent(req, "job.unpublish", updated.id, "success", {
+        source: "update",
+      });
     }
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to update job' });
+    res.status(500).json({ error: "Failed to update job" });
   }
 };
 
@@ -632,23 +763,23 @@ export const deleteJob = async (req: AuthRequest, res: Response) => {
     });
 
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      return res.status(404).json({ error: "Job not found" });
     }
 
     if (job.employer.userId !== req.user!.id) {
-      recordJobEvent(req, 'job.delete', id, 'denied', {
-        reason: 'job_ownership_required',
+      recordJobEvent(req, "job.delete", id, "denied", {
+        reason: "job_ownership_required",
       });
-      return res.status(403).json({ error: 'Not authorized' });
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     await prisma.job.delete({ where: { id } });
 
-    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
-    recordJobEvent(req, 'job.delete', id, 'success');
-    res.json({ message: 'Job deleted successfully' });
+    void invalidateCacheByPrefix(["jobs:list", "public:stats"]);
+    recordJobEvent(req, "job.delete", id, "success");
+    res.json({ message: "Job deleted successfully" });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete job' });
+    res.status(500).json({ error: "Failed to delete job" });
   }
 };
 
@@ -662,40 +793,46 @@ export const publishJob = async (req: AuthRequest, res: Response) => {
     });
 
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      return res.status(404).json({ error: "Job not found" });
     }
 
     if (job.employer.userId !== req.user!.id) {
-      recordJobEvent(req, 'job.publish', id, 'denied', {
-        reason: 'job_ownership_required',
+      recordJobEvent(req, "job.publish", id, "denied", {
+        reason: "job_ownership_required",
       });
-      return res.status(403).json({ error: 'Not authorized' });
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     // Ensure employer is verified before publishing
-    const employerRecord = await prisma.employer.findUnique({ where: { id: job.employerId } });
+    const employerRecord = await prisma.employer.findUnique({
+      where: { id: job.employerId },
+    });
     if (!employerRecord?.verified) {
-      recordJobEvent(req, 'job.publish', id, 'denied', {
-        reason: 'employer_approval_required',
+      recordJobEvent(req, "job.publish", id, "denied", {
+        reason: "employer_approval_required",
       });
-      return res.status(403).json({ error: 'Employer must be verified to publish jobs' });
+      return res
+        .status(403)
+        .json({ error: "Employer must be verified to publish jobs" });
     }
 
     const updated = await prisma.job.update({
       where: { id },
       data: {
         published: true,
-        ...(slugWhenMissing(job.slug, job.title, job.id, 'job')
-          ? { slug: createStableSlug(job.title, job.id, 'job') }
+        ...(slugWhenMissing(job.slug, job.title, job.id, "job")
+          ? { slug: createStableSlug(job.title, job.id, "job") }
           : {}),
       },
     });
 
-    void invalidateCacheByPrefix(['jobs:list', 'public:stats']);
-    recordJobEvent(req, 'job.publish', updated.id, 'success', { source: 'publish_endpoint' });
+    void invalidateCacheByPrefix(["jobs:list", "public:stats"]);
+    recordJobEvent(req, "job.publish", updated.id, "success", {
+      source: "publish_endpoint",
+    });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to change job publication' });
+    res.status(500).json({ error: "Failed to change job publication" });
   }
 };
 
@@ -709,10 +846,10 @@ export const getJobApplicants = async (req: AuthRequest, res: Response) => {
     });
 
     if (!job || job.employer.userId !== req.user!.id) {
-      recordJobEvent(req, 'job.applicants.read', id, 'denied', {
-        reason: 'job_ownership_required',
+      recordJobEvent(req, "job.applicants.read", id, "denied", {
+        reason: "job_ownership_required",
       });
-      return res.status(403).json({ error: 'Not authorized' });
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     const applications = await prisma.application.findMany({
@@ -730,7 +867,7 @@ export const getJobApplicants = async (req: AuthRequest, res: Response) => {
         },
         resume: true,
       },
-      orderBy: { appliedAt: 'desc' },
+      orderBy: { appliedAt: "desc" },
     });
 
     res.json(
@@ -740,6 +877,6 @@ export const getJobApplicants = async (req: AuthRequest, res: Response) => {
       })),
     );
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load job applicants' });
+    res.status(500).json({ error: "Failed to load job applicants" });
   }
 };

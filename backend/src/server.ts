@@ -31,6 +31,8 @@ import serviceRoutes from "./routes/serviceRoutes";
 import { localUploadsPath } from "./config/aws";
 import { assertJwtConfiguration } from "./utils/jwt";
 import { assertOtpConfiguration } from "./utils/otp";
+import businessRoutes from "./routes/businessRoutes";
+import dealRoutes from "./routes/dealRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -55,7 +57,9 @@ const normalizeBrowserOrigin = (value: string): string => {
     parsed.search ||
     parsed.hash
   ) {
-    throw new Error("Browser origins must be plain HTTP(S) origins without paths");
+    throw new Error(
+      "Browser origins must be plain HTTP(S) origins without paths",
+    );
   }
   return parsed.origin;
 };
@@ -67,12 +71,14 @@ const parseAllowedOrigins = () => {
     ...splitOriginList(process.env.ALLOWED_ORIGINS),
   ].map(normalizeBrowserOrigin);
 
-  const devDefaults = isProduction ? [] : [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-  ];
+  const devDefaults = isProduction
+    ? []
+    : [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+      ];
 
   const origins = Array.from(new Set([...fromEnv, ...devDefaults]));
 
@@ -131,7 +137,9 @@ const configuredTrustProxyHops = process.env.TRUST_PROXY_HOPS?.trim();
 const trustProxyHops = configuredTrustProxyHops
   ? Number(configuredTrustProxyHops)
   : 0;
-const trustedProxyAddresses = splitOriginList(process.env.TRUST_PROXY_ADDRESSES);
+const trustedProxyAddresses = splitOriginList(
+  process.env.TRUST_PROXY_ADDRESSES,
+);
 
 if (
   !Number.isInteger(trustProxyHops) ||
@@ -264,7 +272,8 @@ app.use("/api/public", publicRoutes);
 app.use("/api/uploads", uploadsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/services", serviceRoutes);
-
+app.use("/api/businesses", businessRoutes);
+app.use("/api/deals", dealRoutes);
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -284,7 +293,9 @@ app.use(
   ) => {
     const candidateStatus = Number(err?.status);
     const status =
-      Number.isInteger(candidateStatus) && candidateStatus >= 400 && candidateStatus <= 599
+      Number.isInteger(candidateStatus) &&
+      candidateStatus >= 400 &&
+      candidateStatus <= 599
         ? candidateStatus
         : 500;
     console.error("[Server] Request failed", {
@@ -303,7 +314,8 @@ app.use(
       413: "Request is too large",
       429: "Too many requests",
     };
-    const publicMessage = publicMessages[status] ||
+    const publicMessage =
+      publicMessages[status] ||
       (status >= 500 ? "Internal server error" : "Request failed");
     res.status(status).json({ error: publicMessage });
   },
