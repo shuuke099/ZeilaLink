@@ -19,7 +19,6 @@ import authRoutes from "./routes/authRoutes";
 import jobRoutes from "./routes/jobRoutes";
 import applicationRoutes from "./routes/applicationRoutes";
 import resumeRoutes from "./routes/resumeRoutes";
-import trainingRoutes from "./routes/trainingRoutes";
 import providerRoutes from "./routes/providerRoutes";
 import messageRoutes from "./routes/messageRoutes";
 import adminRoutes from "./routes/adminRoutes";
@@ -33,6 +32,7 @@ import { assertJwtConfiguration } from "./utils/jwt";
 import { assertOtpConfiguration } from "./utils/otp";
 import businessRoutes from "./routes/businessRoutes";
 import dealRoutes from "./routes/dealRoutes";
+import courseRoutes from "./routes/courseRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -263,7 +263,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api", applicationRoutes);
 app.use("/api/resumes", resumeRoutes);
-app.use("/api/trainings", trainingRoutes);
 app.use("/api/providers", providerRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/admin", adminRoutes);
@@ -274,6 +273,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/businesses", businessRoutes);
 app.use("/api/deals", dealRoutes);
+app.use("/api/courses", courseRoutes);
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });

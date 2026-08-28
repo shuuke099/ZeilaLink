@@ -9,27 +9,19 @@ const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
 const shouldUseSameOriginApi = process.env.NODE_ENV === "production";
 
 const ensureApiPath = (rawUrl?: string) => {
-  if (!rawUrl) {
-    return DEFAULT_API_URL;
-  }
+  if (!rawUrl) return DEFAULT_API_URL;
 
   const trimmed = rawUrl.trim();
-  if (!trimmed) {
-    return DEFAULT_API_URL;
-  }
+  if (!trimmed) return DEFAULT_API_URL;
 
   let normalized = trimmed;
 
   // Support values like ":7000" or "7000"
   const portOnlyMatch = normalized.match(/^:?(\d{2,5})$/);
-  if (portOnlyMatch) {
-    normalized = `http://localhost:${portOnlyMatch[1]}`;
-  }
+  if (portOnlyMatch) normalized = `http://localhost:${portOnlyMatch[1]}`;
 
   // Allow URLs starting with "//host"
-  if (normalized.startsWith("//")) {
-    normalized = `http:${normalized}`;
-  }
+  if (normalized.startsWith("//")) normalized = `http:${normalized}`;
 
   // If there's no protocol but we have a hostname, assume http
   if (!/^https?:\/\//i.test(normalized) && !normalized.startsWith("/")) {
@@ -43,12 +35,13 @@ const ensureApiPath = (rawUrl?: string) => {
 const baseURL = ensureApiPath(
   shouldUseSameOriginApi ? "/api" : configuredApiUrl,
 );
+
 const debugApi = process.env.NEXT_PUBLIC_API_DEBUG === "true";
 
 export const api = axios.create({
   baseURL,
   withCredentials: true,
-  timeout: 10000, // 10 second timeout
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -56,6 +49,7 @@ export const api = axios.create({
 
 if (process.env.NODE_ENV !== "production" && debugApi) {
   console.log(`[api] API Base URL: ${baseURL}`);
+
   if (baseURL === DEFAULT_API_URL) {
     console.warn(
       "[api] Using default API URL. Set NEXT_PUBLIC_API_URL in .env if different.",
@@ -81,6 +75,7 @@ api.interceptors.request.use((config) => {
 // Handle responses
 api.interceptors.response.use(
   (response) => response,
+
   (error) => {
     // Handle connection errors - check multiple error indicators
     const isConnectionError =
@@ -94,11 +89,14 @@ api.interceptors.response.use(
 
     if (isConnectionError) {
       error.isConnectionError = true;
+
       const backendUrl = baseURL.replace("/api", "");
+
       const activeOrigin =
         typeof window !== "undefined"
           ? window.location.origin
           : "unknown-origin";
+
       error.connectionErrorMessage = `Cannot connect to backend server (or CORS blocked this origin).
 
 Possible causes:
@@ -133,10 +131,12 @@ Then refresh this page.`;
           "%c⚠️ BACKEND SERVER NOT RUNNING!",
           "color: red; font-size: 16px; font-weight: bold;",
         );
+
         console.error(
           "%cPlease start the backend server:",
           "color: orange; font-size: 14px;",
         );
+
         console.error("%c1. cd backend", "color: yellow;");
         console.error("%c2. npm run dev", "color: yellow;");
       }
@@ -145,6 +145,7 @@ Then refresh this page.`;
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
         const requestUrl: string = error.config?.url || "";
+
         const isAuthEndpoint =
           /\/auth\/(login|register|verify-email|resend-verification|forgot-password|verify-reset-otp|reset-password|session|me|logout)$/i.test(
             requestUrl,
@@ -154,16 +155,16 @@ Then refresh this page.`;
           window.dispatchEvent(new Event("auth:unauthorized"));
         }
 
-        const isApplyOrEnrollRequest =
-          /\/jobs\/[^/]+\/apply(\?.*)?$/i.test(requestUrl) ||
-          /\/trainings\/[^/]+\/enroll(\?.*)?$/i.test(requestUrl);
+        const isApplyRequest = /\/jobs\/[^/]+\/apply(\?.*)?$/i.test(requestUrl);
 
-        if (isApplyOrEnrollRequest) {
+        if (isApplyRequest) {
           const nextPath = window.location.pathname + window.location.search;
+
           window.location.href = `/login?redirect=${encodeURIComponent(nextPath)}`;
         }
       }
     }
+
     return Promise.reject(error);
   },
 );

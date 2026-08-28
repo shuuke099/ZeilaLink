@@ -11,13 +11,61 @@ export async function seedSkills(prisma: PrismaClient) {
       category: "Business",
     },
     {
-      id: "seed-skill-web-development",
-      name: "Web Development",
-      nameSo: "Horumarinta Webka",
+      id: "seed-skill-conflict-resolution",
+      name: "Conflict Resolution",
+      nameSo: "Xallinta Khilaafaadka",
       description:
-        "Building and maintaining modern websites and web applications.",
+        "Techniques for handling disagreements and resolving workplace or customer conflicts.",
       descriptionSo:
-        "Dhisidda iyo dayactirka website-yada iyo barnaamijyada webka.",
+        "Farsamooyinka lagu maareeyo laguna xalliyo khilaafaadka goobta shaqada ama macaamiisha.",
+      category: "Business",
+    },
+    {
+      id: "seed-skill-html",
+      name: "HTML",
+      nameSo: null,
+      description: "Structuring modern web pages using semantic HTML.",
+      descriptionSo: null,
+      category: "Technology",
+    },
+    {
+      id: "seed-skill-css",
+      name: "CSS",
+      nameSo: null,
+      description: "Styling responsive and accessible web interfaces.",
+      descriptionSo: null,
+      category: "Technology",
+    },
+    {
+      id: "seed-skill-javascript",
+      name: "JavaScript",
+      nameSo: null,
+      description: "Programming interactive web applications with JavaScript.",
+      descriptionSo: null,
+      category: "Technology",
+    },
+    {
+      id: "seed-skill-react",
+      name: "React",
+      nameSo: null,
+      description: "Building component-based user interfaces with React.",
+      descriptionSo: null,
+      category: "Technology",
+    },
+    {
+      id: "seed-skill-nodejs",
+      name: "Node.js",
+      nameSo: null,
+      description: "Building server-side applications and APIs with Node.js.",
+      descriptionSo: null,
+      category: "Technology",
+    },
+    {
+      id: "seed-skill-databases",
+      name: "Databases",
+      nameSo: null,
+      description: "Working with application data and database fundamentals.",
+      descriptionSo: null,
       category: "Technology",
     },
     {
@@ -31,11 +79,28 @@ export async function seedSkills(prisma: PrismaClient) {
       category: "Automotive",
     },
     {
+      id: "seed-skill-vehicle-diagnostics",
+      name: "Vehicle Diagnostics",
+      nameSo: "Baaritaanka Baabuurta",
+      description: "Basic techniques for identifying common vehicle problems.",
+      descriptionSo:
+        "Farsamooyinka aasaasiga ah ee lagu ogaado dhibaatooyinka caadiga ah ee baabuurta.",
+      category: "Automotive",
+    },
+    {
       id: "seed-skill-translation",
       name: "Translation",
       nameSo: "Turjumaad",
-      description: "Translation and interpretation between multiple languages.",
-      descriptionSo: "Turjumaad iyo fasiraad u dhexeysa luqado kala duwan.",
+      description: "Translation between written content in multiple languages.",
+      descriptionSo: "Turjumaadda qoraallada u dhexeeya luqado kala duwan.",
+      category: "Language",
+    },
+    {
+      id: "seed-skill-interpretation",
+      name: "Interpretation",
+      nameSo: "Fasiraad",
+      description: "Professional spoken-language interpretation skills.",
+      descriptionSo: "Xirfadaha fasiraadda hadalka ee xirfadeed.",
       category: "Language",
     },
     {
@@ -48,25 +113,54 @@ export async function seedSkills(prisma: PrismaClient) {
         "Badbaadada bakhaarka, maaraynta alaabta, xirxiridda iyo saadka.",
       category: "Operations",
     },
+    {
+      id: "seed-skill-inventory",
+      name: "Inventory Management",
+      nameSo: "Maareynta Alaabta",
+      description: "Tracking, organizing, receiving, and handling inventory.",
+      descriptionSo:
+        "Diiwaangelinta, habeynta, soo-dhoweynta iyo maaraynta alaabta.",
+      category: "Operations",
+    },
   ];
 
   const results = [];
 
   for (const skill of skills) {
-    results.push(
-      await prisma.skill.upsert({
-        where: { name: skill.name },
-        update: skill,
-        create: skill,
-      }),
-    );
+    const result = await prisma.skill.upsert({
+      where: {
+        name: skill.name,
+      },
+      update: {
+        nameSo: skill.nameSo,
+        description: skill.description,
+        descriptionSo: skill.descriptionSo,
+        category: skill.category,
+      },
+      create: skill,
+    });
+
+    results.push(result);
   }
 
   return {
     customerService: results[0],
-    webDevelopment: results[1],
-    automotiveRepair: results[2],
-    translation: results[3],
-    warehouseOperations: results[4],
+    conflictResolution: results[1],
+
+    html: results[2],
+    css: results[3],
+    javascript: results[4],
+    react: results[5],
+    nodejs: results[6],
+    databases: results[7],
+
+    automotiveRepair: results[8],
+    vehicleDiagnostics: results[9],
+
+    translation: results[10],
+    interpretation: results[11],
+
+    warehouseOperations: results[12],
+    inventoryManagement: results[13],
   };
 }

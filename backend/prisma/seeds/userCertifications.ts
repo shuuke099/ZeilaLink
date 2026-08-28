@@ -3,14 +3,14 @@ import { PrismaClient } from "@prisma/client";
 export async function seedUserCertifications(
   prisma: PrismaClient,
   users: any,
-  trainings: any,
+  courses: any,
   skills: any,
 ) {
   const certifications = [
     {
       id: "seed-certification-1",
       userId: users.hodanAli.id,
-      trainingId: trainings.customerService.id,
+      courseId: courses.customerService.id,
       skillId: skills.customerService.id,
       issuedAt: new Date("2026-03-15"),
       expiryDate: null,
@@ -20,8 +20,8 @@ export async function seedUserCertifications(
     {
       id: "seed-certification-2",
       userId: users.ahmedOmar.id,
-      trainingId: trainings.webDevelopment.id,
-      skillId: skills.webDevelopment.id,
+      courseId: courses.webDevelopmentFoundations.id,
+      skillId: skills.javascript.id,
       issuedAt: new Date("2026-04-20"),
       expiryDate: null,
       certificateUrl:
@@ -30,17 +30,17 @@ export async function seedUserCertifications(
     {
       id: "seed-certification-3",
       userId: users.sahraMohamed.id,
-      trainingId: trainings.translation.id,
-      skillId: skills.translation.id,
+      courseId: courses.somaliEnglishInterpretation.id,
+      skillId: skills.interpretation.id,
       issuedAt: new Date("2026-05-10"),
       expiryDate: null,
       certificateUrl:
-        "https://zeilalink-uploads.sfo2.digitaloceanspaces.com/demo/certificates/sahra-translation.pdf",
+        "https://zeilalink-uploads.sfo2.digitaloceanspaces.com/demo/certificates/sahra-interpretation.pdf",
     },
     {
       id: "seed-certification-4",
       userId: users.fadumoYusuf.id,
-      trainingId: trainings.customerService.id,
+      courseId: courses.customerService.id,
       skillId: skills.customerService.id,
       issuedAt: new Date("2026-06-05"),
       expiryDate: null,
@@ -50,7 +50,7 @@ export async function seedUserCertifications(
     {
       id: "seed-certification-5",
       userId: users.nimcoAden.id,
-      trainingId: trainings.warehouseOperations.id,
+      courseId: courses.warehouseOperations.id,
       skillId: skills.warehouseOperations.id,
       issuedAt: new Date("2026-07-12"),
       expiryDate: null,

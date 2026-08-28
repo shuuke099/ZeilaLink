@@ -484,89 +484,21 @@ model Skill {
   descriptionSo String?  @map("description_so")
   category      String?
   createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  trainings          Training[]
-  userCertifications UserCertification[]
+  courses            CourseSkill[]
   userSkills         UserSkill[]
-
-  @@map("skills")
-}
-
-model Training {
-  id   String  @id @default(cuid())
-  slug String? @unique
-
-  name          String
-  nameSo        String? @map("name_so")
-  description   String
-  descriptionSo String? @map("description_so")
-
-  providerId String  @map("provider_id")
-  skillId    String? @map("skill_id")
-
-  category String?
-  level    String?
-
-  duration   String
-  durationSo String? @map("duration_so")
-
-  deliveryMode String @default("in_person") @map("delivery_mode")
-
-  address    String?
-  city       String?
-  state      String?
-  postalCode String? @map("postal_code")
-  country    String  @default("US")
-
-  onlineUrl String? @map("online_url")
-
-  startDate            DateTime? @map("start_date")
-  endDate              DateTime? @map("end_date")
-  registrationDeadline DateTime? @map("registration_deadline")
-
-  schedule   String?
-  scheduleSo String? @map("schedule_so")
-
-  cost     Float  @default(0)
-  currency String @default("USD")
-
-  enrollmentUrl  String? @map("enrollment_url")
-  enrollmentOpen Boolean @default(true) @map("enrollment_open")
-
-  imageUrl String? @map("image_url")
-
-  providesCertificate Boolean @default(false) @map("provides_certificate")
-  certificateUrl      String? @map("certificate_url")
-
-  published     Boolean   @default(false)
-  featured      Boolean   @default(false)
-  featuredUntil DateTime? @map("featured_until")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  provider           Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  skill              Skill?              @relation(fields: [skillId], references: [id], onDelete: SetNull)
   userCertifications UserCertification[]
 
-  @@index([published, createdAt])
-  @@index([providerId, createdAt])
-  @@index([skillId, createdAt])
-  @@index([published, cost])
-  @@index([published, deliveryMode])
-  @@index([city, state])
-  @@index([country, state, city])
-  @@index([startDate])
-  @@index([published, featured, featuredUntil])
-  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "trainings_name_trgm_idx")
-  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "trainings_description_trgm_idx")
-  @@map("trainings")
+  @@index([category])
+  @@index([createdAt])
+  @@map("skills")
 }
 
 model Provider {
   id            String  @id @default(cuid())
   slug          String? @unique
-  contactUserId String  @unique @map("contact_user_id")
+  contactUserId String? @unique @map("contact_user_id")
   businessId    String? @unique @map("business_id")
 
   name          String
@@ -584,6 +516,7 @@ model Provider {
   state      String?
   postalCode String? @map("postal_code")
   country    String  @default("US")
+  timezone   String?
 
   rating     Float     @default(0)
   verified   Boolean   @default(false)
@@ -593,15 +526,101 @@ model Provider {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User       @relation(fields: [contactUserId], references: [id], onDelete: Cascade)
-  business  Business?  @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  trainings Training[]
+  user     User?     @relation(fields: [contactUserId], references: [id], onDelete: SetNull)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  courses  Course[]
 
-  @@index([verified, createdAt])
   @@index([active, verified])
   @@index([city, state])
   @@index([country, state, city])
+  @@index([createdAt])
   @@map("providers")
+}
+
+model Course {
+  id   String  @id @default(cuid())
+  slug String? @unique
+
+  name          String
+  nameSo        String? @map("name_so")
+  description   String
+  descriptionSo String? @map("description_so")
+
+  providerId String @map("provider_id")
+
+  category String?
+  level    String?
+
+  duration   String
+  durationSo String? @map("duration_so")
+
+  deliveryMode String @default("in_person") @map("delivery_mode")
+
+  address    String?
+  city       String?
+  state      String?
+  postalCode String? @map("postal_code")
+  country    String  @default("US")
+  timezone   String?
+
+  onlineUrl String? @map("online_url")
+
+  startDate            DateTime? @map("start_date")
+  endDate              DateTime? @map("end_date")
+  registrationDeadline DateTime? @map("registration_deadline")
+
+  schedule   String?
+  scheduleSo String? @map("schedule_so")
+
+  cost     Float  @default(0)
+  currency String @default("USD")
+
+  enrollmentUrl  String? @map("enrollment_url")
+  enrollmentOpen Boolean @default(true) @map("enrollment_open")
+
+  imageUrl String?  @map("image_url")
+  gallery  String[] @default([])
+
+  providesCertificate Boolean @default(false) @map("provides_certificate")
+  certificateUrl      String? @map("certificate_url")
+
+  published     Boolean   @default(false)
+  featured      Boolean   @default(false)
+  featuredUntil DateTime? @map("featured_until")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  provider           Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  skills             CourseSkill[]
+  userCertifications UserCertification[]
+
+  @@index([published, createdAt])
+  @@index([providerId, createdAt])
+  @@index([published, featured, featuredUntil])
+  @@index([published, cost])
+  @@index([published, deliveryMode])
+  @@index([category])
+  @@index([level])
+  @@index([city, state])
+  @@index([country, state, city])
+  @@index([startDate])
+  @@index([registrationDeadline])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "courses_name_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "courses_description_trgm_idx")
+  @@map("courses")
+}
+
+model CourseSkill {
+  courseId String @map("course_id")
+  skillId  String @map("skill_id")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, skillId])
+  @@index([skillId])
+  @@map("course_skills")
 }
 
 model UserSkill {
@@ -611,17 +630,19 @@ model UserSkill {
   level     String   @default("beginner")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@unique([userId, skillId])
+  @@index([skillId])
   @@map("user_skills")
 }
 
 model UserCertification {
   id             String    @id @default(cuid())
   userId         String    @map("user_id")
-  trainingId     String    @map("training_id")
+  courseId       String    @map("course_id")
   skillId        String?   @map("skill_id")
   issuedAt       DateTime  @default(now()) @map("issued_at")
   expiryDate     DateTime? @map("expiry_date")
@@ -629,12 +650,12 @@ model UserCertification {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  skill    Skill?   @relation(fields: [skillId], references: [id], onDelete: SetNull)
-  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill  Skill? @relation(fields: [skillId], references: [id], onDelete: SetNull)
 
   @@index([userId, issuedAt])
-  @@index([trainingId, issuedAt])
+  @@index([courseId, issuedAt])
   @@index([skillId])
   @@map("user_certifications")
 }

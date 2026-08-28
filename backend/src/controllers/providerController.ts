@@ -1,20 +1,30 @@
-import { Response } from 'express';
-import prisma from '../config/database';
-import { AuthRequest } from '../middleware/auth';
-import { recordAuditEvent, requestAuditMeta } from '../utils/audit';
-import { invalidateCacheByPrefix } from '../utils/cache';
-import { createStableSlug } from '../utils/slug';
+import { Response } from "express";
+import prisma from "../config/database";
+import { AuthRequest } from "../middleware/auth";
+import { recordAuditEvent, requestAuditMeta } from "../utils/audit";
+import { invalidateCacheByPrefix } from "../utils/cache";
+import { createStableSlug } from "../utils/slug";
 
 const safeOptionalUrl = (value: unknown): string | null | undefined => {
   if (value === undefined) return undefined;
-  if (value === null || value === '') return null;
-  if (typeof value !== 'string' || value.length > 2048) return undefined;
+  if (value === null || value === "") return null;
+
+  if (typeof value !== "string" || value.length > 2048) {
+    return undefined;
+  }
+
   const trimmed = value.trim();
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.includes('\\')) {
+
+  if (
+    trimmed.startsWith("/") &&
+    !trimmed.startsWith("//") &&
+    !trimmed.includes("\\")
+  ) {
     return trimmed;
   }
+
   try {
-    return new URL(trimmed).protocol === 'https:' ? trimmed : undefined;
+    return new URL(trimmed).protocol === "https:" ? trimmed : undefined;
   } catch {
     return undefined;
   }
@@ -28,22 +38,55 @@ export const getProviders = async (req: AuthRequest, res: Response) => {
 
     if (search) {
       where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { nameSo: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-        { descriptionSo: { contains: search as string, mode: 'insensitive' } },
+        {
+          name: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          nameSo: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          descriptionSo: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
       ];
     }
 
-    if (req.user!.role !== 'admin') {
+    if (req.user!.role !== "admin") {
       where.verified = true;
-      where.user = { isVerified: true };
+
+      where.OR = [
+        {
+          contactUserId: null,
+        },
+        {
+          user: {
+            is: {
+              isVerified: true,
+            },
+          },
+        },
+      ];
     } else if (verified !== undefined) {
-      where.verified = verified === 'true';
+      where.verified = verified === "true";
     }
 
     const providers = await prisma.provider.findMany({
       where,
+
       select: {
         id: true,
         slug: true,
@@ -55,18 +98,24 @@ export const getProviders = async (req: AuthRequest, res: Response) => {
         rating: true,
         verified: true,
         createdAt: true,
+
         _count: {
-          select: { trainings: true },
+          select: {
+            courses: true,
+          },
         },
       },
-      orderBy: { createdAt: 'desc' },
+
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    // This is a directory response. Keep the organization contact user id and
-    // all account contact fields out of it, including for authenticated users.
-    res.json(providers);
+    return res.json(providers);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load providers' });
+    return res.status(500).json({
+      error: "Failed to load providers",
+    });
   }
 };
 
@@ -75,36 +124,59 @@ export const getProviderById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const provider = await prisma.provider.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
+
       include: {
         user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true,
-                location: true,
-                avatarUrl: true,
-                isVerified: true,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            location: true,
+            avatarUrl: true,
+            isVerified: true,
           },
         },
-        trainings: {
-          where: { published: true },
+
+        courses: {
+          where: {
+            published: true,
+          },
+
           include: {
-            skill: true,
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+          },
+
+          orderBy: {
+            createdAt: "desc",
           },
         },
       },
     });
 
     if (!provider) {
-      return res.status(404).json({ error: 'Provider not found' });
+      return res.status(404).json({
+        error: "Provider not found",
+      });
     }
 
     const canViewPrivateContact =
-      req.user!.role === 'admin' || provider.contactUserId === req.user!.id;
-    if ((!provider.verified || !provider.user.isVerified) && !canViewPrivateContact) {
-      return res.status(404).json({ error: 'Provider not found' });
+      req.user!.role === "admin" || provider.contactUserId === req.user!.id;
+
+    const accountIsEligible =
+      provider.contactUserId === null || provider.user?.isVerified === true;
+
+    if ((!provider.verified || !accountIsEligible) && !canViewPrivateContact) {
+      return res.status(404).json({
+        error: "Provider not found",
+      });
     }
 
     if (canViewPrivateContact) {
@@ -122,44 +194,70 @@ export const getProviderById = async (req: AuthRequest, res: Response) => {
       rating: provider.rating,
       verified: provider.verified,
       createdAt: provider.createdAt,
-      trainings: provider.trainings,
+      courses: provider.courses,
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load provider' });
+    return res.status(500).json({
+      error: "Failed to load provider",
+    });
   }
 };
 
 export const createProvider = async (req: AuthRequest, res: Response) => {
   try {
     const { name, nameSo, description, descriptionSo, logoUrl } = req.body;
-    const normalizedName = typeof name === 'string' ? name.trim() : '';
+
+    const normalizedName = typeof name === "string" ? name.trim() : "";
+
     if (!normalizedName || normalizedName.length > 200) {
-      return res.status(400).json({ error: 'Provider name must contain 1 to 200 characters' });
+      return res.status(400).json({
+        error: "Provider name must contain 1 to 200 characters",
+      });
     }
-    if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 5000)) {
-      return res.status(400).json({ error: 'Invalid provider description' });
+
+    if (
+      description !== undefined &&
+      description !== null &&
+      (typeof description !== "string" || description.length > 5000)
+    ) {
+      return res.status(400).json({
+        error: "Invalid provider description",
+      });
     }
+
     if (
       nameSo !== undefined &&
       nameSo !== null &&
-      (typeof nameSo !== 'string' || nameSo.length > 200)
+      (typeof nameSo !== "string" || nameSo.length > 200)
     ) {
-      return res.status(400).json({ error: 'Invalid Somali provider name' });
+      return res.status(400).json({
+        error: "Invalid Somali provider name",
+      });
     }
+
     if (
       descriptionSo !== undefined &&
       descriptionSo !== null &&
-      (typeof descriptionSo !== 'string' || descriptionSo.length > 5000)
+      (typeof descriptionSo !== "string" || descriptionSo.length > 5000)
     ) {
-      return res.status(400).json({ error: 'Invalid Somali provider description' });
+      return res.status(400).json({
+        error: "Invalid Somali provider description",
+      });
     }
+
     const normalizedLogo = safeOptionalUrl(logoUrl);
+
     if (logoUrl !== undefined && normalizedLogo === undefined) {
-      return res.status(400).json({ error: 'Logo URL must be HTTPS or a safe local path' });
+      return res.status(400).json({
+        error: "Logo URL must be HTTPS or a safe local path",
+      });
     }
 
     const existingProvider = await prisma.provider.findUnique({
-      where: { contactUserId: req.user!.id },
+      where: {
+        contactUserId: req.user!.id,
+      },
+
       select: {
         id: true,
         slug: true,
@@ -171,98 +269,152 @@ export const createProvider = async (req: AuthRequest, res: Response) => {
         verified: true,
       },
     });
+
     const normalizedDescription =
-      typeof description === 'string' ? description.trim() || null : null;
-    const normalizedNameSo = typeof nameSo === 'string' ? nameSo.trim() || null : null;
+      typeof description === "string" ? description.trim() || null : null;
+
+    const normalizedNameSo =
+      typeof nameSo === "string" ? nameSo.trim() || null : null;
+
     const normalizedDescriptionSo =
-      typeof descriptionSo === 'string' ? descriptionSo.trim() || null : null;
+      typeof descriptionSo === "string" ? descriptionSo.trim() || null : null;
+
     const changedIdentityFields = existingProvider
       ? [
-          ...(existingProvider.name !== normalizedName ? ['name'] : []),
-          ...(nameSo !== undefined && existingProvider.nameSo !== normalizedNameSo
-            ? ['nameSo']
+          ...(existingProvider.name !== normalizedName ? ["name"] : []),
+
+          ...(nameSo !== undefined &&
+          existingProvider.nameSo !== normalizedNameSo
+            ? ["nameSo"]
             : []),
-          ...(description !== undefined && existingProvider.description !== normalizedDescription
-            ? ['description']
+
+          ...(description !== undefined &&
+          existingProvider.description !== normalizedDescription
+            ? ["description"]
             : []),
+
           ...(descriptionSo !== undefined &&
           existingProvider.descriptionSo !== normalizedDescriptionSo
-            ? ['descriptionSo']
+            ? ["descriptionSo"]
             : []),
-          ...(logoUrl !== undefined && existingProvider.logoUrl !== normalizedLogo
-            ? ['logoUrl']
+
+          ...(logoUrl !== undefined &&
+          existingProvider.logoUrl !== normalizedLogo
+            ? ["logoUrl"]
             : []),
         ]
       : [];
+
     const verificationReset = Boolean(
       existingProvider?.verified && changedIdentityFields.length > 0,
     );
 
     let provider = await prisma.provider.upsert({
-      where: { contactUserId: req.user!.id },
+      where: {
+        contactUserId: req.user!.id,
+      },
+
       update: {
         name: normalizedName,
-        ...(nameSo !== undefined && { nameSo: normalizedNameSo }),
+
+        ...(nameSo !== undefined && {
+          nameSo: normalizedNameSo,
+        }),
+
         ...(description !== undefined && {
           description: normalizedDescription,
         }),
+
         ...(descriptionSo !== undefined && {
           descriptionSo: normalizedDescriptionSo,
         }),
-        ...(logoUrl !== undefined && { logoUrl: normalizedLogo }),
-        ...(changedIdentityFields.length > 0 && { verified: false }),
+
+        ...(logoUrl !== undefined && {
+          logoUrl: normalizedLogo,
+        }),
+
+        ...(changedIdentityFields.length > 0 && {
+          verified: false,
+          verifiedAt: null,
+        }),
       },
+
       create: {
         name: normalizedName,
         nameSo: normalizedNameSo,
         contactUserId: req.user!.id,
-        description: typeof description === 'string' ? description.trim() || null : null,
+        description: normalizedDescription,
         descriptionSo: normalizedDescriptionSo,
         logoUrl: normalizedLogo,
         verified: false,
       },
-      include: { user: { select: { name: true, email: true } } },
+
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!provider.slug) {
       provider = await prisma.provider.update({
-        where: { id: provider.id },
-        data: {
-          slug: createStableSlug(provider.name, provider.id, 'provider'),
+        where: {
+          id: provider.id,
         },
-        include: { user: { select: { name: true, email: true } } },
+
+        data: {
+          slug: createStableSlug(provider.name, provider.id, "provider"),
+        },
+
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
       });
     }
 
     if (changedIdentityFields.length > 0) {
-      await invalidateCacheByPrefix(['trainings:list', 'public:stats']);
+      await invalidateCacheByPrefix(["courses:list", "public:stats"]);
     }
 
     if (verificationReset) {
       recordAuditEvent({
         userId: req.user!.id,
-        action: 'provider.verification_reset',
-        resourceType: 'provider',
+        action: "provider.verification_reset",
+        resourceType: "provider",
         resourceId: provider.id,
+
         meta: {
           ...requestAuditMeta(req),
-          result: 'success',
-          reason: 'approved_identity_changed',
+          result: "success",
+          reason: "approved_identity_changed",
           changedFields: changedIdentityFields,
         },
       });
     }
 
-    res.status(201).json(provider);
+    return res.status(201).json(provider);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to save provider profile' });
+    return res.status(500).json({
+      error: "Failed to save provider profile",
+    });
   }
 };
 
 export const getMyProvider = async (req: AuthRequest, res: Response) => {
   try {
     const provider = await prisma.provider.findUnique({
-      where: { contactUserId: req.user!.id },
+      where: {
+        contactUserId: req.user!.id,
+      },
+
       include: {
         user: {
           select: {
@@ -276,12 +428,16 @@ export const getMyProvider = async (req: AuthRequest, res: Response) => {
     });
 
     if (!provider) {
-      return res.status(404).json({ error: 'Provider profile not found' });
+      return res.status(404).json({
+        error: "Provider profile not found",
+      });
     }
 
-    res.json(provider);
+    return res.json(provider);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load provider profile' });
+    return res.status(500).json({
+      error: "Failed to load provider profile",
+    });
   }
 };
 
@@ -290,50 +446,129 @@ export const getProviderCourses = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const provider = await prisma.provider.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: {
+        OR: [{ id }, { slug: id }],
+      },
+
       select: {
         id: true,
         contactUserId: true,
         verified: true,
-        user: { select: { isVerified: true } },
-      },
-    });
-    const canViewPrivate =
-      req.user!.role === 'admin' || provider?.contactUserId === req.user!.id;
-    if (!provider || ((!provider.verified || !provider.user.isVerified) && !canViewPrivate)) {
-      return res.status(404).json({ error: 'Provider not found' });
-    }
 
-    const trainings = await prisma.training.findMany({
-      where: { providerId: provider.id, published: true },
-      include: {
-        skill: true,
-        _count: {
-          select: { userCertifications: true },
+        user: {
+          select: {
+            isVerified: true,
+          },
         },
       },
-      orderBy: { createdAt: 'desc' },
     });
 
-    res.json(trainings);
+    if (!provider) {
+      return res.status(404).json({
+        error: "Provider not found",
+      });
+    }
+
+    const canViewPrivate =
+      req.user!.role === "admin" || provider.contactUserId === req.user!.id;
+
+    const accountIsEligible =
+      provider.contactUserId === null || provider.user?.isVerified === true;
+
+    if ((!provider.verified || !accountIsEligible) && !canViewPrivate) {
+      return res.status(404).json({
+        error: "Provider not found",
+      });
+    }
+
+    const courses = await prisma.course.findMany({
+      where: {
+        providerId: provider.id,
+        published: true,
+      },
+
+      include: {
+        skills: {
+          include: {
+            skill: true,
+          },
+        },
+
+        _count: {
+          select: {
+            userCertifications: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.json(courses);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load provider courses' });
+    return res.status(500).json({
+      error: "Failed to load provider courses",
+    });
   }
 };
 
 export const getMyMetrics = async (req: AuthRequest, res: Response) => {
   try {
-    const provider = await prisma.provider.findUnique({ where: { contactUserId: req.user!.id } });
-    if (!provider) return res.json({ totalCourses: 0, activeTrainees: 0, certificatesIssued: 0, averageRating: null });
+    const provider = await prisma.provider.findUnique({
+      where: {
+        contactUserId: req.user!.id,
+      },
+    });
 
-    const [totalCourses, activeTrainees, certificatesIssued] = await Promise.all([
-      prisma.training.count({ where: { providerId: provider.id } }),
-      prisma.userCertification.count({ where: { training: { providerId: provider.id } } }),
-      prisma.userCertification.count({ where: { training: { providerId: provider.id }, NOT: { certificateUrl: null } } }),
-    ]);
+    if (!provider) {
+      return res.json({
+        totalCourses: 0,
+        activeTrainees: 0,
+        certificatesIssued: 0,
+        averageRating: null,
+      });
+    }
 
-    res.json({ totalCourses, activeTrainees, certificatesIssued, averageRating: provider.rating ?? null });
+    const [totalCourses, activeTrainees, certificatesIssued] =
+      await Promise.all([
+        prisma.course.count({
+          where: {
+            providerId: provider.id,
+          },
+        }),
+
+        prisma.userCertification.count({
+          where: {
+            course: {
+              providerId: provider.id,
+            },
+          },
+        }),
+
+        prisma.userCertification.count({
+          where: {
+            course: {
+              providerId: provider.id,
+            },
+
+            NOT: {
+              certificateUrl: null,
+            },
+          },
+        }),
+      ]);
+
+    return res.json({
+      totalCourses,
+      activeTrainees,
+      certificatesIssued,
+      averageRating: provider.rating ?? null,
+    });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load provider metrics' });
+    return res.status(500).json({
+      error: "Failed to load provider metrics",
+    });
   }
 };

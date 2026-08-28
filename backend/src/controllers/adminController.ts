@@ -1,42 +1,73 @@
-import { Response } from 'express';
-import prisma from '../config/database';
-import { AuthRequest } from '../middleware/auth';
-import { hashPassword, validatePassword } from '../utils/password';
-import { presentResume } from '../utils/resume';
-import { presentEnrollment } from '../utils/certificate';
-import { invalidateCacheByPrefix } from '../utils/cache';
-import { createStableSlug, slugWhenMissing } from '../utils/slug';
+import { Response } from "express";
+import prisma from "../config/database";
+import { AuthRequest } from "../middleware/auth";
+import { hashPassword, validatePassword } from "../utils/password";
+import { presentResume } from "../utils/resume";
+import { presentEnrollment } from "../utils/certificate";
+import { invalidateCacheByPrefix } from "../utils/cache";
+import { createStableSlug, slugWhenMissing } from "../utils/slug";
 
 const adminUserSelect = {
-  id: true, slug: true, name: true, email: true, role: true, phone: true, location: true,
-  bio: true, bioSo: true, headline: true, headlineSo: true, profilePublic: true,
-  preferredLanguage: true, isVerified: true, avatarUrl: true, createdAt: true, updatedAt: true,
+  id: true,
+  slug: true,
+  name: true,
+  email: true,
+  role: true,
+  phone: true,
+  location: true,
+  bio: true,
+  bioSo: true,
+  headline: true,
+  headlineSo: true,
+  profilePublic: true,
+  preferredLanguage: true,
+  isVerified: true,
+  avatarUrl: true,
+  createdAt: true,
+  updatedAt: true,
 } as const;
 
-const boundedPositiveInteger = (value: unknown, fallback: number, maximum: number) => {
+const boundedPositiveInteger = (
+  value: unknown,
+  fallback: number,
+  maximum: number,
+) => {
   const parsed = Number(value);
+
   return Number.isInteger(parsed) && parsed > 0
     ? Math.min(parsed, maximum)
     : fallback;
 };
 
 const isNullableString = (value: unknown): value is string | null =>
-  value === null || typeof value === 'string';
+  value === null || typeof value === "string";
 
 const hasOwn = (value: object, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(value, key);
 
 const parseEmployerApprovalSnapshot = (value: unknown) => {
-  if (!value || typeof value !== 'object') return null;
+  if (!value || typeof value !== "object") return null;
+
   const snapshot = value as Record<string, unknown>;
-  const nullableFields = ['logoUrl', 'bannerUrl', 'description', 'website', 'address'] as const;
+
+  const nullableFields = [
+    "logoUrl",
+    "bannerUrl",
+    "description",
+    "website",
+    "address",
+  ] as const;
+
   if (
-    !hasOwn(snapshot, 'name') ||
-    typeof snapshot.name !== 'string' ||
-    !nullableFields.every((field) => hasOwn(snapshot, field) && isNullableString(snapshot[field]))
+    !hasOwn(snapshot, "name") ||
+    typeof snapshot.name !== "string" ||
+    !nullableFields.every(
+      (field) => hasOwn(snapshot, field) && isNullableString(snapshot[field]),
+    )
   ) {
     return null;
   }
+
   return {
     name: snapshot.name,
     logoUrl: snapshot.logoUrl as string | null,
@@ -48,18 +79,21 @@ const parseEmployerApprovalSnapshot = (value: unknown) => {
 };
 
 const parseProviderApprovalSnapshot = (value: unknown) => {
-  if (!value || typeof value !== 'object') return null;
+  if (!value || typeof value !== "object") return null;
+
   const snapshot = value as Record<string, unknown>;
+
   if (
-    !hasOwn(snapshot, 'name') ||
-    typeof snapshot.name !== 'string' ||
-    !hasOwn(snapshot, 'logoUrl') ||
+    !hasOwn(snapshot, "name") ||
+    typeof snapshot.name !== "string" ||
+    !hasOwn(snapshot, "logoUrl") ||
     !isNullableString(snapshot.logoUrl) ||
-    !hasOwn(snapshot, 'description') ||
+    !hasOwn(snapshot, "description") ||
     !isNullableString(snapshot.description)
   ) {
     return null;
   }
+
   return {
     name: snapshot.name,
     logoUrl: snapshot.logoUrl as string | null,
@@ -70,75 +104,194 @@ const parseProviderApprovalSnapshot = (value: unknown) => {
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.params.id },
+      where: {
+        id: req.params.id,
+      },
       select: {
         ...adminUserSelect,
+
         employer: true,
         provider: true,
-        userSkills: { include: { skill: true } },
-        userCertifications: { include: { training: { select: { id: true, name: true } }, skill: true } },
-        workerExperiences: { orderBy: { startDate: 'desc' } },
-        workerEducations: { orderBy: { createdAt: 'desc' } },
-        workerLanguages: { orderBy: { language: 'asc' } },
+
+        userSkills: {
+          include: {
+            skill: true,
+          },
+        },
+
+        userCertifications: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            skill: true,
+          },
+        },
+
+        workerExperiences: {
+          orderBy: {
+            startDate: "desc",
+          },
+        },
+
+        workerEducations: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+
+        workerLanguages: {
+          orderBy: {
+            language: "asc",
+          },
+        },
+
         workerPreference: true,
-        resumes: { select: { id: true, s3Url: true, skillsExtracted: true, createdAt: true }, orderBy: { createdAt: 'desc' } },
-        _count: { select: { applications: true, serviceBookings: true, sentMessages: true, receivedMessages: true } },
+
+        resumes: {
+          select: {
+            id: true,
+            s3Url: true,
+            skillsExtracted: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+
+        _count: {
+          select: {
+            applications: true,
+            serviceBookings: true,
+            sentMessages: true,
+            receivedMessages: true,
+          },
+        },
       },
     });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    const { userCertifications, ...userDetails } = user;
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    const { userCertifications, resumes, ...userDetails } = user;
+
     return res.json({
       user: {
         ...userDetails,
         userCertifications: userCertifications.map(presentEnrollment),
-        resumes: user.resumes.map(presentResume),
+        resumes: resumes.map(presentResume),
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Failed to load user' });
+    return res.status(500).json({
+      error: "Failed to load user",
+    });
   }
 };
 
 export const createUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, email, password, role = 'worker', phone, location, isVerified = true } = req.body;
-    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const {
+      name,
+      email,
+      password,
+      role = "worker",
+      phone,
+      location,
+      isVerified = true,
+    } = req.body;
+
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
+
     const normalizedRole = String(role).trim().toLowerCase();
-    if (!String(name || '').trim() || !normalizedEmail || !String(password || '')) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+
+    if (
+      !String(name || "").trim() ||
+      !normalizedEmail ||
+      !String(password || "")
+    ) {
+      return res.status(400).json({
+        error: "Name, email, and password are required",
+      });
     }
-    if (!['worker', 'employer', 'provider', 'admin'].includes(normalizedRole)) {
-      return res.status(400).json({ error: 'Invalid role' });
+
+    if (!["worker", "employer", "provider", "admin"].includes(normalizedRole)) {
+      return res.status(400).json({
+        error: "Invalid role",
+      });
     }
+
     const passwordError = validatePassword(String(password));
-    if (passwordError) return res.status(400).json({ error: passwordError });
+
+    if (passwordError) {
+      return res.status(400).json({
+        error: passwordError,
+      });
+    }
+
     const passwordHash = await hashPassword(String(password));
+
     let user = await prisma.user.create({
       data: {
-        name: String(name).trim(), email: normalizedEmail, passwordHash,
-        role: normalizedRole as any, phone: String(phone || '').trim() || null,
-        location: String(location || '').trim() || null, isVerified: Boolean(isVerified),
+        name: String(name).trim(),
+        email: normalizedEmail,
+        passwordHash,
+        role: normalizedRole as any,
+        phone: String(phone || "").trim() || null,
+        location: String(location || "").trim() || null,
+        isVerified: Boolean(isVerified),
       },
       select: adminUserSelect,
     });
+
     if (!user.slug) {
       user = await prisma.user.update({
-        where: { id: user.id },
+        where: {
+          id: user.id,
+        },
         data: {
           slug: createStableSlug(
             user.name,
             user.id,
-            normalizedRole === 'worker' ? 'worker' : 'user',
+            normalizedRole === "worker" ? "worker" : "user",
           ),
         },
         select: adminUserSelect,
       });
     }
-    await prisma.auditLog.create({ data: { userId: req.user!.id, action: 'admin_create_user', resourceType: 'user', resourceId: user.id, meta: { role: user.role } } });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user!.id,
+        action: "admin_create_user",
+        resourceType: "user",
+        resourceId: user.id,
+        meta: {
+          role: user.role,
+        },
+      },
+    });
+
     return res.status(201).json(user);
   } catch (error: any) {
-    if (error.code === 'P2002') return res.status(400).json({ error: 'Email already exists' });
-    return res.status(500).json({ error: 'Failed to create user' });
+    if (error.code === "P2002") {
+      return res.status(400).json({
+        error: "Email already exists",
+      });
+    }
+
+    return res.status(500).json({
+      error: "Failed to create user",
+    });
   }
 };
 
@@ -147,7 +300,9 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     const { role, search, status, page = 1, limit = 20 } = req.query;
 
     const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+
     const pageSize = boundedPositiveInteger(limit, 20, 100);
+
     const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
@@ -160,28 +315,46 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     if (search) {
       filters.push({
         OR: [
-          { name: { contains: search as string, mode: 'insensitive' } },
-          { email: { contains: search as string, mode: 'insensitive' } },
+          {
+            name: {
+              contains: search as string,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: search as string,
+              mode: "insensitive",
+            },
+          },
         ],
       });
     }
 
-    if (status === 'verified') {
+    if (status === "verified") {
       where.isVerified = true;
-    } else if (status === 'unverified') {
+    } else if (status === "unverified") {
       where.isVerified = false;
-    } else if (status === 'pending_approval') {
+    } else if (status === "pending_approval") {
       filters.push({
         OR: [
           {
-            role: 'employer',
+            role: "employer",
             isVerified: true,
-            employer: { is: { verified: false } },
+            employer: {
+              is: {
+                verified: false,
+              },
+            },
           },
           {
-            role: 'provider',
+            role: "provider",
             isVerified: true,
-            provider: { is: { verified: false } },
+            provider: {
+              is: {
+                verified: false,
+              },
+            },
           },
         ],
       });
@@ -205,6 +378,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           avatarUrl: true,
           createdAt: true,
           updatedAt: true,
+
           employer: {
             select: {
               id: true,
@@ -217,6 +391,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
               verified: true,
             },
           },
+
           provider: {
             select: {
               id: true,
@@ -229,9 +404,14 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         },
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
-      prisma.user.count({ where }),
+
+      prisma.user.count({
+        where,
+      }),
     ]);
 
     res.json({
@@ -239,7 +419,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         const organization = employer
           ? {
               id: employer.id,
-              type: 'employer' as const,
+              type: "employer" as const,
               name: employer.name,
               verified: employer.verified,
               identity: {
@@ -254,7 +434,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           : provider
             ? {
                 id: provider.id,
-                type: 'provider' as const,
+                type: "provider" as const,
                 name: provider.name,
                 verified: provider.verified,
                 identity: {
@@ -267,13 +447,16 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 
         return {
           ...user,
+
           organizationApproved:
-            user.role === 'employer' || user.role === 'provider'
+            user.role === "employer" || user.role === "provider"
               ? Boolean(organization?.verified)
               : true,
+
           organization,
         };
       }),
+
       pagination: {
         total,
         page: pageNumber,
@@ -282,7 +465,9 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load users' });
+    res.status(500).json({
+      error: "Failed to load users",
+    });
   }
 };
 
@@ -291,18 +476,21 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
     const { published, page = 1, limit = 20 } = req.query;
 
     const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+
     const pageSize = boundedPositiveInteger(limit, 20, 100);
+
     const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
 
     if (published !== undefined) {
-      where.published = published === 'true';
+      where.published = published === "true";
     }
 
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
         where,
+
         include: {
           employer: {
             include: {
@@ -314,19 +502,30 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
               },
             },
           },
+
           _count: {
-            select: { applications: true },
+            select: {
+              applications: true,
+            },
           },
         },
+
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' },
+
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
-      prisma.job.count({ where }),
+
+      prisma.job.count({
+        where,
+      }),
     ]);
 
     res.json({
       jobs,
+
       pagination: {
         total,
         page: pageNumber,
@@ -335,13 +534,16 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load jobs' });
+    res.status(500).json({
+      error: "Failed to load jobs",
+    });
   }
 };
 
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
     const {
       name,
       email,
@@ -358,109 +560,202 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       avatarUrl,
     } = req.body;
 
-    if (role !== undefined && !['worker', 'employer', 'provider', 'admin'].includes(String(role))) {
-      return res.status(400).json({ error: 'Invalid role' });
+    if (
+      role !== undefined &&
+      !["worker", "employer", "provider", "admin"].includes(String(role))
+    ) {
+      return res.status(400).json({
+        error: "Invalid role",
+      });
     }
-    if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
-      return res.status(400).json({ error: 'Invalid email address' });
+
+    if (
+      email !== undefined &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())
+    ) {
+      return res.status(400).json({
+        error: "Invalid email address",
+      });
     }
-    if (isVerified !== undefined && typeof isVerified !== 'boolean') {
-      return res.status(400).json({ error: 'isVerified must be a boolean' });
+
+    if (isVerified !== undefined && typeof isVerified !== "boolean") {
+      return res.status(400).json({
+        error: "isVerified must be a boolean",
+      });
     }
-    if (profilePublic !== undefined && typeof profilePublic !== 'boolean') {
-      return res.status(400).json({ error: 'profilePublic must be a boolean' });
+
+    if (profilePublic !== undefined && typeof profilePublic !== "boolean") {
+      return res.status(400).json({
+        error: "profilePublic must be a boolean",
+      });
     }
-    if (preferredLanguage !== undefined && !['en', 'so'].includes(String(preferredLanguage))) {
-      return res.status(400).json({ error: 'Invalid preferred language' });
+
+    if (
+      preferredLanguage !== undefined &&
+      !["en", "so"].includes(String(preferredLanguage))
+    ) {
+      return res.status(400).json({
+        error: "Invalid preferred language",
+      });
     }
+
     if (
       req.user!.id === id &&
-      ((role !== undefined && role !== 'admin') || isVerified === false)
+      ((role !== undefined && role !== "admin") || isVerified === false)
     ) {
-      return res.status(400).json({ error: 'Admins cannot remove their own access' });
+      return res.status(400).json({
+        error: "Admins cannot remove their own access",
+      });
     }
+
     if (
       avatarUrl !== undefined &&
       avatarUrl !== null &&
-      !(typeof avatarUrl === 'string' && (
-        (/^\/(?!\/)/.test(avatarUrl) && !avatarUrl.includes('\\')) ||
-        /^https:\/\//i.test(avatarUrl)
-      ))
+      !(
+        typeof avatarUrl === "string" &&
+        ((/^\/(?!\/)/.test(avatarUrl) && !avatarUrl.includes("\\")) ||
+          /^https:\/\//i.test(avatarUrl))
+      )
     ) {
-      return res.status(400).json({ error: 'Invalid avatar URL' });
+      return res.status(400).json({
+        error: "Invalid avatar URL",
+      });
     }
+
     for (const [field, value, maximum] of [
-      ['headline', headline, 200],
-      ['headlineSo', headlineSo, 200],
-      ['bio', bio, 5000],
-      ['bioSo', bioSo, 5000],
+      ["headline", headline, 200],
+      ["headlineSo", headlineSo, 200],
+      ["bio", bio, 5000],
+      ["bioSo", bioSo, 5000],
     ] as const) {
       if (
         value !== undefined &&
         value !== null &&
-        (typeof value !== 'string' || value.length > maximum)
+        (typeof value !== "string" || value.length > maximum)
       ) {
-        return res.status(400).json({ error: `Invalid ${field}` });
+        return res.status(400).json({
+          error: `Invalid ${field}`,
+        });
       }
     }
 
     const existing = await prisma.user.findUnique({
-      where: { id },
-      select: { id: true, name: true, slug: true },
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
     });
-    if (!existing) return res.status(404).json({ error: 'User not found' });
+
+    if (!existing) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
 
     const updated = await prisma.user.update({
-      where: { id },
+      where: {
+        id,
+      },
+
       data: {
-        ...(name !== undefined && { name: String(name).trim() }),
-        ...(email !== undefined && { email: String(email).trim().toLowerCase() }),
-        ...(role !== undefined && { role }),
-        ...(phone !== undefined && { phone: String(phone || '').trim() || null }),
-        ...(location !== undefined && { location: String(location || '').trim() || null }),
-        ...(bio !== undefined && { bio: String(bio || '').slice(0, 5000) || null }),
-        ...(bioSo !== undefined && { bioSo: String(bioSo || '').slice(0, 5000) || null }),
+        ...(name !== undefined && {
+          name: String(name).trim(),
+        }),
+
+        ...(email !== undefined && {
+          email: String(email).trim().toLowerCase(),
+        }),
+
+        ...(role !== undefined && {
+          role,
+        }),
+
+        ...(phone !== undefined && {
+          phone: String(phone || "").trim() || null,
+        }),
+
+        ...(location !== undefined && {
+          location: String(location || "").trim() || null,
+        }),
+
+        ...(bio !== undefined && {
+          bio: String(bio || "").slice(0, 5000) || null,
+        }),
+
+        ...(bioSo !== undefined && {
+          bioSo: String(bioSo || "").slice(0, 5000) || null,
+        }),
+
         ...(headline !== undefined && {
-          headline: String(headline || '').trim().slice(0, 200) || null,
+          headline:
+            String(headline || "")
+              .trim()
+              .slice(0, 200) || null,
         }),
+
         ...(headlineSo !== undefined && {
-          headlineSo: String(headlineSo || '').trim().slice(0, 200) || null,
+          headlineSo:
+            String(headlineSo || "")
+              .trim()
+              .slice(0, 200) || null,
         }),
-        ...(profilePublic !== undefined && { profilePublic }),
-        ...(preferredLanguage !== undefined && { preferredLanguage }),
-        ...(isVerified !== undefined && { isVerified }),
-        ...(avatarUrl !== undefined && { avatarUrl: avatarUrl || null }),
+
+        ...(profilePublic !== undefined && {
+          profilePublic,
+        }),
+
+        ...(preferredLanguage !== undefined && {
+          preferredLanguage,
+        }),
+
+        ...(isVerified !== undefined && {
+          isVerified,
+        }),
+
+        ...(avatarUrl !== undefined && {
+          avatarUrl: avatarUrl || null,
+        }),
+
         ...(slugWhenMissing(
           existing.slug,
           name !== undefined ? String(name).trim() : existing.name,
           existing.id,
-          'worker',
+          "worker",
         )
           ? {
               slug: createStableSlug(
                 name !== undefined ? String(name).trim() : existing.name,
                 existing.id,
-                'worker',
+                "worker",
               ),
             }
           : {}),
       },
+
       select: adminUserSelect,
     });
 
     await prisma.auditLog.create({
       data: {
         userId: req.user!.id,
-        action: 'admin_update_user',
-        resourceType: 'user',
+        action: "admin_update_user",
+        resourceType: "user",
         resourceId: id,
-        meta: { fields: Object.keys(req.body || {}) },
+        meta: {
+          fields: Object.keys(req.body || {}),
+        },
       },
     });
 
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to update user' });
+    res.status(500).json({
+      error: "Failed to update user",
+    });
   }
 };
 
@@ -468,48 +763,88 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Prevent self-delete for safety
     if (req.user?.id === id) {
-      return res.status(400).json({ error: 'Admins cannot delete their own account.' });
+      return res.status(400).json({
+        error: "Admins cannot delete their own account.",
+      });
     }
 
-    // Ensure user exists
-    const existing = await prisma.user.findUnique({ where: { id } });
-    if (!existing) return res.status(404).json({ error: 'User not found' });
+    const existing = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
 
-    await prisma.user.delete({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    await prisma.user.delete({
+      where: {
+        id,
+      },
+    });
 
     await prisma.auditLog.create({
       data: {
         userId: req.user!.id,
-        action: 'admin_delete_user',
-        resourceType: 'user',
+        action: "admin_delete_user",
+        resourceType: "user",
         resourceId: id,
-        meta: { role: existing.role },
+        meta: {
+          role: existing.role,
+        },
       },
     });
 
-    res.json({ message: 'User deleted successfully' });
+    res.json({
+      message: "User deleted successfully",
+    });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete user' });
+    res.status(500).json({
+      error: "Failed to delete user",
+    });
   }
 };
 
 export const verifyEmployer = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
     const reviewedIdentity = parseEmployerApprovalSnapshot(req.body?.identity);
+
     if (!reviewedIdentity) {
-      return res.status(400).json({ error: 'The reviewed employer profile snapshot is required' });
+      return res.status(400).json({
+        error: "The reviewed employer profile snapshot is required",
+      });
     }
 
     const pendingEmployer = await prisma.employer.findUnique({
-      where: { id },
-      select: { id: true, user: { select: { isVerified: true } } },
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        user: {
+          select: {
+            isVerified: true,
+          },
+        },
+      },
     });
-    if (!pendingEmployer) return res.status(404).json({ error: 'Employer not found' });
+
+    if (!pendingEmployer) {
+      return res.status(404).json({
+        error: "Employer not found",
+      });
+    }
+
     if (!pendingEmployer.user.isVerified) {
-      return res.status(400).json({ error: 'Email verification is required before approval' });
+      return res.status(400).json({
+        error: "Email verification is required before approval",
+      });
     }
 
     const employer = await prisma.$transaction(async (transaction) => {
@@ -518,14 +853,25 @@ export const verifyEmployer = async (req: AuthRequest, res: Response) => {
           id,
           verified: false,
           ...reviewedIdentity,
-          user: { isVerified: true },
+          user: {
+            isVerified: true,
+          },
         },
-        data: { verified: true },
+
+        data: {
+          verified: true,
+        },
       });
-      if (approval.count !== 1) return null;
+
+      if (approval.count !== 1) {
+        return null;
+      }
 
       const approvedEmployer = await transaction.employer.findUniqueOrThrow({
-        where: { id },
+        where: {
+          id,
+        },
+
         include: {
           user: {
             select: {
@@ -539,42 +885,74 @@ export const verifyEmployer = async (req: AuthRequest, res: Response) => {
       await transaction.auditLog.create({
         data: {
           userId: req.user!.id,
-          action: 'verify_employer',
-          resourceType: 'employer',
+          action: "verify_employer",
+          resourceType: "employer",
           resourceId: id,
-          meta: { result: 'approved' },
+          meta: {
+            result: "approved",
+          },
         },
       });
+
       return approvedEmployer;
     });
+
     if (!employer) {
       return res.status(409).json({
-        error: 'The employer profile changed. Reload and review it before approving.',
+        error:
+          "The employer profile changed. Reload and review it before approving.",
       });
     }
-    await invalidateCacheByPrefix(['jobs:list', 'public:stats']);
+
+    await invalidateCacheByPrefix(["jobs:list", "public:stats"]);
 
     res.json(employer);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to approve employer' });
+    res.status(500).json({
+      error: "Failed to approve employer",
+    });
   }
 };
 
 export const verifyProvider = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
     const reviewedIdentity = parseProviderApprovalSnapshot(req.body?.identity);
+
     if (!reviewedIdentity) {
-      return res.status(400).json({ error: 'The reviewed provider profile snapshot is required' });
+      return res.status(400).json({
+        error: "The reviewed provider profile snapshot is required",
+      });
     }
 
     const pendingProvider = await prisma.provider.findUnique({
-      where: { id },
-      select: { id: true, user: { select: { isVerified: true } } },
+      where: {
+        id,
+      },
+
+      select: {
+        id: true,
+        contactUserId: true,
+
+        user: {
+          select: {
+            isVerified: true,
+          },
+        },
+      },
     });
-    if (!pendingProvider) return res.status(404).json({ error: 'Provider not found' });
-    if (!pendingProvider.user.isVerified) {
-      return res.status(400).json({ error: 'Email verification is required before approval' });
+
+    if (!pendingProvider) {
+      return res.status(404).json({
+        error: "Provider not found",
+      });
+    }
+
+    if (pendingProvider.user && !pendingProvider.user.isVerified) {
+      return res.status(400).json({
+        error: "Email verification is required before approval",
+      });
     }
 
     const provider = await prisma.$transaction(async (transaction) => {
@@ -583,14 +961,36 @@ export const verifyProvider = async (req: AuthRequest, res: Response) => {
           id,
           verified: false,
           ...reviewedIdentity,
-          user: { isVerified: true },
+
+          OR: [
+            {
+              contactUserId: null,
+            },
+            {
+              user: {
+                is: {
+                  isVerified: true,
+                },
+              },
+            },
+          ],
         },
-        data: { verified: true },
+
+        data: {
+          verified: true,
+          verifiedAt: new Date(),
+        },
       });
-      if (approval.count !== 1) return null;
+
+      if (approval.count !== 1) {
+        return null;
+      }
 
       const approvedProvider = await transaction.provider.findUniqueOrThrow({
-        where: { id },
+        where: {
+          id,
+        },
+
         include: {
           user: {
             select: {
@@ -604,24 +1004,32 @@ export const verifyProvider = async (req: AuthRequest, res: Response) => {
       await transaction.auditLog.create({
         data: {
           userId: req.user!.id,
-          action: 'verify_provider',
-          resourceType: 'provider',
+          action: "verify_provider",
+          resourceType: "provider",
           resourceId: id,
-          meta: { result: 'approved' },
+          meta: {
+            result: "approved",
+          },
         },
       });
+
       return approvedProvider;
     });
+
     if (!provider) {
       return res.status(409).json({
-        error: 'The provider profile changed. Reload and review it before approving.',
+        error:
+          "The provider profile changed. Reload and review it before approving.",
       });
     }
-    await invalidateCacheByPrefix(['trainings:list', 'public:stats']);
+
+    await invalidateCacheByPrefix(["courses:list", "public:stats"]);
 
     res.json(provider);
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to approve provider' });
+    res.status(500).json({
+      error: "Failed to approve provider",
+    });
   }
 };
 
@@ -630,7 +1038,9 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
     const { userId, action, page = 1, limit = 50 } = req.query;
 
     const pageNumber = boundedPositiveInteger(page, 1, 1_000_000);
+
     const pageSize = boundedPositiveInteger(limit, 50, 100);
+
     const skip = (pageNumber - 1) * pageSize;
 
     const where: any = {};
@@ -640,12 +1050,16 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
     }
 
     if (action) {
-      where.action = { contains: action as string, mode: 'insensitive' };
+      where.action = {
+        contains: action as string,
+        mode: "insensitive",
+      };
     }
 
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
+
         include: {
           user: {
             select: {
@@ -654,15 +1068,23 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
             },
           },
         },
+
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' },
+
+        orderBy: {
+          createdAt: "desc",
+        },
       }),
-      prisma.auditLog.count({ where }),
+
+      prisma.auditLog.count({
+        where,
+      }),
     ]);
 
     res.json({
       logs,
+
       pagination: {
         total,
         page: pageNumber,
@@ -671,16 +1093,23 @@ export const getAuditLogs = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to load audit logs' });
+    res.status(500).json({
+      error: "Failed to load audit logs",
+    });
   }
 };
 
 export const testEmail = async (req: AuthRequest, res: Response) => {
   try {
-    const { DEFAULT_CONTACT_ADDRESS, isValidEmailAddress, sendVerificationEmail } =
-      await import('../utils/email.js');
+    const {
+      DEFAULT_CONTACT_ADDRESS,
+      isValidEmailAddress,
+      sendVerificationEmail,
+    } = await import("../utils/email.js");
+
     const requestedEmail =
-      typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+      typeof req.body?.email === "string" ? req.body.email.trim() : "";
+
     const testEmailAddress =
       requestedEmail ||
       process.env.CONTACT_EMAIL_TO?.trim() ||
@@ -689,29 +1118,32 @@ export const testEmail = async (req: AuthRequest, res: Response) => {
     if (!isValidEmailAddress(testEmailAddress)) {
       return res.status(400).json({
         success: false,
-        error: 'A valid test recipient email is required',
+        error: "A valid test recipient email is required",
       });
     }
 
-    const testCode = '123456';
+    const testCode = "123456";
 
-    await sendVerificationEmail(testEmailAddress, testCode, 'Test User');
+    await sendVerificationEmail(testEmailAddress, testCode, "Test User");
 
     return res.json({
       success: true,
-      message: 'Test email accepted for delivery',
+      message: "Test email accepted for delivery",
     });
   } catch (error: any) {
-    console.error('[Admin] Email test failed', {
-      code: typeof error?.code === 'string' ? error.code.slice(0, 40) : undefined,
+    console.error("[Admin] Email test failed", {
+      code:
+        typeof error?.code === "string" ? error.code.slice(0, 40) : undefined,
+
       responseCode:
-        typeof error?.responseCode === 'number'
+        typeof error?.responseCode === "number"
           ? error.responseCode
           : undefined,
     });
+
     return res.status(503).json({
       success: false,
-      error: 'Email service is currently unavailable',
+      error: "Email service is currently unavailable",
     });
   }
 };
@@ -724,44 +1156,52 @@ export const getMetrics = async (req: AuthRequest, res: Response) => {
       totalEmployers,
       totalProviders,
       totalJobs,
-      totalTrainings,
+      totalCourses,
       totalApplications,
       flaggedJobs,
       recentActivity,
     ] = await Promise.all([
-      // Total users
       prisma.user.count(),
-      
-      // Workers (users with role 'worker')
-      prisma.user.count({ where: { role: 'worker' } }),
-      
-      // Employers count
+
+      prisma.user.count({
+        where: {
+          role: "worker",
+        },
+      }),
+
       prisma.employer.count(),
-      
-      // Providers count
+
       prisma.provider.count(),
-      
-      // Active jobs (published)
-      prisma.job.count({ where: { published: true } }),
-      
-      // Active trainings (published)
-      prisma.training.count({ where: { published: true } }),
-      
-      // Total applications
+
+      prisma.job.count({
+        where: {
+          published: true,
+        },
+      }),
+
+      prisma.course.count({
+        where: {
+          published: true,
+        },
+      }),
+
       prisma.application.count(),
-      
-      // Flagged jobs (you can add a flagged field later, for now using 0)
+
       Promise.resolve(0),
-      
-      // Recent activity from audit logs (last 24 hours)
+
       prisma.auditLog.findMany({
         take: 10,
-        orderBy: { createdAt: 'desc' },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
         where: {
           createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
           },
         },
+
         include: {
           user: {
             select: {
@@ -773,37 +1213,52 @@ export const getMetrics = async (req: AuthRequest, res: Response) => {
       }),
     ]);
 
-    // Format recent activity
-    const formattedActivity = recentActivity.map((log, index) => {
-      const actionMap: Record<string, { title: string; description: string }> = {
-        'admin_update_user': {
-          title: 'User updated',
-          description: `Admin updated user profile`,
+    const formattedActivity = recentActivity.map((log) => {
+      const actionMap: Record<
+        string,
+        {
+          title: string;
+          description: string;
+        }
+      > = {
+        admin_update_user: {
+          title: "User updated",
+          description: "Admin updated user profile",
         },
-        'admin_delete_user': {
-          title: 'User deleted',
-          description: `User account was removed`,
+
+        admin_delete_user: {
+          title: "User deleted",
+          description: "User account was removed",
         },
-        'verify_employer': {
-          title: 'Employer verified',
-          description: `Employer account was verified`,
+
+        verify_employer: {
+          title: "Employer verified",
+          description: "Employer account was verified",
         },
-        'verify_provider': {
-          title: 'Provider verified',
-          description: `Training provider was verified`,
+
+        verify_provider: {
+          title: "Provider verified",
+          description: "Course provider was verified",
         },
       };
 
       const actionInfo = actionMap[log.action] || {
-        title: 'System activity',
+        title: "System activity",
         description: log.action,
       };
 
-      const timeAgo = Math.floor((Date.now() - log.createdAt.getTime()) / 60000);
-      const timeString = timeAgo < 1 ? 'Just now' : 
-                        timeAgo < 60 ? `${timeAgo} minutes ago` :
-                        timeAgo < 1440 ? `${Math.floor(timeAgo / 60)} hours ago` :
-                        `${Math.floor(timeAgo / 1440)} days ago`;
+      const timeAgo = Math.floor(
+        (Date.now() - log.createdAt.getTime()) / 60000,
+      );
+
+      const timeString =
+        timeAgo < 1
+          ? "Just now"
+          : timeAgo < 60
+            ? `${timeAgo} minutes ago`
+            : timeAgo < 1440
+              ? `${Math.floor(timeAgo / 60)} hours ago`
+              : `${Math.floor(timeAgo / 1440)} days ago`;
 
       return {
         id: log.id,
@@ -819,16 +1274,20 @@ export const getMetrics = async (req: AuthRequest, res: Response) => {
       totalEmployers,
       totalProviders,
       totalJobs,
-      totalTrainings,
+      totalCourses,
       totalApplications,
       flaggedJobs,
       recentActivity: formattedActivity,
     });
   } catch (error: any) {
-    console.error('[Admin] Metrics request failed', {
-      errorType: typeof error?.name === 'string' ? error.name : 'Error',
-      code: typeof error?.code === 'string' ? error.code : undefined,
+    console.error("[Admin] Metrics request failed", {
+      errorType: typeof error?.name === "string" ? error.name : "Error",
+
+      code: typeof error?.code === "string" ? error.code : undefined,
     });
-    res.status(500).json({ error: 'Failed to load metrics' });
+
+    res.status(500).json({
+      error: "Failed to load metrics",
+    });
   }
 };

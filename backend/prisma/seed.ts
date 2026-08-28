@@ -6,25 +6,32 @@ import { seedUsers } from "./seeds/users";
 import { seedBusinesses } from "./seeds/businesses";
 import { seedBusinessHours } from "./seeds/businessHours";
 import { seedDeals } from "./seeds/deals";
+
 import { seedEmployers } from "./seeds/employers";
 import { seedJobs } from "./seeds/jobs";
+import { seedApplications } from "./seeds/applications";
+
 import { seedServices } from "./seeds/services";
 import { seedServiceBookings } from "./seeds/serviceBookings";
-import { seedApplications } from "./seeds/applications";
+
 import { seedResumes } from "./seeds/resumes";
 import { seedWorkerExperiences } from "./seeds/workerExperiences";
 import { seedWorkerEducations } from "./seeds/workerEducations";
 import { seedWorkerLanguages } from "./seeds/workerLanguages";
 import { seedWorkerPreferences } from "./seeds/workerPreferences";
+
 import { seedSkills } from "./seeds/skills";
 import { seedUserSkills } from "./seeds/userSkills";
+
 import { seedProviders } from "./seeds/providers";
-import { seedTrainings } from "./seeds/trainings";
+import { seedCourses } from "./seeds/courses";
 import { seedUserCertifications } from "./seeds/userCertifications";
+
 import { seedMessages } from "./seeds/messages";
 import { seedAuditLogs } from "./seeds/auditLogs";
 
 const prisma = new PrismaClient();
+
 async function main() {
   console.log("🌱 Starting database seed...");
 
@@ -47,7 +54,7 @@ async function main() {
   const skills = await seedSkills(prisma);
 
   console.log("Seeding providers...");
-  const providers = await seedProviders(prisma, users, businesses);
+  const providers = await seedProviders(prisma);
 
   console.log("Seeding jobs...");
   const jobs = await seedJobs(prisma, employers);
@@ -55,8 +62,8 @@ async function main() {
   console.log("Seeding services...");
   const services = await seedServices(prisma, businesses);
 
-  console.log("Seeding trainings...");
-  const trainings = await seedTrainings(prisma, providers, skills);
+  console.log("Seeding courses...");
+  const courses = await seedCourses(prisma, providers, skills);
 
   console.log("Seeding resumes...");
   await seedResumes(prisma, users);
@@ -83,7 +90,7 @@ async function main() {
   await seedServiceBookings(prisma, users, services);
 
   console.log("Seeding user certifications...");
-  await seedUserCertifications(prisma, users, trainings, skills);
+  await seedUserCertifications(prisma, users, courses, skills);
 
   console.log("Seeding messages...");
   await seedMessages(prisma, users, jobs);
