@@ -10,6 +10,7 @@ import FeaturedBusinesses from "@/components/home/FeaturedBusinesses";
 import PopularServices from "@/components/home/PopularServices";
 import HomeJobsAndPromotions from "@/components/home/jobs-promotions/HomeJobsAndPromotions";
 import DealsAndPromotions from "@/components/home/DealsAndPromotions/DealsAndPromotions";
+import FeaturedCourses from "@/components/home/FeaturedCourses";
 export default function HomePage() {
   const savedLanguage = cookies().get("language")?.value;
   const language: Language = savedLanguage === "so" ? "so" : "en";
@@ -19,8 +20,9 @@ export default function HomePage() {
       <Navbar />
       <HeroSection heroImage="/hero.jpeg" />
       <FeaturedBusinesses />
-      <DealsAndPromotions />
       <PopularServices />
+      <FeaturedCourses />
+      <DealsAndPromotions />
       <HomeJobsAndPromotions />
       <StatsSection language={language} />
       <AboutSection language={language} />

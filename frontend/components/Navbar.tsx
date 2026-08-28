@@ -111,7 +111,6 @@ export default function Navbar() {
     { name: getT("jobs"), href: "/jobs" },
     { name: getT("services"), href: "/services" },
     { name: getT("trainings"), href: "/training" },
-    { name: getT("workers"), href: "/workers" },
     { name: getT("businesses"), href: "/businesses" },
     { name: getT("about"), href: "/about" },
     { name: getT("contact"), href: "/contact" },
@@ -525,7 +524,7 @@ export default function Navbar() {
             {/* ======================================================
                 MOBILE / TABLET TOP CONTROLS
             ====================================================== */}
-            <div className="flex min-w-0 items-center justify-end gap-0.5 lg:hidden">
+            <div className="col-start-3 flex min-w-0 items-center justify-self-end gap-0.5 lg:hidden">
               <button
                 type="button"
                 onClick={toggleLanguage}

@@ -71,7 +71,7 @@ function ServiceCard({ service }: { service: Service }) {
   const image = service.image || FALLBACK_IMAGE;
 
   return (
-    <article className="group w-[145px] min-w-[145px] overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:w-[165px] sm:min-w-[165px] md:w-auto md:min-w-0">
+    <article className="group w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
       <Link href={serviceUrl} className="block">
         {/* Image */}
         <div className="relative h-[125px] w-full overflow-hidden bg-gray-100 sm:h-[140px] md:h-[145px]">
@@ -136,11 +136,11 @@ function LoadingSkeleton() {
         </div>
 
         {/* Mobile */}
-        <div className="flex gap-3 overflow-hidden md:hidden">
+        <div className="grid grid-cols-2 gap-3 md:hidden">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="h-[205px] w-[145px] min-w-[145px] animate-pulse rounded-xl bg-gray-100"
+              className="h-[205px] animate-pulse rounded-xl bg-gray-100"
             />
           ))}
         </div>
@@ -293,22 +293,14 @@ export default function PopularServices() {
         ==================================================== */}
 
         <div className="md:hidden">
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="grid grid-cols-2 gap-3">
             {services.map((service) => (
-              <div key={service.id} className="snap-start">
+              <div key={service.id}>
                 <ServiceCard service={service} />
               </div>
             ))}
           </div>
 
-          {services.length > 3 && (
-            <div className="mt-3 flex justify-center gap-1.5">
-              <span className="h-2 w-5 rounded-full bg-violet-700" />
-              <span className="h-2 w-2 rounded-full bg-gray-200" />
-              <span className="h-2 w-2 rounded-full bg-gray-200" />
-              <span className="h-2 w-2 rounded-full bg-gray-200" />
-            </div>
-          )}
         </div>
 
         {/* ====================================================

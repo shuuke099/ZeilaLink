@@ -67,10 +67,15 @@ const remotePatterns = [
     hostname: "images.unsplash.com",
   },
 
-  // DigitalOcean Spaces (update later)
+  // DigitalOcean Spaces CDN and origin
   {
     protocol: "https",
-    hostname: "<YOUR_SPACE>.<YOUR_REGION>.digitaloceanspaces.com",
+    hostname: "zeilalink-uploads.sfo2.cdn.digitaloceanspaces.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "zeilalink-uploads.sfo2.digitaloceanspaces.com",
     pathname: "/**",
   },
 ];
@@ -102,7 +107,7 @@ module.exports = (phase) => {
     {
       key: "Permissions-Policy",
       value:
-        "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+        "camera=(), microphone=(), geolocation=(self), browsing-topics=()",
     },
     {
       key: "Cross-Origin-Opener-Policy",

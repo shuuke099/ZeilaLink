@@ -89,8 +89,8 @@ export default function JobsNearYou() {
   }, []);
 
   return (
-    <section className="flex h-full min-h-[300px] w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between px-5 pb-3 pt-4">
+    <section className="flex h-full min-h-[300px] w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
+      <div className="flex items-center justify-between gap-4 px-5 pb-2 pt-4 sm:px-6">
         <h2 className="text-base font-bold text-slate-950 sm:text-lg">
           Jobs Near You
         </h2>
@@ -105,7 +105,7 @@ export default function JobsNearYou() {
       </div>
 
       {loading && (
-        <div className="flex-1 px-5">
+        <div className="flex-1 px-5 sm:px-6">
           {[1, 2, 3].map((item) => (
             <div
               key={item}
@@ -147,7 +147,7 @@ export default function JobsNearYou() {
       )}
 
       {!loading && !error && jobs.length > 0 && (
-        <div className="flex-1 px-5">
+        <div className="flex-1 px-5 sm:px-6">
           {jobs.map((job) => {
             const jobUrl = job.slug || job.id;
             const posted = formatPostedTime(job.createdAt);
@@ -156,7 +156,7 @@ export default function JobsNearYou() {
               <Link
                 key={job.id}
                 href={`/jobs/${jobUrl}`}
-                className="group flex min-h-[72px] items-center gap-3 border-b border-slate-100 py-3 transition last:border-b-0 hover:bg-slate-50"
+                className="group -mx-2 flex min-h-[76px] items-center gap-3 border-b border-slate-100 px-2 py-3 transition last:border-b-0 hover:bg-violet-50/40"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-50">
                   {job.employer.logoUrl ? (

@@ -1,8 +1,9 @@
 import { Response } from "express";
-import { Prisma } from "@prisma/client";
 import prisma from "../config/database";
 import { AuthRequest } from "../middleware/auth";
 import { cacheGetOrSet, makeCacheKey } from "../utils/cache";
+import { randomUUID } from "crypto";
+import { slugify } from "../utils/slug";
 
 const toNumber = (value: unknown, fallback: number) => {
   const parsed = Number(value);
@@ -24,18 +25,27 @@ type BusinessStatusResult = {
   closesAt: string | null;
 };
 
-type BusinessWithHours = Prisma.BusinessGetPayload<{
-  include: {
-    hours: true;
-  };
-}>;
+type BusinessWithHours = Record<string, any> & {
+  hours: BusinessHour[];
+  timezone: string | null;
+};
 
-type BusinessWithHoursAndDeals = Prisma.BusinessGetPayload<{
-  include: {
-    hours: true;
-    deals: true;
-  };
-}>;
+// The controller can compile even when the generated Prisma Client is stale.
+// After regenerating Prisma, this still points to the normal Business delegate.
+const businessDb = (prisma as any).business;
+
+const presentDirectoryBusiness = (business: any) => ({
+  type: "business" as const,
+  ...business,
+  region: business.state,
+  location: [business.city, business.state, business.country].filter(Boolean).join(", "),
+  openingHours: {
+    weekdays: business.hours?.find((item: any) => item.dayOfWeek === 1)?.openTime || "",
+    weekends: business.hours?.find((item: any) => item.dayOfWeek === 6)?.openTime || "",
+  },
+  jobCount: 0,
+  trainingCount: 0,
+});
 
 const parseTime = (time: string): number | null => {
   const [hours, minutes] = time.split(":").map(Number);
@@ -266,7 +276,7 @@ export const getBusinesses = async (req: AuthRequest, res: Response) => {
     const pageNum = Math.max(1, toNumber(page, 1));
     const limitNum = Math.min(100, Math.max(1, toNumber(limit, 20)));
 
-    const where: Prisma.BusinessWhereInput = {
+    const where: Record<string, any> = {
       published: true,
       active: true,
     };
@@ -360,7 +370,7 @@ export const getBusinesses = async (req: AuthRequest, res: Response) => {
       total: number;
     }> => {
       const [businesses, total] = await Promise.all([
-        prisma.business.findMany({
+        businessDb.findMany({
           where,
           include: {
             hours: {
@@ -384,7 +394,7 @@ export const getBusinesses = async (req: AuthRequest, res: Response) => {
           take: limitNum,
         }),
 
-        prisma.business.count({
+        businessDb.count({
           where,
         }),
       ]);
@@ -406,7 +416,7 @@ export const getBusinesses = async (req: AuthRequest, res: Response) => {
     }>(cacheKey, 60, loadBusinesses);
 
     const businesses = result.value.businesses.map((business) => ({
-      ...business,
+      ...presentDirectoryBusiness(business),
       ...getBusinessStatus(business.hours, business.timezone),
     }));
 
@@ -440,7 +450,7 @@ export const getFeaturedBusinesses = async (
     const limitNum = Math.min(20, Math.max(1, toNumber(req.query.limit, 10)));
 
     const loadFeaturedBusinesses = async (): Promise<BusinessWithHours[]> => {
-      return prisma.business.findMany({
+      return businessDb.findMany({
         where: {
           featured: true,
           published: true,
@@ -516,7 +526,7 @@ export const getBusinessById = async (req: AuthRequest, res: Response) => {
       `businesses:detail:${identifier}`,
       60,
       async () => {
-        return await prisma.business.findFirst({
+        return await businessDb.findFirst({
           where: {
             published: true,
             active: true,
@@ -547,7 +557,7 @@ export const getBusinessById = async (req: AuthRequest, res: Response) => {
     }
 
     const business = {
-      ...result.value,
+      ...presentDirectoryBusiness(result.value),
       ...getBusinessStatus(result.value.hours, result.value.timezone),
     };
 
@@ -566,3 +576,17 @@ export const getBusinessById = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+const adminData = (body: Record<string, any>) => {
+  const required = (key: string) => { const value = String(body[key] || "").trim(); if (!value) throw Object.assign(new Error(`${key} is required`), { status: 400 }); return value; };
+  const optional = (key: string) => String(body[key] || "").trim() || null;
+  const coordinate = (key: string, min: number, max: number) => { if (body[key] === "" || body[key] == null) return null; const value = Number(body[key]); if (!Number.isFinite(value) || value < min || value > max) throw Object.assign(new Error(`Invalid ${key}`), { status: 400 }); return value; };
+  return { name: required("name"), category: required("category"), description: required("description"), logoUrl: optional("logoUrl"), bannerUrl: optional("bannerUrl"), website: optional("website"), phone: optional("phone"), email: optional("email"), address: required("address"), city: required("city"), state: optional("region"), country: required("country"), postalCode: optional("postalCode"), latitude: coordinate("latitude", -90, 90), longitude: coordinate("longitude", -180, 180), hasPhysicalLocation: true, featured: body.featured === true, published: body.published !== false, active: true };
+};
+const adminHours = (body: Record<string, any>) => { const value = body.openingHours && typeof body.openingHours === "object" ? body.openingHours : {}; return [{ dayOfWeek: 1, openTime: String(value.weekdays || "").trim() || null, closeTime: null, closed: !value.weekdays }, { dayOfWeek: 6, openTime: String(value.weekends || "").trim() || null, closeTime: null, closed: !value.weekends }]; };
+
+export const getAdminBusinesses = async (_req: AuthRequest, res: Response) => { const businesses = await businessDb.findMany({ include: { hours: true }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }] }); return res.json({ businesses: businesses.map(presentDirectoryBusiness) }); };
+export const getAdminBusinessById = async (req: AuthRequest, res: Response) => { const business = await businessDb.findUnique({ where: { id: req.params.id }, include: { hours: true } }); if (!business) return res.status(404).json({ error: "Business not found" }); return res.json({ business: presentDirectoryBusiness(business) }); };
+export const createAdminBusiness = async (req: AuthRequest, res: Response) => { try { if (!req.user) return res.status(401).json({ error: "Authentication required" }); const data = adminData(req.body || {}); const business = await businessDb.create({ data: { ...data, userId: req.user.id, slug: `${slugify(data.name, "business")}-${randomUUID()}`, hours: { create: adminHours(req.body || {}) } }, include: { hours: true } }); return res.status(201).json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to create business" }); } };
+export const updateAdminBusiness = async (req: AuthRequest, res: Response) => { try { const existing = await businessDb.findUnique({ where: { id: req.params.id } }); if (!existing) return res.status(404).json({ error: "Business not found" }); const data = adminData({ ...existing, region: existing.state, ...(req.body || {}) }); const business = await businessDb.update({ where: { id: existing.id }, data: { ...data, hours: { deleteMany: {}, create: adminHours(req.body || {}) } }, include: { hours: true } }); return res.json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to update business" }); } };
+export const deleteAdminBusiness = async (req: AuthRequest, res: Response) => { const result = await businessDb.deleteMany({ where: { id: req.params.id } }); if (!result.count) return res.status(404).json({ error: "Business not found" }); return res.json({ message: "Business deleted successfully" }); };

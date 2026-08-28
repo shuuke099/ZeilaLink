@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import type { Request } from "express";
 import multer from "multer";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import "./env";
 
 type UploadPurpose = "public-image" | "resume" | "private-document";
@@ -15,6 +16,26 @@ const MAX_USER_PUBLIC_FILES = 25;
 const MAX_USER_PRIVATE_FILES = 50;
 const MAX_ACCOUNTED_FILES_PER_BUCKET = 256;
 const QUOTA_RESERVATION_TTL_MS = 15 * 60 * 1000;
+
+const spacesEnabled = process.env.STORAGE_PROVIDER?.trim().toLowerCase() === "spaces";
+const requiredSpacesValue = (name: string): string => {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is required when STORAGE_PROVIDER=spaces`);
+  return value;
+};
+
+const spacesBucket = spacesEnabled ? requiredSpacesValue("SPACES_BUCKET") : "";
+const spacesClient = spacesEnabled
+  ? new S3Client({
+      region: requiredSpacesValue("SPACES_REGION"),
+      endpoint: requiredSpacesValue("SPACES_ENDPOINT"),
+      forcePathStyle: false,
+      credentials: {
+        accessKeyId: requiredSpacesValue("SPACES_ACCESS_KEY"),
+        secretAccessKey: requiredSpacesValue("SPACES_SECRET_KEY"),
+      },
+    })
+  : null;
 
 const configuredUploadsRoot = process.env.UPLOADS_ROOT?.trim();
 if (
@@ -439,7 +460,20 @@ export const validateStoredFile = async (
   try {
     if (isValid) {
       await assertStoredFileWithinQuota(filePath, purpose);
-      await fs.promises.chmod(filePath, purpose === "public-image" ? 0o644 : 0o600);
+      if (purpose === "public-image" && spacesClient) {
+        const body = await fs.promises.readFile(filePath);
+        await spacesClient.send(new PutObjectCommand({
+          Bucket: spacesBucket,
+          Key: storedKey,
+          Body: body,
+          ContentType: declaredMimeType,
+          CacheControl: "public, max-age=31536000, immutable",
+          ACL: "public-read",
+        }));
+        await fs.promises.unlink(filePath);
+      } else {
+        await fs.promises.chmod(filePath, purpose === "public-image" ? 0o644 : 0o600);
+      }
     }
   } finally {
     releaseQuotaReservation(storedKey);
@@ -448,9 +482,19 @@ export const validateStoredFile = async (
 };
 
 export const removeStoredUpload = async (key: string): Promise<boolean> => {
+  const normalized = key.replace(/\\/g, "/").replace(/^\/+/, "");
+  if (normalized.startsWith("public/") && spacesClient) {
+    await spacesClient.send(new DeleteObjectCommand({ Bucket: spacesBucket, Key: normalized }));
+    // Also remove a temporary local copy if an upload failed before it reached Spaces.
+    await fs.promises.unlink(safeStoredPath(normalized)).catch((error: any) => {
+      if (error?.code !== "ENOENT") throw error;
+    });
+    releaseQuotaReservation(normalized);
+    return true;
+  }
   try {
-    await fs.promises.unlink(safeStoredPath(key));
-    releaseQuotaReservation(key);
+    await fs.promises.unlink(safeStoredPath(normalized));
+    releaseQuotaReservation(normalized);
     return true;
   } catch (error: any) {
     if (error?.code !== "ENOENT") throw error;
@@ -473,12 +517,18 @@ export const ownedPublicUploadKeyFromUrl = (
       parsed = new URL(candidate, "http://local.invalid");
       uploadPathPrefix = "/uploads/";
     } else {
-      const configuredBase = process.env.PUBLIC_ASSET_BASE_URL?.trim();
+      const configuredBase = (spacesEnabled
+        ? (process.env.SPACES_CDN_ENABLED?.toLowerCase() === "true"
+            ? process.env.SPACES_CDN_URL
+            : process.env.SPACES_ORIGIN_URL)
+        : process.env.PUBLIC_ASSET_BASE_URL)?.trim();
       if (!configuredBase) return null;
       parsed = new URL(candidate);
       const base = new URL(configuredBase);
       if (parsed.origin !== base.origin) return null;
-      uploadPathPrefix = `${base.pathname.replace(/\/+$/, "")}/uploads/`;
+      uploadPathPrefix = spacesEnabled
+        ? `${base.pathname.replace(/\/+$/, "")}/`
+        : `${base.pathname.replace(/\/+$/, "")}/uploads/`;
     }
   } catch {
     return null;
@@ -512,6 +562,20 @@ export const publicUrlForKey = (key: string): string => {
   }
   safeStoredPath(normalized);
 
+  if (spacesEnabled) {
+    const cdnEnabled = process.env.SPACES_CDN_ENABLED?.trim().toLowerCase() === "true";
+    const configuredBase = (cdnEnabled
+      ? process.env.SPACES_CDN_URL
+      : process.env.SPACES_ORIGIN_URL)?.trim().replace(/\/$/, "");
+    if (!configuredBase) {
+      throw httpError(
+        `${cdnEnabled ? "SPACES_CDN_URL" : "SPACES_ORIGIN_URL"} is required`,
+        500,
+      );
+    }
+    return `${configuredBase}/${normalized}`;
+  }
+
   const configuredBase = process.env.PUBLIC_ASSET_BASE_URL?.replace(/\/$/, "");
   return `${configuredBase || ""}/uploads/${normalized}`;
 };
@@ -522,7 +586,7 @@ export const getDirectUploadUrl = (): string => "/api/uploads/direct";
 export const uploadMiddleware = publicImageUpload;
 export const uploadToS3 = resumeUpload;
 export const localUploadsPath = uploadsRoot;
-export const s3Enabled = false;
+export const s3Enabled = spacesEnabled;
 export const getPublicUrlForKey = publicUrlForKey;
 export const getSignedUrl = publicUrlForKey;
 export const createPresignedPutUrl = async (): Promise<string> => {

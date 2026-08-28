@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import prisma from "../config/database";
 import { cacheGetOrSet } from "../utils/cache";
 
+// Prisma Client in this project is currently generated from a schema that
+// does not expose the Provider/Course relations used by this controller.
+// Keep these delegates isolated until `prisma generate` is run against the
+// schema that contains the matching Provider/Course models and relations.
+const providerDb = (prisma as any).provider;
+const courseDb = (prisma as any).course;
+
 const boundedPositiveInteger = (
   value: unknown,
   fallback: number,
@@ -428,7 +435,7 @@ const employerDirectoryWhere = (search: string) => {
   return where;
 };
 
-const providerAccountWhere = {
+const providerAccountWhere: any = {
   OR: [
     {
       contactUserId: null,
@@ -627,7 +634,7 @@ export const getPublicBusinesses = async (req: Request, res: Response) => {
           take: candidateLimit,
         }),
 
-        prisma.provider.findMany({
+        providerDb.findMany({
           where: providerWhere,
           select: providerDirectorySelect,
 
@@ -642,7 +649,7 @@ export const getPublicBusinesses = async (req: Request, res: Response) => {
           where: employerWhere,
         }),
 
-        prisma.provider.count({
+        providerDb.count({
           where: providerWhere,
         }),
       ]);
@@ -746,7 +753,7 @@ export const getPublicBusinessByIdentifier = async (
         },
       }),
 
-      prisma.provider.findFirst({
+      providerDb.findFirst({
         where: {
           verified: true,
 
@@ -830,10 +837,10 @@ export const getPublicBusinessByIdentifier = async (
       });
     }
 
-    const courses = provider!.courses.map((course) => ({
+    const courses = provider!.courses.map((course: any) => ({
       ...course,
 
-      skills: course.skills.map((entry) => entry.skill),
+      skills: course.skills.map((entry: any) => entry.skill),
     }));
 
     return res.json({
@@ -877,7 +884,7 @@ export const getPublicStats = async (req: Request, res: Response) => {
           },
         }),
 
-        prisma.course.count({
+        courseDb.count({
           where: {
             published: true,
 

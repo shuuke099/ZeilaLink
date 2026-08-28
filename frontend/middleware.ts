@@ -43,6 +43,8 @@ export function middleware(request: NextRequest) {
     "data:",
     "blob:",
     "https://images.unsplash.com",
+    "https://zeilalink-uploads.sfo2.cdn.digitaloceanspaces.com",
+    "https://zeilalink-uploads.sfo2.digitaloceanspaces.com",
     ...(analyticsEnabled
       ? [
           "https://www.google-analytics.com",

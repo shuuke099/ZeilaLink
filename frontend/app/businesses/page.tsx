@@ -8,7 +8,6 @@ import {
   Building2,
   GraduationCap,
   MapPin,
-  Search,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { serverApiGet } from "@/lib/serverApi";
@@ -21,6 +20,7 @@ import {
   getLocalizedBusinessText,
   parseBusinessesResponse,
 } from "@/lib/publicDirectoryTypes";
+import BusinessDirectoryControls from "./BusinessDirectoryControls";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,12 @@ interface BusinessesPageProps {
   searchParams?: {
     q?: string | string[];
     page?: string | string[];
+    type?: string | string[];
+    category?: string | string[];
+    city?: string | string[];
+    lat?: string | string[];
+    lng?: string | string[];
+    radius?: string | string[];
   };
 }
 
@@ -42,6 +48,7 @@ type BusinessesLoadResult =
       status: "success";
       businesses: PublicBusiness[];
       pagination: DirectoryPagination;
+      locationFallback: boolean;
     }
   | { status: "error"; businesses: []; pagination: DirectoryPagination };
 
@@ -62,15 +69,17 @@ const normalizedPage = (value?: string | string[]) => {
 };
 
 const loadBusinesses = cache(
-  async (query: string, page: number): Promise<BusinessesLoadResult> => {
+  async (query: string, page: number, filters: string): Promise<BusinessesLoadResult> => {
     const params = new URLSearchParams();
     if (query) params.set("search", query);
     if (page > 1) params.set("page", String(page));
+    const selectedFilters = new URLSearchParams(filters);
+    selectedFilters.forEach((value, key) => params.set(key, value));
 
     try {
       const suffix = params.size ? `?${params.toString()}` : "";
       const response = await serverApiGet<unknown>(
-        `/public/businesses${suffix}`,
+        `/businesses${suffix}`,
       );
       const parsed = parseBusinessesResponse(response);
       if (!parsed) {
@@ -91,8 +100,8 @@ const loadBusinesses = cache(
   },
 );
 
-const directoryHref = (query: string, page: number) => {
-  const params = new URLSearchParams();
+const directoryHref = (query: string, page: number, filters = "") => {
+  const params = new URLSearchParams(filters);
   if (query) params.set("q", query);
   if (page > 1) params.set("page", String(page));
   const suffix = params.size ? `?${params.toString()}` : "";
@@ -106,6 +115,7 @@ const businessTypeLabel = (
   if (type === "provider") {
     return language === "so" ? "Bixiyaha tababarka" : "Training provider";
   }
+  if (type === "business") return language === "so" ? "Ganacsi deegaan" : "Local business";
   return language === "so" ? "Shaqeeye" : "Employer";
 };
 
@@ -115,7 +125,7 @@ export async function generateMetadata({
   const language = pageLanguage();
   const query = normalizedQuery(searchParams?.q);
   const page = normalizedPage(searchParams?.page);
-  const result = await loadBusinesses(query, page);
+  const result = await loadBusinesses(query, page, "");
   const canonical = absoluteUrl("/businesses");
   const title = query
     ? language === "so"
@@ -170,7 +180,12 @@ export default async function BusinessesPage({
   const isSomali = language === "so";
   const query = normalizedQuery(searchParams?.q);
   const requestedPage = normalizedPage(searchParams?.page);
-  const result = await loadBusinesses(query, requestedPage);
+  const filterParams = new URLSearchParams();
+  for (const key of ["type", "category", "city", "lat", "lng", "radius"] as const) {
+    const value = firstSearchValue(searchParams?.[key]);
+    if (value) filterParams.set(key, value.slice(0, 120));
+  }
+  const result = await loadBusinesses(query, requestedPage, filterParams.toString());
   const canonical = absoluteUrl("/businesses");
   const nonce = headers().get("x-nonce") || undefined;
 
@@ -228,75 +243,8 @@ export default async function BusinessesPage({
       />
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-8">
-        <nav
-          aria-label={isSomali ? "Jidka bogga" : "Breadcrumb"}
-          className="mb-8 flex items-center gap-2 text-sm font-semibold text-slate-500"
-        >
-          <Link href="/" className="transition-colors hover:text-primary">
-            {isSomali ? "Bogga hore" : "Home"}
-          </Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="text-slate-900">
-            {isSomali ? "Ganacsiyada" : "Businesses"}
-          </span>
-        </nav>
-
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 px-6 py-12 text-white sm:px-10 lg:px-14">
-          <div
-            aria-hidden="true"
-            className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/30 blur-3xl"
-          />
-          <div className="relative max-w-3xl">
-            <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-primary-light">
-              {isSomali ? "Ururrada ZeilaLink" : "ZeilaLink organizations"}
-            </span>
-            <h1 className="mt-5 text-4xl font-black tracking-tight sm:text-5xl">
-              {isSomali ? "Hagaha ganacsiyada" : "Business directory"}
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-300">
-              {isSomali
-                ? "La kulan shaqeeyayaasha, shirkadaha iyo bixiyeyaasha tababarka ee kobcinaya shaqada iyo xirfadaha."
-                : "Meet the employers, companies, and training providers creating career and skills opportunities."}
-            </p>
-          </div>
-
-          <form
-            action="/businesses"
-            method="get"
-            role="search"
-            className="relative mt-8 flex max-w-3xl flex-col gap-3 sm:flex-row"
-          >
-            <label className="relative flex-1">
-              <span className="sr-only">
-                {isSomali ? "Raadi ganacsi" : "Search businesses"}
-              </span>
-              <Search
-                aria-hidden="true"
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={20}
-              />
-              <input
-                type="search"
-                name="q"
-                defaultValue={query}
-                maxLength={100}
-                placeholder={
-                  isSomali
-                    ? "Magac, nooc ama goob ku raadi"
-                    : "Search by name, type, or location"
-                }
-                className="w-full rounded-2xl border border-white/10 bg-white py-4 pl-12 pr-4 text-slate-900 outline-none transition focus:ring-4 focus:ring-primary/30"
-              />
-            </label>
-            <button
-              type="submit"
-              className="rounded-2xl bg-primary px-7 py-4 font-black text-white transition hover:bg-primary-dark"
-            >
-              {isSomali ? "Raadi" : "Search"}
-            </button>
-          </form>
-        </section>
+      <main className="mx-auto max-w-[1440px] px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+        <BusinessDirectoryControls isSomali={isSomali} />
 
         {result.status === "error" ? (
           <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-8 text-center">
@@ -312,7 +260,7 @@ export default async function BusinessesPage({
             </p>
           </section>
         ) : (
-          <section className="mt-10" aria-labelledby="business-results-heading">
+          <section className="mt-7" aria-labelledby="business-results-heading">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2
@@ -323,12 +271,20 @@ export default async function BusinessesPage({
                     ? isSomali
                       ? `Natiijooyinka “${query}”`
                       : `Results for “${query}”`
+                    : filterParams.has("lat") && !result.locationFallback
+                      ? isSomali
+                        ? "Ganacsiyada kuugu dhow"
+                        : "Businesses near you"
                     : isSomali
                       ? "Ururrada la heli karo"
                       : "Featured organizations"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {isSomali
+                  {result.locationFallback
+                    ? isSomali
+                      ? "Ganacsi kuu dhow lama helin, sidaas darteed dhammaan ganacsiyada ayaan ku tusaynaa."
+                      : "No nearby businesses were found, so we’re showing all available businesses."
+                    : isSomali
                     ? `${result.pagination.total ?? result.businesses.length} urur ayaa la helay`
                     : `${result.pagination.total ?? result.businesses.length} organizations found`}
                 </p>
@@ -360,7 +316,7 @@ export default async function BusinessesPage({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {result.businesses.map((business) => {
                   const localized = getLocalizedBusinessText(
                     business,
@@ -368,18 +324,26 @@ export default async function BusinessesPage({
                   );
                   const businessPath = `/businesses/${business.slug || business.id}`;
                   const safeLogo = getSafeStoredUrl(business.logoUrl);
+                  const safeBanner = getSafeStoredUrl(business.bannerUrl);
                   const location = business.location || business.address;
                   const alternateName = isSomali
                     ? business.name
                     : business.nameSo?.trim();
 
                   return (
-                    <article
+                    <Link
+                      href={businessPath}
                       key={`${business.type}-${business.id}`}
-                      className="flex h-full flex-col rounded-3xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl"
+                      className="group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                      <div className="relative block h-36 overflow-hidden bg-slate-100">
+                        {safeBanner && <img src={safeBanner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
+                        {business.featured && <span className="absolute left-3 top-3 rounded bg-violet-700 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">{isSomali ? "La xushay" : "Featured"}</span>}
+                      </div>
+                      <div className="flex flex-1 flex-col px-4 pb-4">
+                      <div className="relative -mt-8 flex items-end gap-4">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-white bg-white shadow-md">
                           {safeLogo ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -391,7 +355,7 @@ export default async function BusinessesPage({
                               }
                               loading="lazy"
                               decoding="async"
-                              className="h-full w-full object-contain p-2"
+                              className="h-full w-full object-contain p-2.5"
                             />
                           ) : (
                             <Building2
@@ -401,17 +365,14 @@ export default async function BusinessesPage({
                             />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <span className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                        <div className="min-w-0 pb-1">
+                          <span className="inline-flex rounded-full border border-primary/10 bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] text-primary">
                             {businessTypeLabel(business.type, language)}
                           </span>
-                          <h3 className="mt-2 text-xl font-black text-slate-900">
-                            <Link
-                              href={businessPath}
-                              className="transition-colors hover:text-primary"
-                            >
+                          <h3 className="mt-1 line-clamp-1 text-base font-bold tracking-tight text-slate-950">
+                            <span className="transition-colors group-hover:text-primary">
                               {localized.name}
-                            </Link>
+                            </span>
                           </h3>
                           {alternateName &&
                             alternateName !== localized.name && (
@@ -426,7 +387,7 @@ export default async function BusinessesPage({
                       </div>
 
                       {location && (
-                        <p className="mt-5 flex items-start gap-2 text-sm font-medium text-slate-600">
+                        <p className="mt-5 flex items-start gap-2 text-sm font-semibold text-slate-500">
                           <MapPin
                             aria-hidden="true"
                             size={16}
@@ -436,7 +397,14 @@ export default async function BusinessesPage({
                         </p>
                       )}
 
-                      <p className="mt-4 line-clamp-4 text-sm leading-relaxed text-slate-600">
+                      {(business.category || typeof business.distanceKm === "number") && (
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
+                          {business.category && <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">{business.category}</span>}
+                          {typeof business.distanceKm === "number" && <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">{business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`} {isSomali ? "kuu jirta" : "away"}</span>}
+                        </div>
+                      )}
+
+                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
                         {localized.description
                           ? compactDescription(localized.description, 210)
                           : isSomali
@@ -444,7 +412,7 @@ export default async function BusinessesPage({
                             : `${localized.name} is listed in the ${SITE_NAME} business directory.`}
                       </p>
 
-                      <dl className="mt-5 grid grid-cols-2 gap-3">
+                      {business.type !== "business" && <dl className="mt-5 grid grid-cols-2 gap-3">
                         {business.type === "employer" && (
                           <div className="rounded-2xl bg-slate-50 p-3">
                             <dt className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
@@ -470,16 +438,14 @@ export default async function BusinessesPage({
                             </dd>
                           </div>
                         )}
-                      </dl>
+                      </dl>}
 
-                      <Link
-                        href={businessPath}
-                        className="mt-auto inline-flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-sm font-black text-primary hover:underline"
-                      >
+                      <div className="mt-auto inline-flex items-center justify-between gap-2 border-t border-slate-100 pt-5 text-sm font-black text-slate-900 transition group-hover:text-primary">
                         {isSomali ? "Eeg astaanta ganacsiga" : "View business profile"}
-                        <ArrowRight aria-hidden="true" size={15} />
-                      </Link>
-                    </article>
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 transition group-hover:bg-primary group-hover:text-white"><ArrowRight aria-hidden="true" size={15} /></span>
+                      </div>
+                      </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -495,6 +461,7 @@ export default async function BusinessesPage({
                     href={directoryHref(
                       query,
                       result.pagination.page - 1,
+                      filterParams.toString(),
                     )}
                     rel="prev"
                     className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:border-primary hover:text-primary"
@@ -511,6 +478,7 @@ export default async function BusinessesPage({
                     href={directoryHref(
                       query,
                       result.pagination.page + 1,
+                      filterParams.toString(),
                     )}
                     rel="next"
                     className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:border-primary hover:text-primary"
@@ -523,32 +491,6 @@ export default async function BusinessesPage({
           </section>
         )}
 
-        <section className="mt-14 grid gap-4 rounded-3xl border border-slate-100 bg-white p-8 sm:grid-cols-[1fr,auto] sm:items-center">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900">
-              {isSomali ? "La xiriir hibada saxda ah" : "Connect with the right talent"}
-            </h2>
-            <p className="mt-2 text-slate-600">
-              {isSomali
-                ? "Eeg shaqaalaha xirfadda leh ama sahami adeegyada bulshada ZeilaLink."
-                : "Browse skilled workers or explore services from the ZeilaLink community."}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/workers"
-              className="rounded-xl bg-primary px-5 py-3 text-sm font-black text-white"
-            >
-              {isSomali ? "Eeg shaqaalaha" : "Browse workers"}
-            </Link>
-            <Link
-              href="/services"
-              className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black text-slate-700"
-            >
-              {isSomali ? "Eeg adeegyada" : "Browse services"}
-            </Link>
-          </div>
-        </section>
       </main>
     </div>
   );

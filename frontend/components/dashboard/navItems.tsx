@@ -69,6 +69,7 @@ export const adminNavItems: DashboardNavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: Home },
   { label: 'User Management', href: '/admin/users', icon: Warehouse },
   { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+  { label: 'Businesses', href: '/admin/businesses', icon: Building },
   { label: 'Services', href: '/admin/services', icon: ClipboardList },
   { label: 'Service Bookings', href: '/admin/service-bookings', icon: CalendarCheck2 },
   { label: 'Trainings', href: '/admin/providers', icon: FileText },

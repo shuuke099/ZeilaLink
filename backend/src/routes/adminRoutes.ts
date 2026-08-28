@@ -3,6 +3,7 @@ import { Router } from "express";
 import * as adminController from "../controllers/adminController";
 import * as serviceController from "../controllers/serviceController";
 import * as courseController from "../controllers/courseController";
+import * as businessController from "../controllers/businessController";
 
 import { authenticate, authorize } from "../middleware/auth";
 
@@ -78,6 +79,12 @@ router.post(
 );
 
 /* Services */
+router.get("/businesses", authenticate, authorize("admin"), businessController.getAdminBusinesses);
+router.get("/businesses/:id", authenticate, authorize("admin"), businessController.getAdminBusinessById);
+router.post("/businesses", authenticate, authorize("admin"), businessController.createAdminBusiness);
+router.put("/businesses/:id", authenticate, authorize("admin"), businessController.updateAdminBusiness);
+router.delete("/businesses/:id", authenticate, authorize("admin"), businessController.deleteAdminBusiness);
+
 router.get(
   "/services",
   authenticate,

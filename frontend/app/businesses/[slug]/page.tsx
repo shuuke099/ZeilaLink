@@ -51,7 +51,7 @@ const loadBusiness = cache(
 
     try {
       const response = await serverApiGet<unknown>(
-        `/public/businesses/${encodeURIComponent(identifier)}`,
+        `/businesses/${encodeURIComponent(identifier)}`,
       );
       const business = parseBusinessDetailResponse(response);
       return business ? { status: "success", business } : { status: "error" };
@@ -68,6 +68,9 @@ const businessTypeLabel = (
   type: PublicBusiness["type"],
   language: DirectoryLanguage,
 ) => {
+  if (type === "business") {
+    return language === "so" ? "Ganacsi deegaan" : "Local business";
+  }
   if (type === "provider") {
     return language === "so" ? "Bixiyaha tababarka" : "Training provider";
   }
@@ -141,10 +144,12 @@ export async function generateMetadata({
     `/businesses/${business.slug || business.id}`,
   );
   const safeLogo = getSafeStoredUrl(business.logoUrl);
-  const image = safeLogo
-    ? safeLogo.startsWith("/")
-      ? absoluteUrl(safeLogo)
-      : safeLogo
+  const safeBanner = getSafeStoredUrl(business.bannerUrl);
+  const imageSource = safeBanner || safeLogo;
+  const image = imageSource
+    ? imageSource.startsWith("/")
+      ? absoluteUrl(imageSource)
+      : imageSource
     : undefined;
 
   return {
@@ -222,6 +227,7 @@ export default async function BusinessProfilePage({
   const profilePath = `/businesses/${business.slug || business.id}`;
   const canonical = absoluteUrl(profilePath);
   const safeLogo = getSafeStoredUrl(business.logoUrl);
+  const safeBanner = getSafeStoredUrl(business.bannerUrl);
   const schemaLogo = safeLogo
     ? safeLogo.startsWith("/")
       ? absoluteUrl(safeLogo)
@@ -284,7 +290,7 @@ export default async function BusinessProfilePage({
         url: canonical,
         description: localized.description || undefined,
         logo: schemaLogo,
-        image: schemaLogo,
+        image: safeBanner || schemaLogo,
         sameAs: externalWebsite ? [externalWebsite] : undefined,
         address:
           business.address || business.location
@@ -310,30 +316,19 @@ export default async function BusinessProfilePage({
       <Navbar />
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-8">
-        <nav
-          aria-label={isSomali ? "Jidka bogga" : "Breadcrumb"}
-          className="mb-8 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-500"
-        >
-          <Link href="/" className="hover:text-primary">
-            {isSomali ? "Bogga hore" : "Home"}
-          </Link>
-          <span aria-hidden="true">/</span>
-          <Link href="/businesses" className="hover:text-primary">
-            {isSomali ? "Ganacsiyada" : "Businesses"}
-          </Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page" className="text-slate-900">
-            {localized.name}
-          </span>
-        </nav>
-
-        <section className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-6 text-white sm:p-10">
-          <div
-            aria-hidden="true"
-            className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/30 blur-3xl"
-          />
-          <div className="relative flex flex-col gap-7 sm:flex-row sm:items-center">
-            <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white sm:h-36 sm:w-36">
+        <section className="relative min-h-[340px] overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-2xl shadow-slate-900/10">
+          {safeBanner && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={safeBanner}
+              alt={isSomali ? `Sawirka daboolka ${localized.name}` : `${localized.name} cover`}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-slate-950/25" />
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/15" />
+          <div className="relative flex min-h-[340px] flex-col justify-end gap-7 p-6 sm:flex-row sm:items-end sm:justify-start sm:p-10 lg:p-12">
+            <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-3xl border-4 border-white/90 bg-white shadow-2xl sm:h-36 sm:w-36">
               {safeLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -343,7 +338,7 @@ export default async function BusinessProfilePage({
                       ? `Astaanta ${localized.name}`
                       : `${localized.name} logo`
                   }
-                  className="h-full w-full object-contain p-4"
+                  className="h-full w-full object-contain p-3"
                 />
               ) : (
                 <Building2
@@ -353,22 +348,22 @@ export default async function BusinessProfilePage({
                 />
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-primary-light">
+            <div className="min-w-0 flex-1 pb-1">
+              <span className="inline-flex rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-200 backdrop-blur-md">
                 {businessTypeLabel(business.type, language)}
               </span>
-              <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+              <h1 className="mt-3 text-4xl font-black tracking-tight !text-white drop-shadow-lg sm:text-5xl">
                 {localized.name}
               </h1>
               {alternateName && alternateName !== localized.name && (
                 <p
                   lang={isSomali ? "en" : "so"}
-                  className="mt-2 text-lg font-semibold text-slate-300"
+                  className="mt-2 text-lg font-semibold text-white/85"
                 >
                   {alternateName}
                 </p>
               )}
-              <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-slate-300">
+              <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-white/85">
                 {(business.location || business.address) && (
                   <span className="inline-flex items-center gap-2">
                     <MapPin aria-hidden="true" size={17} className="text-primary" />
@@ -478,6 +473,39 @@ export default async function BusinessProfilePage({
                     <dd className="mt-1 font-black leading-6 text-slate-900">
                       {business.address}
                     </dd>
+                  </div>
+                )}
+                {business.category && (
+                  <div>
+                    <dt className="font-bold text-slate-500">{isSomali ? "Qaybta" : "Category"}</dt>
+                    <dd className="mt-1 font-black text-slate-900">{business.category}</dd>
+                  </div>
+                )}
+                {business.phone && (
+                  <div>
+                    <dt className="font-bold text-slate-500">{isSomali ? "Telefoon" : "Phone"}</dt>
+                    <dd className="mt-1"><a className="font-black text-primary hover:underline" href={`tel:${business.phone}`}>{business.phone}</a></dd>
+                  </div>
+                )}
+                {business.email && (
+                  <div>
+                    <dt className="font-bold text-slate-500">Email</dt>
+                    <dd className="mt-1 break-all"><a className="font-black text-primary hover:underline" href={`mailto:${business.email}`}>{business.email}</a></dd>
+                  </div>
+                )}
+                {business.openingHours && (business.openingHours.weekdays || business.openingHours.weekends) && (
+                  <div>
+                    <dt className="font-bold text-slate-500">{isSomali ? "Saacadaha furitaanka" : "Opening hours"}</dt>
+                    <dd className="mt-2 space-y-1 text-sm font-semibold text-slate-900">
+                      {business.openingHours.weekdays && <p><span className="text-slate-500">{isSomali ? "Maalmaha shaqada:" : "Weekdays:"}</span> {business.openingHours.weekdays}</p>}
+                      {business.openingHours.weekends && <p><span className="text-slate-500">{isSomali ? "Dhamaadka toddobaadka:" : "Weekends:"}</span> {business.openingHours.weekends}</p>}
+                    </dd>
+                  </div>
+                )}
+                {(business.latitude != null && business.longitude != null) && (
+                  <div>
+                    <dt className="font-bold text-slate-500">{isSomali ? "Khariidadda" : "Directions"}</dt>
+                    <dd className="mt-2"><a target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-black text-primary hover:underline" href={`https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`}>{isSomali ? "Hel jidka" : "Get directions"}<ExternalLink size={15} /></a></dd>
                   </div>
                 )}
                 {business.location &&

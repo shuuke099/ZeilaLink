@@ -71,7 +71,7 @@ export interface PublicWorker {
 export interface PublicBusiness {
   id: string;
   slug?: string | null;
-  type: "employer" | "provider";
+  type: "employer" | "provider" | "business";
   name: string;
   nameSo?: string | null;
   description?: string | null;
@@ -80,6 +80,19 @@ export interface PublicBusiness {
   address?: string | null;
   location?: string | null;
   website?: string | null;
+  category?: string | null;
+  city?: string | null;
+  region?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  distanceKm?: number | null;
+  featured?: boolean;
+  bannerUrl?: string | null;
+  openingHours?: Record<string, string> | null;
   createdAt?: string | null;
   jobCount?: number | null;
   trainingCount?: number | null;
@@ -222,7 +235,7 @@ export const parsePublicBusiness = (
   if (
     !isRecord(value) ||
     !isPublicDirectoryIdentifier(value.id) ||
-    (value.type !== "employer" && value.type !== "provider") ||
+    (value.type !== "employer" && value.type !== "provider" && value.type !== "business") ||
     typeof value.name !== "string" ||
     !value.name.trim()
   ) {
@@ -265,7 +278,7 @@ export const parsePublicBusiness = (
 
 export const parseBusinessesResponse = (
   value: unknown,
-): { businesses: PublicBusiness[]; pagination: DirectoryPagination } | null => {
+): { businesses: PublicBusiness[]; pagination: DirectoryPagination; locationFallback: boolean } | null => {
   if (!isRecord(value) || !Array.isArray(value.businesses)) return null;
 
   const businesses = value.businesses
@@ -281,6 +294,7 @@ export const parseBusinessesResponse = (
   return {
     businesses: uniqueBusinesses,
     pagination: parsePagination(value.pagination, uniqueBusinesses.length),
+    locationFallback: value.locationFallback === true,
   };
 };
 

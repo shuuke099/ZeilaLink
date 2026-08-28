@@ -116,7 +116,19 @@ export default function FeaturedBusinesses() {
           },
         );
 
-        setBusinesses(response.data.businesses || []);
+        let items = response.data.businesses || [];
+
+        // Keep the homepage section useful even before an admin has marked
+        // directory records as featured.
+        if (items.length === 0) {
+          const fallback = await api.get<FeaturedBusinessesResponse>(
+            "/businesses",
+            { params: { page: 1, limit: 12 } },
+          );
+          items = fallback.data.businesses || [];
+        }
+
+        setBusinesses(items);
       } catch (error) {
         console.error("Failed to load featured businesses:", error);
 
@@ -158,7 +170,7 @@ export default function FeaturedBusinesses() {
             <div className="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-gray-100" />
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
@@ -181,10 +193,6 @@ export default function FeaturedBusinesses() {
         </div>
       </section>
     );
-  }
-
-  if (businesses.length === 0) {
-    return null;
   }
 
   return (
@@ -214,7 +222,13 @@ export default function FeaturedBusinesses() {
           </Link>
         </div>
 
-        {/* Business cards */}
+        {businesses.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
+            <p className="text-sm font-semibold text-slate-600">Businesses will appear here as soon as they are published.</p>
+            <Link href="/businesses" className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">Browse the business directory</Link>
+          </div>
+        ) : (
+        /* Business cards */
         <div className="relative">
           {totalPages > 1 && (
             <button
@@ -227,7 +241,7 @@ export default function FeaturedBusinesses() {
             </button>
           )}
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {visibleBusinesses.map((business) => {
               const businessUrl = business.slug || business.id;
 
@@ -253,10 +267,10 @@ export default function FeaturedBusinesses() {
               return (
                 <article
                   key={business.id}
-                  className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                  className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   {/* Image */}
-                  <div className="relative h-36 overflow-hidden bg-gray-100">
+                  <div className="relative h-28 overflow-hidden bg-slate-100 sm:h-36">
                     <Link href={`/businesses/${businessUrl}`}>
                       <img
                         src={image}
@@ -281,16 +295,16 @@ export default function FeaturedBusinesses() {
                   </div>
 
                   {/* Card body */}
-                  <div className="p-4">
+                  <div className="p-2.5 sm:p-3.5">
                     {/* Business name */}
                     <Link href={`/businesses/${businessUrl}`}>
-                      <h3 className="truncate text-base font-bold text-slate-950 transition hover:text-violet-700">
+                      <h3 className="truncate text-sm font-bold text-slate-950 transition hover:text-violet-700">
                         {business.name}
                       </h3>
                     </Link>
 
                     {/* Rating */}
-                    <div className="mt-2 flex items-center gap-1">
+                    <div className="mt-1.5 flex items-center gap-1">
                       <Star
                         size={15}
                         className="fill-amber-400 text-amber-400"
@@ -306,7 +320,7 @@ export default function FeaturedBusinesses() {
                     </div>
 
                     {/* Category */}
-                    <p className="mt-2 truncate text-sm text-slate-600">
+                    <p className="mt-1.5 truncate text-xs text-slate-600">
                       {business.subcategory || business.category}
                     </p>
 
@@ -393,6 +407,7 @@ export default function FeaturedBusinesses() {
             </button>
           )}
         </div>
+        )}
 
         {/* Pagination dots */}
         {totalPages > 1 && (
