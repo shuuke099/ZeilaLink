@@ -29,8 +29,9 @@ const parseTraining = (value: unknown): TrainingDetail | null => {
     value &&
     typeof value === "object" &&
     !Array.isArray(value) &&
-    "training" in value
-      ? (value as { training?: unknown }).training
+    ("training" in value || "course" in value)
+      ? (value as { training?: unknown; course?: unknown }).training ??
+        (value as { course?: unknown }).course
       : value;
 
   if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
@@ -59,7 +60,7 @@ const loadTraining = cache(async (identifier: string): Promise<LoadResult> => {
 
   try {
     const response = await serverApiGet<unknown>(
-      `/trainings/${encodeURIComponent(identifier)}`,
+      `/courses/${encodeURIComponent(identifier)}`,
     );
     const training = parseTraining(response);
     return training
@@ -115,7 +116,7 @@ export async function generateMetadata({
       training.nameSo,
       training.provider.name,
       training.provider.nameSo,
-      training.skill?.name,
+      training.skills?.[0]?.name,
       "training Somalia",
       "tababar Soomaaliya",
     ].filter((value): value is string => Boolean(value)),

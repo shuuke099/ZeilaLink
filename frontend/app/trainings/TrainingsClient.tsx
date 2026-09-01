@@ -4,481 +4,136 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { t } from '@/lib/translations';
 import { cachedApiGet } from '@/lib/api-cache';
-import {
-  Search,
-  Clock,
-  GraduationCap,
-  ChevronDown,
-  ChevronUp,
-  Monitor,
-  User as UserIcon,
-  Star,
-  Award,
-  ArrowRight,
-  DollarSign,
-  Filter,
-} from 'lucide-react';
+import { BookOpen, Briefcase, CalendarDays, ChevronDown, ChevronUp, Clock3, Grid2X2, Heart, Languages, Laptop, List, MapPin, MoreHorizontal, Palette, Search, SlidersHorizontal, Stethoscope, Wrench, X } from 'lucide-react';
+
 export interface Training {
-  id: string;
-  slug?: string | null;
-  name: string;
-  nameSo?: string | null;
-  description: string;
-  descriptionSo?: string | null;
-  duration: string;
-  durationSo?: string | null;
-  cost: number;
-  imageUrl?: string | null;
-  providesCertificate?: boolean;
-  provider: {
-    id: string;
-    slug?: string | null;
-    name: string;
-    nameSo?: string | null;
-    logoUrl?: string | null;
-    description?: string | null;
-    descriptionSo?: string | null;
-    rating?: number | null;
-    verified?: boolean | null;
-  };
-  skill?: {
-    name: string;
-  };
+  id: string; slug?: string | null; name: string; nameSo?: string | null;
+  description: string; descriptionSo?: string | null; duration: string; durationSo?: string | null;
+  cost: number; currency?: string; imageUrl?: string | null; providesCertificate?: boolean;
+  featured?: boolean; category?: string | null; level?: string | null; deliveryMode?: string | null;
+  city?: string | null; state?: string | null; startDate?: string | null; endDate?: string | null;
+  schedule?: string | null; scheduleSo?: string | null;
+  provider: { id: string; slug?: string | null; name: string; nameSo?: string | null; logoUrl?: string | null; description?: string | null; descriptionSo?: string | null; rating?: number | null; verified?: boolean | null };
+  skills?: Array<{ id?: string; name: string }>;
 }
 
-type TrainingsClientProps = {
-  initialTrainings: Training[];
-  loadError?: boolean;
-};
+type Props = { initialTrainings: Training[]; loadError?: boolean };
+type ViewMode = 'grid' | 'list';
 
-export default function TrainingsClient({
-  initialTrainings,
-  loadError = false,
-}: TrainingsClientProps) {
-  const [trainings, setTrainings] = useState<Training[]>(initialTrainings);
+const categories = [
+  { value: '', label: 'All', icon: Grid2X2 }, { value: 'Technology', label: 'Technology', icon: Laptop },
+  { value: 'Business', label: 'Business', icon: Briefcase }, { value: 'Health', label: 'Health', icon: Stethoscope },
+  { value: 'Trades', label: 'Trades', icon: Wrench }, { value: 'Languages', label: 'Languages', icon: Languages },
+  { value: 'Arts', label: 'Arts', icon: Palette },
+];
+const dateOptions = [['any', 'Any time'], ['week', 'This week'], ['month', 'This month'], ['three', 'Next 3 months'], ['six', 'Next 6 months']];
+const fieldClass = 'h-10 min-w-0 rounded-lg border border-slate-200 bg-white text-[10px] font-medium text-slate-700 shadow-sm outline-none transition hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/10 sm:h-11 sm:text-[12px]';
+
+export default function TrainingsClient({ initialTrainings, loadError = false }: Props) {
+  const [trainings, setTrainings] = useState(initialTrainings);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({
-    category: '',
-    location: '',
-    price: 'all', // 'all', 'free', 'paid'
-    provider: '',
-    format: '',
-  });
-  const [selectedProvider, setSelectedProvider] = useState<Training['provider'] | null>(null);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [location, setLocation] = useState('');
+  const [price, setPrice] = useState('all');
+  const [date, setDate] = useState('any');
+  const [delivery, setDelivery] = useState('all');
+  const [sort, setSort] = useState('upcoming');
+  const [view, setView] = useState<ViewMode>('grid');
+  const [mobileFilters, setMobileFilters] = useState(false);
   const skippedInitialFetch = useRef(false);
-
   const { language } = useLanguage();
-  const getT = (key: string) => t(key, language);
 
+  useEffect(() => { const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 250); return () => window.clearTimeout(timer); }, [search]);
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 250);
-
-    return () => window.clearTimeout(timer);
-  }, [search]);
-
-  useEffect(() => {
-    if (!skippedInitialFetch.current && !debouncedSearch) {
-      skippedInitialFetch.current = true;
-      return;
-    }
+    if (!skippedInitialFetch.current && !debouncedSearch) { skippedInitialFetch.current = true; return; }
+    const fetchTrainings = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({ limit: '100' });
+        if (debouncedSearch) params.set('search', debouncedSearch);
+        const data = await cachedApiGet<{ courses?: Training[] }>(`/courses?${params}`, undefined, 30_000);
+        setTrainings(Array.from(new Map((data.courses || []).map((item) => [item.id, item])).values()));
+      } catch { setTrainings([]); } finally { setLoading(false); }
+    };
     void fetchTrainings();
   }, [debouncedSearch]);
 
-  const fetchTrainings = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({ limit: '100' });
-      if (debouncedSearch) params.append('search', debouncedSearch);
-
-      const queryString = params.toString();
-      const endpoint = queryString ? `/trainings?${queryString}` : '/trainings';
-      const data = await cachedApiGet<{ trainings?: Training[] }>(endpoint, undefined, 30_000);
-      const trainingsData: Training[] = data.trainings || [];
-
-      // Deduplicate trainings by ID
-      const uniqueTrainingsMap = new Map();
-      trainingsData.forEach(t => uniqueTrainingsMap.set(t.id, t));
-      const uniqueTrainings = Array.from(uniqueTrainingsMap.values());
-
-      setTrainings(uniqueTrainings);
-    } catch (error: any) {
-      console.error('[TrainingsPage] Error fetching trainings:', error);
-      console.error('[TrainingsPage] Error response:', error.response?.data);
-      setTrainings([]);
-      // Show error message to user if needed
-      if (error.response?.status !== 401) {
-        // Don't show error for auth issues as they're handled by interceptor
-        console.error('Failed to load trainings:', error.response?.data?.error || error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const locations = useMemo(() => Array.from(new Set(trainings.map((item) => [item.city, item.state].filter(Boolean).join(', ')).filter(Boolean))).sort(), [trainings]);
   const visibleTrainings = useMemo(() => {
-    return trainings.filter((training) => {
-      if (filters.price === 'free' && training.cost !== 0) return false;
-      if (filters.price === 'paid' && training.cost === 0) return false;
-      if (
-        filters.category &&
-        !training.skill?.name
-          ?.toLowerCase()
-          .includes(filters.category.toLowerCase())
-      ) {
-        return false;
-      }
+    const now = Date.now();
+    const dateLimit = date === 'week' ? 7 : date === 'month' ? 31 : date === 'three' ? 90 : date === 'six' ? 180 : 0;
+    return trainings.filter((item) => {
+      const itemCategory = `${item.category || ''} ${(item.skills || []).map((skill) => skill.name).join(' ')}`.toLowerCase();
+      const itemLocation = [item.city, item.state].filter(Boolean).join(', ');
+      if (category && !itemCategory.includes(category.toLowerCase())) return false;
+      if (location && itemLocation !== location) return false;
+      if (price === 'free' && item.cost !== 0) return false;
+      if (price === 'under100' && (item.cost <= 0 || item.cost >= 100)) return false;
+      if (price === '100to500' && (item.cost < 100 || item.cost > 500)) return false;
+      if (price === 'over500' && item.cost <= 500) return false;
+      if (delivery !== 'all' && item.deliveryMode !== delivery) return false;
+      if (dateLimit && item.startDate) { const distance = new Date(item.startDate).getTime() - now; if (distance < 0 || distance > dateLimit * 86400000) return false; }
       return true;
+    }).sort((a, b) => {
+      if (sort === 'price-low') return a.cost - b.cost;
+      if (sort === 'price-high') return b.cost - a.cost;
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      return new Date(a.startDate || 8640000000000000).getTime() - new Date(b.startDate || 8640000000000000).getTime();
     });
-  }, [filters.category, filters.price, trainings]);
+  }, [category, date, delivery, location, price, sort, trainings]);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+  const resetFilters = () => { setCategory(''); setLocation(''); setPrice('all'); setDate('any'); setDelivery('all'); setSearch(''); };
+  const activeFilterCount = [category, location, price !== 'all' ? price : '', date !== 'any' ? date : '', delivery !== 'all' ? delivery : ''].filter(Boolean).length;
 
-      <div className="max-w-7xl mx-auto px-4 pt-28 pb-12">
-        {loadError && (
-          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950">
-            {language === 'en'
-              ? 'Training programs are temporarily unavailable. Please try again shortly.'
-              : 'Barnaamijyada tababarka hadda lama heli karo. Fadlan wax yar kadib isku day.'}
-          </div>
-        )}
-        {/* Header */}
-        <div className="mb-12">
-          <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-              {language === 'en' ? 'Professional Development' : 'Horumarinta Xirfadaha'}
-            </span>
-          </div>
-          <h1 className="text-5xl lg:text-6xl font-black text-slate-900 mb-4 tracking-tighter leading-tight">
-            {language === 'en' ? (
-              <>Skills & <span className="text-primary relative inline-block">Training <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" /></span> Programs</>
-            ) : (
-              <>Barnaamijyada <span className="text-primary relative inline-block">Tababarka <div className="absolute -bottom-2 left-0 w-full h-3 bg-primary/10 -z-10" /></span></>
-            )}
-          </h1>
-          <p className="text-slate-500 text-xl font-medium max-w-2xl leading-relaxed">
-            {language === 'en' ? 'Find the right program to advance your career and develop industry-standard expertise.' : 'Raadi barnaamijka saxda ah si aad u horumariiso shaqadaada iyo xirfadaada.'}
-          </p>
-        </div>
-
-        {/* Search Bar at Top */}
-        <div className="mb-12">
-          <div className="relative group max-w-3xl">
-            <div className="absolute inset-0 bg-primary/5 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative">
-              <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={24} />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={language === 'en' ? 'Search trainings by keyword, provider, or category...' : 'Raadi tababarka adigoo adeegsanaya kalimada...'}
-                className="w-full bg-white border border-slate-100 rounded-[2rem] pl-16 pr-8 py-6 text-lg font-medium focus:outline-none focus:border-primary/30 transition-all shadow-sm group-hover:shadow-md"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Mobile Filter Toggle */}
-          <div className="lg:hidden flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-4">
-            <span className="font-black text-slate-900 uppercase tracking-widest text-xs">
-              {visibleTrainings.length} {language === 'en' ? 'Programs Found' : 'Barnaamijyo la helay'}
-            </span>
-            <button
-              onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest"
-            >
-              <Filter size={16} />
-              {language === 'en' ? 'Filters' : 'Filter'}
-            </button>
-          </div>
-          {/* Left Sidebar - Filters */}
-          <div className={`${showMobileFilters ? 'block' : 'hidden'} lg:block lg:w-1/4 flex-shrink-0`}>
-            <div className="bg-white rounded-[2rem] border border-slate-100 p-8 sticky top-28 shadow-sm">
-              <h2 className="text-xl font-black text-slate-900 mb-8 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <GraduationCap size={18} />
-                </div>
-                {language === 'en' ? 'Refine' : 'Shaandhee'}
-              </h2>
-
-              <div className="space-y-8">
-                {/* Category */}
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-4">
-                    {language === 'en' ? 'Category' : 'Qaybta'}
-                  </h3>
-                  <div className="space-y-3">
-                    {['Technology', 'Healthcare', 'Trades', 'Business', 'Education'].map((cat) => (
-                      <label key={cat} className="flex items-center group cursor-pointer">
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={filters.category === cat}
-                          onChange={() => setFilters({ ...filters, category: cat })}
-                          className="w-4 h-4 text-primary border-slate-200 focus:ring-primary/20 transition-all cursor-pointer"
-                        />
-                        <span className="ml-3 text-[13px] font-bold text-slate-600 group-hover:text-primary transition-colors">{cat}</span>
-                      </label>
-                    ))}
-                    <label className="flex items-center group cursor-pointer">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={filters.category === ''}
-                        onChange={() => setFilters({ ...filters, category: '' })}
-                        className="w-4 h-4 text-primary border-slate-200 focus:ring-primary/20 transition-all cursor-pointer"
-                      />
-                      <span className="ml-3 text-[13px] font-bold text-slate-600 group-hover:text-primary transition-colors">{language === 'en' ? 'All Categories' : 'Dhammaan'}</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Price Filter */}
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-4">
-                    {getT('cost')}
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { value: 'all', label: language === 'en' ? 'All Prices' : 'Dhammaan' },
-                      { value: 'free', label: language === 'en' ? 'Free Course' : 'Bilaash' },
-                      { value: 'paid', label: language === 'en' ? 'Paid Program' : 'Lacag leh' },
-                    ].map((price) => (
-                      <label key={price.value} className="flex items-center group cursor-pointer">
-                        <input
-                          type="radio"
-                          name="price"
-                          checked={filters.price === price.value}
-                          onChange={() => setFilters({ ...filters, price: price.value })}
-                          className="w-4 h-4 text-primary border-slate-200 focus:ring-primary/20 transition-all cursor-pointer"
-                        />
-                        <span className="ml-3 text-[13px] font-bold text-slate-600 group-hover:text-primary transition-colors">{price.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSearch('');
-                    setFilters({ category: '', location: '', price: 'all', provider: '', format: '' });
-                  }}
-                  className="w-full py-3 px-4 rounded-xl border border-slate-100 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all"
-                >
-                  {language === 'en' ? 'Reset Filters' : 'Nadiifi'}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-grow">
-            <div className="flex justify-end items-center mb-12">
-              <select className="input-field text-sm">
-                <option>{language === 'en' ? 'Sort by: Relevance' : 'U kala saar: La xiriira'}</option>
-              </select>
-            </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">{getT('loading')}</p>
-              </div>
-            ) : visibleTrainings.length === 0 ? (
-              <div className="text-center py-32 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-300">
-                  <GraduationCap size={44} />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-2">
-                  {language === 'en' ? 'No Programs Available' : 'Barnaamijyo lama helin'}
-                </h3>
-                <p className="text-slate-500 font-medium">
-                  {language === 'en'
-                    ? 'Try adjusting your filters or check back later for new enrollments.'
-                    : 'Isku day inaad bedesho filtarrada ama dib u soo noqo mar kale.'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-                {visibleTrainings.map((training) => {
-                  const trainingName =
-                    language === 'so' && training.nameSo?.trim()
-                      ? training.nameSo
-                      : training.name;
-                  const trainingDuration =
-                    language === 'so' && training.durationSo?.trim()
-                      ? training.durationSo
-                      : training.duration;
-                  const providerName =
-                    language === 'so' && training.provider.nameSo?.trim()
-                      ? training.provider.nameSo
-                      : training.provider.name;
-
-                  return (
-                  <div key={training.id}>
-                    <Link href={`/training/${training.slug || training.id}`} className="block group h-full">
-                      <div className="bg-white rounded-[2rem] border border-slate-100 group-hover:border-primary/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 overflow-hidden relative flex flex-col h-full text-center p-6">
-                        {/* Image/Icon */}
-                        <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-50 p-2.5 mx-auto mb-4 group-hover:scale-110 transition-transform duration-500 overflow-hidden flex items-center justify-center">
-                          {training.imageUrl ? (
-                            <img src={training.imageUrl} alt={`${trainingName} training program`} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-xl" />
-                          ) : (
-                            <div className="w-full h-full rounded-xl text-primary flex items-center justify-center">
-                              <GraduationCap size={32} strokeWidth={2.5} />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 flex flex-col">
-                          <div className="mb-4">
-                            <div className="flex items-center justify-center gap-1 cursor-pointer hover:text-primary mb-1 text-[10px] font-black uppercase tracking-widest text-primary/60" onClick={(e) => { e.preventDefault(); setSelectedProvider(training.provider); }}>
-                              {providerName}
-                              <span className="mx-1 text-slate-300">•</span>
-                              <Star size={10} className="text-amber-400 fill-amber-400" />
-                              {training.provider.rating ? training.provider.rating.toFixed(1) : 'New'}
-                            </div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
-                              {trainingName}
-                            </h3>
-                          </div>
-
-                          <div className="flex justify-center gap-2 mb-4">
-                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${training.cost === 0
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                              : 'bg-primary/5 text-primary border-primary/10'
-                              }`}>
-                              {training.cost === 0 ? 'Free' : `$${training.cost}`}
-                            </span>
-                            {training.providesCertificate && (
-                              <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100">
-                                Certified
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-auto pt-4 border-t border-slate-50 flex flex-col items-center gap-3">
-                            <div className="flex items-center justify-center gap-3 w-full">
-                              <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                <Clock size={12} className="text-primary/60" />
-                                {trainingDuration}
-                              </div>
-                              {training.skill && (
-                                <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                  <Award size={12} className="text-primary/60" />
-                                  {training.skill.name}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-2 bg-primary/5 text-primary px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] group-hover:bg-primary group-hover:text-white transition-all w-full flex items-center justify-center gap-2">
-                              {language === 'en' ? 'Enroll Now' : 'Isqori Hadda'}
-                              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform border-l border-current pl-2 ml-1" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+  return <div className="min-h-screen bg-[#fbfbfe] text-slate-900"><Navbar /><main className="pb-16 pt-16">
+    <section className="relative overflow-hidden border-b border-violet-100 bg-gradient-to-r from-white via-[#fbfaff] to-[#f4f0ff]">
+      <div className="mx-auto flex min-h-[150px] max-w-[1440px] items-center justify-between gap-8 px-4 py-8 sm:px-6 lg:px-8">
+        <div><h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[32px]">{language === 'en' ? 'Courses & Training' : 'Koorsooyin & Tababar'}</h1><p className="mt-2 max-w-xl text-[13px] font-medium leading-5 text-slate-600">{language === 'en' ? 'Discover local courses and training opportunities from trusted providers.' : 'Ka hel koorsooyin iyo fursado tababar bixiyeyaasha lagu kalsoon yahay.'}</p></div>
+        <div aria-hidden="true" className="relative hidden h-24 w-44 shrink-0 sm:block"><div className="absolute bottom-2 right-4 h-7 w-28 rounded-lg bg-emerald-500 shadow-md" /><div className="absolute bottom-8 right-1 h-7 w-32 -rotate-2 rounded-lg bg-violet-500 shadow-md" /><div className="absolute bottom-[54px] right-6 h-5 w-24 rotate-2 rounded-md bg-white shadow-md" /><div className="absolute right-11 top-0 h-0 w-0 border-x-[43px] border-b-[18px] border-x-transparent border-b-slate-800" /><div className="absolute right-[60px] top-3 h-5 w-12 bg-slate-900 [clip-path:polygon(0_0,100%_0,82%_100%,16%_100%)]" /><div className="absolute bottom-1 left-3 text-emerald-600"><BookOpen size={31} strokeWidth={2.4} /></div></div>
       </div>
-
-      {selectedProvider && (
-        <ProviderProfileModal
-          provider={selectedProvider}
-          onClose={() => setSelectedProvider(null)}
-          language={language}
-        />
-      )}
+    </section>
+    <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
+      {loadError && <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900">Training programs are temporarily unavailable. Please try again shortly.</div>}
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5 md:grid-cols-[minmax(260px,1fr)_160px_160px_145px_auto]">
+        <label className="relative col-span-4 block min-w-0 md:col-span-1"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={language === 'en' ? 'Search courses or programs...' : 'Raadi koorsooyin...'} className={`${fieldClass} w-full pl-10 pr-9`} />{search && <button onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X size={15} /></button>}</label>
+        <Select value={category} onChange={setCategory} label="Category" options={categories.slice(1).map((item) => [item.value, item.label])} />
+        <Select value={location} onChange={setLocation} label="Location" options={locations.map((item) => [item, item])} />
+        <Select value={date === 'any' ? '' : date} onChange={(value) => setDate(value || 'any')} label="Date" options={dateOptions.slice(1)} />
+        <button onClick={() => setMobileFilters(!mobileFilters)} className={`${fieldClass} flex w-full items-center justify-center gap-1 px-1 text-primary lg:pointer-events-none sm:gap-2 sm:px-4`}><SlidersHorizontal size={13} /> <span className="truncate">Filters</span>{activeFilterCount > 0 && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[8px] text-white">{activeFilterCount}</span>}</button>
+      </div>
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">{categories.map(({ value, label, icon: Icon }) => <button key={label} onClick={() => setCategory(value)} className={`flex h-10 shrink-0 items-center gap-2 rounded-lg border px-4 text-[11px] font-semibold transition ${category === value ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:text-violet-700'}`}><Icon size={14} /> {label}</button>)}<button className="flex h-10 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-[11px] font-semibold text-slate-600"><MoreHorizontal size={15} /> More</button></div>
+      <div className="mt-5 flex items-center justify-between"><p className="text-[11px] font-bold text-slate-700">{loading ? 'Loading programs…' : `${visibleTrainings.length} ${visibleTrainings.length === 1 ? 'opportunity' : 'opportunities'} found`}</p><div className="flex items-center gap-2"><select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort courses" className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none"><option value="upcoming">Sort by: Upcoming</option><option value="price-low">Price: Low to high</option><option value="price-high">Price: High to low</option><option value="name">Name: A–Z</option></select><div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white"><button onClick={() => setView('grid')} aria-label="Grid view" className={`grid h-9 w-9 place-items-center ${view === 'grid' ? 'bg-violet-50 text-violet-700' : 'text-slate-400'}`}><Grid2X2 size={15} /></button><button onClick={() => setView('list')} aria-label="List view" className={`grid h-9 w-9 place-items-center border-l border-slate-200 ${view === 'list' ? 'bg-violet-50 text-violet-700' : 'text-slate-400'}`}><List size={16} /></button></div></div></div>
+      <div className="mt-3 grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className={`${mobileFilters ? 'block' : 'hidden'} space-y-3 lg:block`}><FilterSection title="Category"><RadioList name="sidebar-category" value={category} onChange={setCategory} options={[['', 'All Categories'], ...categories.slice(1).map((item) => [item.value, item.label])]} /></FilterSection><FilterSection title="Date"><RadioList name="date" value={date} onChange={setDate} options={dateOptions} /></FilterSection><FilterSection title="Location"><RadioList name="location" value={location} onChange={setLocation} options={[['', 'All Locations'], ...locations.slice(0, 5).map((item) => [item, item])]} /></FilterSection><FilterSection title="Format"><RadioList name="delivery" value={delivery} onChange={setDelivery} options={[['all', 'Any format'], ['in_person', 'In person'], ['online', 'Online'], ['hybrid', 'Hybrid']]} /></FilterSection><FilterSection title="Price"><RadioList name="price" value={price} onChange={setPrice} options={[['all', 'Any price'], ['free', 'Free'], ['under100', 'Under $100'], ['100to500', '$100 – $500'], ['over500', 'Over $500']]} /></FilterSection>{activeFilterCount > 0 && <button onClick={resetFilters} className="w-full rounded-lg border border-violet-200 bg-violet-50 py-2.5 text-[11px] font-bold text-violet-700">Clear all filters</button>}</aside>
+        <section>{visibleTrainings.length === 0 && !loading ? <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-20 text-center"><BookOpen className="mx-auto text-violet-300" size={40} /><h2 className="mt-4 text-lg font-bold">No programs found</h2><p className="mt-1 text-sm text-slate-500">Try changing your search or filters.</p><button onClick={resetFilters} className="mt-5 rounded-lg bg-violet-600 px-4 py-2 text-xs font-bold text-white">Reset filters</button></div> : <div className={view === 'grid' ? 'grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4' : 'grid gap-3'}>{visibleTrainings.map((training) => <CourseCard key={training.id} training={training} language={language} list={view === 'list'} />)}</div>}</section>
+      </div>
     </div>
-  );
+  </main></div>;
 }
 
-function ProviderProfileModal({
-  provider,
-  onClose,
-  language,
-}: {
-  provider: Training['provider'];
-  onClose: () => void;
-  language: string;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-2xl bg-white overflow-hidden flex items-center justify-center">
-            {provider.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={provider.logoUrl}
-                alt={`${provider.name} logo`}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-contain p-1"
-              />
-            ) : (
-              <span className="text-primary text-xl font-semibold">
-                {provider.name.charAt(0)}
-              </span>
-            )}
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-primary-darker">{provider.name}</h2>
-            <div className="flex items-center gap-2 text-sm text-yellow-500">
-              <Star className="w-4 h-4" fill="currentColor" />
-              <span>
-                {provider.rating && provider.rating > 0
-                  ? provider.rating.toFixed(1)
-                  : language === 'en'
-                    ? 'No ratings yet'
-                    : 'Qiimeyn lama hayo'}
-              </span>
-            </div>
-          </div>
-        </div>
+function Select({ value, onChange, label, options }: { value: string; onChange: (value: string) => void; label: string; options: string[][] }) {
+  return <div className="relative min-w-0"><select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className={`${fieldClass} w-full appearance-none truncate px-2 pr-5 accent-primary sm:px-3 sm:pr-8`}><option value="">{label}</option>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}</select><ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-muted sm:right-3" size={12} /></div>;
+}
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) { const [open, setOpen] = useState(true); return <div className="rounded-lg border border-slate-200 bg-white p-3.5 shadow-[0_1px_3px_rgba(15,23,42,.03)]"><button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between text-[11px] font-extrabold text-slate-800">{title}{open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}</button>{open && <div className="mt-3">{children}</div>}</div>; }
+function RadioList({ name, value, onChange, options }: { name: string; value: string; onChange: (value: string) => void; options: string[][] }) { return <div className="space-y-2.5">{options.map(([optionValue, label]) => <label key={`${name}-${optionValue}`} className="flex cursor-pointer items-center gap-2.5 text-[10px] font-medium text-slate-600"><input type="radio" name={name} checked={value === optionValue} onChange={() => onChange(optionValue)} className="h-3.5 w-3.5 accent-violet-600" />{label}</label>)}</div>; }
 
-        <div className="space-y-4">
-          <div>
-            <p className="text-sm text-primary-darker/70 mb-1">
-              {language === 'en' ? 'About this provider' : 'Ku saabsan bixiyaha'}
-            </p>
-            <p className="text-primary-darker/85 whitespace-pre-line">
-              {provider.description
-                ? provider.description
-                : language === 'en'
-                  ? 'No description provided yet.'
-                  : 'Sharaxaad lama hayo.'}
-            </p>
-          </div>
-          <div className="text-xs text-primary-darker/60">
-            {language === 'en'
-              ? 'Providers are verified by the admin team before their courses are published.'
-              : 'Bixiyeyaasha waxaa hubiya maamulka ka hor inta koorsooyinkoodu la daabicin.'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function CourseCard({ training, language, list }: { training: Training; language: string; list: boolean }) {
+  const name = language === 'so' && training.nameSo?.trim() ? training.nameSo : training.name;
+  const provider = language === 'so' && training.provider.nameSo?.trim() ? training.provider.nameSo : training.provider.name;
+  const duration = language === 'so' && training.durationSo?.trim() ? training.durationSo : training.duration;
+  const schedule = language === 'so' && training.scheduleSo?.trim() ? training.scheduleSo : training.schedule;
+  const place = training.deliveryMode === 'online' ? 'Online' : [training.city, training.state].filter(Boolean).join(', ') || 'Location provided on enrollment';
+  const start = training.startDate ? new Intl.DateTimeFormat(language === 'so' ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric' }).format(new Date(training.startDate)) : 'Flexible start';
+  const end = training.endDate ? new Intl.DateTimeFormat(language === 'so' ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(training.endDate)) : '';
+  const level = training.level || 'All levels';
+  const formatLabel = (training.deliveryMode || 'in_person').replace('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const categoryTone = training.category?.toLowerCase().includes('health') ? 'bg-rose-50 text-rose-700' : training.category?.toLowerCase().includes('trade') ? 'bg-amber-50 text-amber-700' : 'bg-violet-50 text-violet-700';
+  const priceLabel = training.cost === 0 ? 'FREE' : new Intl.NumberFormat('en-US', { style: 'currency', currency: training.currency || 'USD', maximumFractionDigits: 0 }).format(training.cost);
+  return <Link href={`/training/${training.slug || training.id}`} className={`group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_10px_26px_rgba(91,33,209,.12)] ${list ? 'grid sm:h-[190px] sm:grid-cols-[260px_minmax(0,1fr)]' : 'flex flex-col'}`}>
+    <div className={`relative w-full shrink-0 overflow-hidden bg-gradient-to-br from-violet-100 via-slate-100 to-emerald-100 ${list ? 'h-[160px] min-h-0 sm:h-[190px]' : 'h-[96px] sm:h-[112px] xl:h-[120px]'}`}>{training.imageUrl ? <img src={training.imageUrl} alt={name} loading="lazy" decoding="async" className="absolute inset-0 block h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]" /> : <div className="grid h-full place-items-center"><div className="grid h-12 w-12 place-items-center rounded-xl bg-white/80 text-violet-600 shadow-sm"><BookOpen size={27} /></div></div>}{training.featured && <span className="absolute left-2 top-2 rounded bg-violet-600 px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-wide text-white sm:px-2 sm:py-1 sm:text-[8px]">Featured</span>}</div>
+    <div className="flex flex-1 flex-col p-2.5 sm:p-3"><h3 className="line-clamp-2 text-[11px] font-extrabold leading-[1.25] tracking-[-0.015em] text-slate-900 group-hover:text-violet-700 sm:text-[13px] xl:text-[14px]">{name}</h3><p className="mt-1 flex min-w-0 items-center gap-1 truncate text-[8px] font-semibold text-slate-500 sm:text-[9px] xl:text-[10px]"><span className="truncate">{provider}</span>{training.provider.verified && <span title="Verified provider" className="grid h-3 w-3 shrink-0 place-items-center rounded-full bg-emerald-500 text-[7px] text-white">✓</span>}</p><div className="mt-2 space-y-1 text-[8px] font-medium leading-3 text-slate-600 sm:text-[9px] sm:leading-4 xl:text-[10px]"><p className="flex items-start gap-1.5"><CalendarDays className="mt-0.5 shrink-0 text-slate-500" size={11} /><span className="line-clamp-1">{start}{end && ` – ${end}`}</span></p><p className="flex items-start gap-1.5"><Clock3 className="mt-0.5 shrink-0 text-slate-500" size={11} /><span className="line-clamp-1">{schedule || duration}</span></p><p className="flex items-start gap-1.5"><MapPin className="mt-0.5 shrink-0 text-slate-500" size={11} /><span className="line-clamp-1">{place}</span></p></div><div className="mt-2 flex flex-wrap gap-1"><span className={`rounded px-1.5 py-0.5 text-[7px] font-bold sm:text-[8px] ${categoryTone}`}>{level}</span><span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[7px] font-bold text-emerald-700 sm:text-[8px]">{formatLabel}</span>{training.providesCertificate && <span className="hidden rounded bg-blue-50 px-1.5 py-0.5 text-[7px] font-bold text-blue-700 sm:inline sm:text-[8px]">Certificate</span>}</div><div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2"><strong className={`text-[11px] sm:text-[13px] ${training.cost === 0 ? 'text-emerald-600' : 'text-violet-700'}`}>{priceLabel}</strong><Heart size={15} className="text-slate-400 transition group-hover:text-violet-600" /></div></div>
+  </Link>;
 }

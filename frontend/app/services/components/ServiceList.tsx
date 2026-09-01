@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Search, Star } from 'lucide-react';
+import { ChevronDown, Grid2X2, Heart, Search, Sparkles, Star, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { cachedApiGet } from '@/lib/api-cache';
 import { serviceCategories, services as fallbackServices } from '../data/services';
@@ -99,20 +99,21 @@ export default function ServiceList({
   const hasMoreMobileFilters = categories.length > mobileCategories.length;
 
   return (
-    <section className="pt-28 pb-16 px-4 sm:px-6 lg:px-8 bg-background min-h-screen transition-colors">
-      <div className="max-w-[1320px] mx-auto">
-        <div className="mb-8 max-w-3xl">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">
-            {isEn ? 'ZeilaLink Service Marketplace' : 'Suuqa Adeegyada ZeilaLink'}
-          </p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
+    <section className="min-h-screen bg-[#fbfbfe] px-4 pb-16 pt-20 transition-colors sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="relative mb-4 min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 sm:px-7">
+          <div className="relative z-10 max-w-xl">
+          <h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[32px]">
             {isEn ? 'Professional Services' : 'Adeegyada Xirfadeed'}
           </h1>
-          <p className="mt-3 text-base leading-relaxed text-slate-600">
+          <p className="mt-2 text-[12px] font-medium leading-5 text-slate-600">
             {isEn
               ? 'Search trusted local and online services from providers serving Somali communities.'
               : 'Ka raadi adeegyo maxalli ah iyo kuwo online ah oo ay bixiyaan adeeg-bixiyeyaal u adeegaya bulshada Soomaaliyeed.'}
           </p>
+          <p className="mt-5 flex items-center gap-2 text-[10px] font-bold text-slate-700"><Wrench size={14} className="text-primary" /><span className="text-primary">{services.length}</span>{isEn ? 'services available' : 'adeeg ayaa diyaar ah'}</p>
+          </div>
+          <div aria-hidden="true" className="absolute bottom-2 right-8 hidden items-end gap-3 text-violet-300 md:flex"><Wrench size={60} strokeWidth={1.2}/><Sparkles size={95} strokeWidth={1}/><Grid2X2 size={70} strokeWidth={1}/></div>
         </div>
 
         {loadError && !usingDemoData && (
@@ -134,7 +135,7 @@ export default function ServiceList({
           </div>
         )}
 
-        <div className="relative mb-6 max-w-2xl">
+        <div className="relative mb-3 w-full">
           <Search
             className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
             size={20}
@@ -149,7 +150,7 @@ export default function ServiceList({
                 : 'Ku raadi adeegyada Af-Soomaali ama Ingiriisi'
             }
             aria-label={isEn ? 'Search services' : 'Raadi adeegyada'}
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+            className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-[11px] text-slate-900 shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
         </div>
 
@@ -163,7 +164,7 @@ export default function ServiceList({
                   type="button"
                   onClick={() => setActiveCategory(category)}
                   className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                    active ? 'bg-[#2d7df6] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    active ? 'bg-primary text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   {category}
@@ -174,7 +175,7 @@ export default function ServiceList({
               <button
                 type="button"
                 onClick={() => setShowAllMobileFilters((prev) => !prev)}
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#2d7df6] transition hover:bg-slate-100"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-bold text-primary transition hover:bg-slate-100"
               >
                 {showAllMobileFilters ? (isEn ? 'Less' : 'Yaree') : (isEn ? 'More' : 'Dheeraad')}
                 <ChevronDown className={`h-3.5 w-3.5 transition ${showAllMobileFilters ? 'rotate-180' : ''}`} />
@@ -192,7 +193,7 @@ export default function ServiceList({
                     type="button"
                     onClick={() => setActiveCategory(category)}
                     className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-                      active ? 'bg-[#2d7df6] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      active ? 'bg-primary text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                     }`}
                   >
                     {category}
@@ -213,7 +214,8 @@ export default function ServiceList({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
           {filteredServices.map((item) => {
             const title = !isEn && item.titleSo?.trim() ? item.titleSo : item.title;
             const description =
@@ -227,30 +229,30 @@ export default function ServiceList({
             <Link
               key={item.id}
               href={`/services/${item.slug || item.id}`}
-              className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-300/40"
+              className="group flex h-[270px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg sm:h-[290px]"
             >
-              <div className="relative h-36 overflow-hidden">
+              <div className="relative h-[105px] shrink-0 overflow-hidden bg-slate-100 sm:h-[120px]">
                 <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
-                <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[9px] tracking-wide font-bold uppercase bg-white/95 text-[#2d7df6] border border-slate-200">
+                <span className="absolute left-2 top-2 rounded bg-primary px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white sm:text-[8px]">
                   {item.isDemo || usingDemoData ? `Demo • ${item.badge}` : item.badge}
-                </span>
+                </span><Heart size={16} className="absolute right-2 top-2 text-white drop-shadow" />
               </div>
 
-              <div className="p-3">
+              <div className="flex min-h-0 flex-1 flex-col p-2.5 sm:p-3">
                 <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-1.5">
                   <span className="w-2 h-2 rounded-full bg-slate-800" />
                   <span className="font-medium truncate">{provider}</span>
                 </div>
 
-                <div className="flex items-start justify-between gap-3 min-h-[70px]">
-                  <div>
-                    <h2 className="font-bold text-[14px] text-slate-900 leading-[1.2] mb-1">{title}</h2>
-                    <p className="text-[11px] text-slate-500 leading-[1.3] max-h-8 overflow-hidden">{description}</p>
+                <div className="flex min-h-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-2 text-[11px] font-extrabold leading-[1.2] text-slate-900 sm:text-[13px]">{title}</h2>
+                    <p className="mt-1 line-clamp-2 text-[8px] leading-3 text-slate-500 sm:text-[9px] sm:leading-4">{description}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[9px] uppercase font-bold text-slate-400">{isEn ? 'Starting' : 'Ka bilaabma'}</p>
-                    <p className="text-[18px] font-black text-[#2d7df6] leading-none">{item.priceLabel}</p>
+                  <div className="shrink-0 text-right">
+                    <p className="text-[7px] uppercase font-bold text-slate-400">{isEn ? 'From' : 'Laga bilaabo'}</p>
+                    <p className="text-[12px] font-extrabold leading-none text-primary sm:text-[14px]">{item.priceLabel}</p>
                   </div>
                 </div>
 
@@ -262,7 +264,7 @@ export default function ServiceList({
                   </div>
                 </div>
 
-                <div className="mt-3 block w-full text-center py-2 rounded-md bg-primary border border-primary/70 text-white text-[12px] font-semibold">
+                <div className="mt-auto block w-full rounded-md border border-primary/20 bg-primary/5 py-2 text-center text-[9px] font-bold text-primary sm:text-[10px]">
                   {item.isDemo || usingDemoData
                     ? (isEn ? 'Preview Demo' : 'Eeg Tusaalaha')
                     : (isEn ? 'View Details' : 'Faahfaahin Eeg')}
@@ -271,6 +273,14 @@ export default function ServiceList({
             </Link>
             );
           })}
+        </div>
+        <aside className="hidden space-y-3 lg:block">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)]">
+            <h3 className="flex items-center gap-2 text-[12px] font-extrabold"><Grid2X2 size={14} className="text-primary" />{isEn ? 'Categories' : 'Qaybaha'}</h3>
+            <div className="mt-3 space-y-1">{categories.map((category) => { const count = category === 'All Services' ? services.length : services.filter((service) => service.category === category).length; return <button key={category} onClick={() => setActiveCategory(category)} className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[9px] ${activeCategory === category ? 'bg-primary/10 font-bold text-primary' : 'font-medium text-slate-600 hover:bg-slate-50'}`}><span className="truncate">{category}</span><span>{count}</span></button>; })}</div>
+          </div>
+          <div className="rounded-xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center"><Sparkles className="mx-auto text-primary" size={20}/><h3 className="mt-2 text-[12px] font-extrabold">{isEn ? 'Offer a Service' : 'Bixi Adeeg'}</h3><p className="mt-1 text-[9px] leading-4 text-slate-500">{isEn ? 'Reach customers looking for trusted local professionals.' : 'Gaadh macaamiisha raadinaya xirfadlayaal.'}</p><Link href="/register" className="mt-3 flex h-9 items-center justify-center rounded-lg bg-primary text-[9px] font-bold text-white">{isEn ? 'Get Started' : 'Bilow'}</Link></div>
+        </aside>
         </div>
 
         {filteredServices.length === 0 && (

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 type TrainingResponse = {
-  trainings?: unknown[];
+  courses?: unknown[];
 };
 
 const isTraining = (value: unknown): value is Training => {
@@ -67,10 +67,10 @@ const isTraining = (value: unknown): value is Training => {
 const loadTrainings = async () => {
   try {
     const response = await serverApiGet<TrainingResponse>(
-      "/trainings?limit=100",
+      "/courses?limit=100",
     );
     return {
-      trainings: (response.trainings || []).filter(isTraining),
+      trainings: (response.courses || []).filter(isTraining),
       loadError: false,
     };
   } catch {

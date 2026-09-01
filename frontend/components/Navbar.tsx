@@ -6,9 +6,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Briefcase,
+  Building2,
   ChevronDown,
   Globe,
   GraduationCap,
+  Heart,
   Home,
   LogOut,
   Moon,
@@ -240,7 +242,7 @@ export default function Navbar() {
                           aria-hidden="true"
                           className="
                             absolute
-                            bottom-0
+                            bottom-[10px]
                             left-[9px]
                             right-[9px]
                             h-[2px]
@@ -525,6 +527,22 @@ export default function Navbar() {
                 MOBILE / TABLET TOP CONTROLS
             ====================================================== */}
             <div className="col-start-3 flex min-w-0 items-center justify-self-end gap-0.5 lg:hidden">
+              <Link
+                href={user ? "/worker/recommended" : "/login?redirect=%2Fworker%2Frecommended"}
+                aria-label={language === "en" ? "Favorites" : "Kuwa aad jeceshahay"}
+                className="flex h-9 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-primary dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <Heart size={17} strokeWidth={1.8} />
+              </Link>
+
+              <Link
+                href={user ? `/${user.role}` : "/login"}
+                aria-label={language === "en" ? "Profile" : "Boggaaga"}
+                className="flex h-9 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-primary dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <UserIcon size={17} strokeWidth={1.8} />
+              </Link>
+
               <button
                 type="button"
                 onClick={toggleLanguage}
@@ -626,18 +644,14 @@ export default function Navbar() {
               icon: Wrench,
             },
             {
+              name: getT("businesses"),
+              href: "/businesses",
+              icon: Building2,
+            },
+            {
               name: getT("trainings"),
               href: "/training",
               icon: GraduationCap,
-            },
-            {
-              name: user
-                ? "Account"
-                : language === "en"
-                  ? "Sign In"
-                  : "Soo gal",
-              href: user ? `/${user.role}` : "/login",
-              icon: UserIcon,
             },
           ].map((item) => {
             const active = isRouteActive(item.href);
@@ -673,20 +687,6 @@ export default function Navbar() {
                   }
                 `}
               >
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="
-                      absolute
-                      top-0
-                      h-[2px]
-                      w-6
-                      rounded-full
-                      bg-primary
-                    "
-                  />
-                )}
-
                 <span
                   className={`
                     flex

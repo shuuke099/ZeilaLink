@@ -10,6 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "pnpm run prisma:generate && ts-node prisma/seed.ts",
+    "prisma:seed:trainings": "ts-node prisma/seed-trainings.ts",
+    "prisma:seed:businesses": "ts-node prisma/seed-businesses.ts",
     "db:studio": "prisma studio",
     "email:test": "node test-email.js",
     "security:check-passwords": "node scripts/check-password-security.js"

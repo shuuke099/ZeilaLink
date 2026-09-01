@@ -91,6 +91,9 @@ export interface PublicBusiness {
   longitude?: number | null;
   distanceKm?: number | null;
   featured?: boolean;
+  rating?: number | null;
+  reviewsCount?: number | null;
+  statusLabel?: string | null;
   bannerUrl?: string | null;
   openingHours?: Record<string, string> | null;
   createdAt?: string | null;

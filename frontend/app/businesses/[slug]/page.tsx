@@ -305,7 +305,7 @@ export default async function BusinessProfilePage({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#fafafe]">
       <script
         nonce={nonce}
         type="application/ld+json"
@@ -315,8 +315,8 @@ export default async function BusinessProfilePage({
       />
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 lg:px-8">
-        <section className="relative min-h-[340px] overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-2xl shadow-slate-900/10">
+      <main className="mx-auto max-w-[1440px] px-4 pb-16 pt-20 sm:px-6 lg:px-8">
+        <section className="relative min-h-[280px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 text-white shadow-[0_2px_8px_rgba(15,23,42,.06)] sm:min-h-[320px]">
           {safeBanner && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -327,8 +327,8 @@ export default async function BusinessProfilePage({
           )}
           <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-slate-950/25" />
           <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/15" />
-          <div className="relative flex min-h-[340px] flex-col justify-end gap-7 p-6 sm:flex-row sm:items-end sm:justify-start sm:p-10 lg:p-12">
-            <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-3xl border-4 border-white/90 bg-white shadow-2xl sm:h-36 sm:w-36">
+          <div className="relative flex min-h-[280px] flex-col justify-end gap-4 p-5 sm:min-h-[320px] sm:flex-row sm:items-end sm:justify-start sm:p-7">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-white/90 bg-white shadow-lg sm:h-20 sm:w-20">
               {safeLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -338,32 +338,32 @@ export default async function BusinessProfilePage({
                       ? `Astaanta ${localized.name}`
                       : `${localized.name} logo`
                   }
-                  className="h-full w-full object-contain p-3"
+                  className="h-full w-full object-contain p-2"
                 />
               ) : (
                 <Building2
                   aria-hidden="true"
-                  size={48}
+                  size={30}
                   className="text-primary"
                 />
               )}
             </div>
             <div className="min-w-0 flex-1 pb-1">
-              <span className="inline-flex rounded-full border border-white/20 bg-slate-950/45 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-200 backdrop-blur-md">
+              <span className="inline-flex rounded border border-white/20 bg-slate-950/45 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-violet-200 backdrop-blur-md">
                 {businessTypeLabel(business.type, language)}
               </span>
-              <h1 className="mt-3 text-4xl font-black tracking-tight !text-white drop-shadow-lg sm:text-5xl">
+              <h1 className="mt-2 text-[25px] font-extrabold tracking-[-0.035em] !text-white drop-shadow-lg sm:text-[30px]">
                 {localized.name}
               </h1>
               {alternateName && alternateName !== localized.name && (
                 <p
                   lang={isSomali ? "en" : "so"}
-                  className="mt-2 text-lg font-semibold text-white/85"
+                  className="mt-1 text-[11px] font-semibold text-white/80"
                 >
                   {alternateName}
                 </p>
               )}
-              <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-white/85">
+              <div className="mt-3 flex flex-wrap gap-4 text-[10px] font-medium text-white/85">
                 {(business.location || business.address) && (
                   <span className="inline-flex items-center gap-2">
                     <MapPin aria-hidden="true" size={17} className="text-primary" />
@@ -385,17 +385,17 @@ export default async function BusinessProfilePage({
           </div>
         </section>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,2fr),minmax(280px,1fr)]">
-          <div className="space-y-8">
-            <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-black text-slate-900">
+        <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
+          <div className="space-y-4">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] sm:p-5">
+              <h2 className="text-[14px] font-extrabold text-slate-900">
                 {isSomali
                   ? `Ku saabsan ${localized.name}`
                   : `About ${localized.name}`}
               </h2>
               <p
                 lang={isSomali ? "so" : "en"}
-                className="mt-4 whitespace-pre-line leading-8 text-slate-700"
+                className="mt-3 whitespace-pre-line text-[11px] leading-5 text-slate-600"
               >
                 {localized.description ||
                   (isSomali
@@ -404,12 +404,12 @@ export default async function BusinessProfilePage({
               </p>
               {showAlternateDescription && (
                 <div className="mt-6 border-t border-slate-100 pt-6">
-                  <h3 className="text-sm font-black uppercase tracking-wider text-slate-500">
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     {isSomali ? "English description" : "Sharaxaad Soomaali"}
                   </h3>
                   <p
                     lang={isSomali ? "en" : "so"}
-                    className="mt-3 whitespace-pre-line leading-7 text-slate-600"
+                    className="mt-2 whitespace-pre-line text-[10px] leading-5 text-slate-600"
                   >
                     {alternateDescription}
                   </p>
@@ -417,8 +417,8 @@ export default async function BusinessProfilePage({
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-2xl font-black text-slate-900">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] sm:p-5">
+              <h2 className="text-[14px] font-extrabold text-slate-900">
                 {business.type === "employer"
                   ? isSomali
                     ? "Fursadaha shaqada"
@@ -427,7 +427,7 @@ export default async function BusinessProfilePage({
                     ? "Fursadaha tababarka"
                     : "Training opportunities"}
               </h2>
-              <p className="mt-3 leading-7 text-slate-600">
+              <p className="mt-2 text-[10px] leading-5 text-slate-600">
                 {business.type === "employer"
                   ? isSomali
                     ? `${localized.name} wuxuu leeyahay ${business.jobCount ?? 0} shaqo oo hadda ku qoran ZeilaLink.`
@@ -438,7 +438,7 @@ export default async function BusinessProfilePage({
               </p>
               <Link
                 href={business.type === "employer" ? "/jobs" : "/training"}
-                className="mt-5 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-black text-white"
+                className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2.5 text-[10px] font-bold text-white"
               >
                 {business.type === "employer"
                   ? isSomali
@@ -451,12 +451,12 @@ export default async function BusinessProfilePage({
             </section>
           </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-black text-slate-900">
+          <aside className="space-y-3 lg:sticky lg:top-20">
+            <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)]">
+              <h2 className="text-[12px] font-extrabold text-slate-900">
                 {isSomali ? "Faahfaahinta ururka" : "Organization details"}
               </h2>
-              <dl className="mt-5 space-y-5 text-sm">
+              <dl className="mt-3 space-y-3 text-[10px]">
                 <div>
                   <dt className="font-bold text-slate-500">
                     {isSomali ? "Nooca" : "Type"}
@@ -470,7 +470,7 @@ export default async function BusinessProfilePage({
                     <dt className="font-bold text-slate-500">
                       {isSomali ? "Cinwaanka" : "Address"}
                     </dt>
-                    <dd className="mt-1 font-black leading-6 text-slate-900">
+                    <dd className="mt-1 font-semibold leading-5 text-slate-900">
                       {business.address}
                     </dd>
                   </div>
@@ -541,26 +541,26 @@ export default async function BusinessProfilePage({
             </section>
 
             <section className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-slate-100 bg-white p-5 text-center shadow-sm">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
                 <Briefcase
                   aria-hidden="true"
                   className="mx-auto text-primary"
                   size={24}
                 />
-                <p className="mt-2 text-2xl font-black text-slate-900">
+                <p className="mt-1 text-lg font-extrabold text-slate-900">
                   {business.jobCount ?? 0}
                 </p>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   {isSomali ? "Shaqooyin" : "Jobs"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-slate-100 bg-white p-5 text-center shadow-sm">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
                 <GraduationCap
                   aria-hidden="true"
                   className="mx-auto text-primary"
                   size={24}
                 />
-                <p className="mt-2 text-2xl font-black text-slate-900">
+                <p className="mt-1 text-lg font-extrabold text-slate-900">
                   {business.trainingCount ?? 0}
                 </p>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -569,25 +569,25 @@ export default async function BusinessProfilePage({
               </div>
             </section>
 
-            <section className="rounded-3xl bg-primary p-6 text-white">
-              <h2 className="text-xl font-black">
+            <section className="rounded-xl bg-primary p-4 text-white">
+              <h2 className="text-[13px] font-extrabold !text-white">
                 {isSomali ? "Sii wad sahminta" : "Keep exploring"}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-white/80">
+              <p className="mt-2 text-[9px] leading-4 text-white/80">
                 {isSomali
                   ? "Eeg shaqaale xirfad leh iyo adeegyo kale oo ZeilaLink ah."
                   : "Discover skilled workers and more services on ZeilaLink."}
               </p>
-              <div className="mt-5 flex flex-col gap-3">
+              <div className="mt-3 flex flex-col gap-2">
                 <Link
                   href="/workers"
-                  className="rounded-xl bg-white px-4 py-3 text-center text-sm font-black text-primary"
+                  className="rounded-lg bg-white px-4 py-2.5 text-center text-[9px] font-bold text-primary"
                 >
                   {isSomali ? "Eeg shaqaalaha" : "Browse workers"}
                 </Link>
                 <Link
                   href="/services"
-                  className="rounded-xl border border-white/30 px-4 py-3 text-center text-sm font-black text-white"
+                  className="rounded-lg border border-white/30 px-4 py-2.5 text-center text-[9px] font-bold text-white"
                 >
                   {isSomali ? "Eeg adeegyada" : "Browse services"}
                 </Link>

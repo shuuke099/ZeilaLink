@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import api from "@/lib/api";
 
 /* ============================================================
@@ -146,7 +146,7 @@ function LoadingSkeleton() {
         </div>
 
         {/* Desktop */}
-        <div className="hidden grid-cols-3 gap-4 md:grid lg:grid-cols-6">
+        <div className="hidden grid-cols-6 gap-4 md:grid">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
@@ -165,7 +165,6 @@ function LoadingSkeleton() {
 
 export default function PopularServices() {
   const [services, setServices] = useState<Service[]>([]);
-  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -214,26 +213,7 @@ export default function PopularServices() {
      PAGINATION
   ============================================================ */
 
-  const totalPages = Math.ceil(services.length / CARDS_PER_PAGE);
-
-  const visibleServices = useMemo(() => {
-    const startIndex = page * CARDS_PER_PAGE;
-    return services.slice(startIndex, startIndex + CARDS_PER_PAGE);
-  }, [services, page]);
-
-  const previousPage = () => {
-    setPage((current) => {
-      if (totalPages <= 1) return 0;
-      return current === 0 ? totalPages - 1 : current - 1;
-    });
-  };
-
-  const nextPage = () => {
-    setPage((current) => {
-      if (totalPages <= 1) return 0;
-      return (current + 1) % totalPages;
-    });
-  };
+  const visibleServices = services.slice(0, CARDS_PER_PAGE);
 
   /* ============================================================
      STATES
@@ -288,73 +268,11 @@ export default function PopularServices() {
           </Link>
         </div>
 
-        {/* ====================================================
-            MOBILE VERSION
-        ==================================================== */}
-
-        <div className="md:hidden">
-          <div className="grid grid-cols-2 gap-3">
-            {services.map((service) => (
-              <div key={service.id}>
-                <ServiceCard service={service} />
-              </div>
-            ))}
-          </div>
-
-        </div>
-
-        {/* ====================================================
-            DESKTOP VERSION
-        ==================================================== */}
-
-        <div className="relative hidden md:block">
-          {totalPages > 1 && (
-            <button
-              type="button"
-              onClick={previousPage}
-              aria-label="Previous services"
-              className="absolute -left-5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition hover:bg-gray-50 hover:text-violet-700"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
-
-          <div className="grid grid-cols-3 gap-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
             {visibleServices.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
-          </div>
-
-          {totalPages > 1 && (
-            <button
-              type="button"
-              onClick={nextPage}
-              aria-label="Next services"
-              className="absolute -right-5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition hover:bg-gray-50 hover:text-violet-700"
-            >
-              <ChevronRight size={20} />
-            </button>
-          )}
         </div>
-
-        {/* Desktop Carousel Dots */}
-        {totalPages > 1 && (
-          <div className="mt-6 hidden justify-center gap-2 md:flex">
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                aria-label={`Go to services page ${index + 1}`}
-                onClick={() => setPage(index)}
-                className={`h-2 rounded-full transition-all ${
-                  page === index
-                    ? "w-6 bg-violet-700"
-                    : "w-2 bg-gray-300 hover:bg-gray-400"
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
