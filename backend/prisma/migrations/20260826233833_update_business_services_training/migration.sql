@@ -55,7 +55,7 @@ ADD COLUMN     "phone" TEXT,
 ADD COLUMN     "postal_code" TEXT,
 ADD COLUMN     "slug" TEXT,
 ADD COLUMN     "state" TEXT,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL,
 ADD COLUMN     "verified_at" TIMESTAMP(3);
 
 -- AlterTable
@@ -87,7 +87,7 @@ ADD COLUMN     "phone" TEXT,
 ADD COLUMN     "postal_code" TEXT,
 ADD COLUMN     "slug" TEXT,
 ADD COLUMN     "state" TEXT,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL,
 ADD COLUMN     "verified_at" TIMESTAMP(3),
 ADD COLUMN     "website" TEXT;
 
@@ -168,10 +168,10 @@ ADD COLUMN     "state" TEXT;
 
 -- AlterTable
 ALTER TABLE "user_certifications" ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL;
 
 -- AlterTable
-ALTER TABLE "user_skills" ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "user_skills" ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL;
 
 -- AlterTable
 ALTER TABLE "users" ADD COLUMN     "bio_so" TEXT,
