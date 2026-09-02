@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { Prisma } from "@prisma/client";
 import prisma from "../config/database";
 import { AuthRequest } from "../middleware/auth";
 import {
@@ -27,6 +28,16 @@ const normalizeStringArray = (value: unknown): string[] => {
   }
 
   return [];
+};
+
+const normalizeJsonObject = (value: unknown): Prisma.InputJsonObject => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonObject;
+  } catch {
+    return {};
+  }
 };
 
 const toNumber = (value: unknown, fallback: number) => {
@@ -1027,6 +1038,8 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
 
     const image = String(req.body?.image || "").trim() || null;
 
+    const slaResponse = String(req.body?.slaResponse || "").trim() || null;
+
     const phone = String(req.body?.phone || "").trim() || null;
 
     const email = String(req.body?.email || "").trim() || null;
@@ -1078,6 +1091,10 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
 
     const galleryInput = normalizeStringArray(req.body?.gallery);
 
+    const attachments = normalizeStringArray(req.body?.attachments);
+
+    const advancedConfig = normalizeJsonObject(req.body?.advancedConfig);
+
     const serviceArea = normalizeStringArray(req.body?.serviceArea);
 
     const latitude = toOptionalNumber(req.body?.latitude);
@@ -1116,6 +1133,12 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
 
           gallery:
             galleryInput.length > 0 ? galleryInput : image ? [image] : [],
+
+          slaResponse,
+
+          attachments,
+
+          advancedConfig,
 
           phone,
           email,
@@ -1242,6 +1265,16 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
         ? normalizeStringArray(req.body.gallery)
         : existing.gallery;
 
+    const attachments =
+      req.body?.attachments !== undefined
+        ? normalizeStringArray(req.body.attachments)
+        : undefined;
+
+    const advancedConfig =
+      req.body?.advancedConfig !== undefined
+        ? normalizeJsonObject(req.body.advancedConfig)
+        : undefined;
+
     const serviceArea =
       req.body?.serviceArea !== undefined
         ? normalizeStringArray(req.body.serviceArea)
@@ -1361,6 +1394,15 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
 
         gallery:
           galleryInput.length > 0 ? galleryInput : nextImage ? [nextImage] : [],
+
+        slaResponse:
+          req.body?.slaResponse !== undefined
+            ? String(req.body.slaResponse || "").trim() || null
+            : undefined,
+
+        attachments,
+
+        advancedConfig,
 
         phone:
           req.body?.phone !== undefined

@@ -89,7 +89,7 @@ export default function JobsNearYou() {
   }, []);
 
   return (
-    <section className="w-full bg-white">
+    <section className="w-full bg-white dark:bg-background">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div><h2 className="text-xl font-bold text-slate-950 sm:text-2xl">
           Jobs Near You
@@ -148,9 +148,9 @@ export default function JobsNearYou() {
               <Link
                 key={job.id}
                 href={`/jobs/${jobUrl}`}
-                className="group flex h-[190px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"
+                className="group flex h-[190px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
                   {job.employer.logoUrl ? (
                     <img
                       src={job.employer.logoUrl}

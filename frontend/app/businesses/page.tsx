@@ -26,6 +26,10 @@ import {
   parseBusinessesResponse,
 } from "@/lib/publicDirectoryTypes";
 import BusinessDirectoryControls from "./BusinessDirectoryControls";
+import {
+  getBusinessCategoryLabel,
+  getCanonicalBusinessName,
+} from "./businessUi";
 
 export const dynamic = "force-dynamic";
 
@@ -247,7 +251,7 @@ export default async function BusinessesPage({
         itemListElement: result.businesses.map((business, index) => ({
           "@type": "ListItem",
           position: index + 1,
-          name: getLocalizedBusinessText(business, language).name,
+          name: getCanonicalBusinessName(business),
           url: absoluteUrl(
             `/businesses/${business.slug || business.id}`,
           ),
@@ -257,7 +261,7 @@ export default async function BusinessesPage({
   ];
 
   return (
-    <div className="min-h-screen bg-[#fbfbfe]">
+    <div className="min-h-screen bg-background text-foreground transition-colors dark:bg-background">
       <script
         nonce={nonce}
         type="application/ld+json"
@@ -268,24 +272,24 @@ export default async function BusinessesPage({
       <Navbar />
 
       <main className="mx-auto max-w-[1440px] px-4 pb-20 pt-20 sm:px-6 lg:px-8">
-        <section className="relative mb-4 min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 sm:px-7">
+        <section className="relative mb-4 min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 transition-colors dark:border-violet-900/60 dark:from-[#100d20] dark:via-[#151127] dark:to-[#211641] sm:px-7">
           <div className="relative z-10 max-w-xl">
-            <h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[32px]">{isSomali ? "Ganacsiyada" : "Businesses"}</h1>
-            <p className="mt-2 text-[12px] font-medium text-slate-600">{isSomali ? "Ka hel ganacsiyada Soomaaliyeed ee lagu kalsoon yahay bulshadaada." : "Find trusted Somali-owned businesses in your community."}</p>
-            <p className="mt-5 flex items-center gap-2 text-[10px] font-bold text-slate-700"><Building2 size={14} className="text-primary" /><span className="text-primary">{directoryTotal}</span> {isSomali ? "ganacsi ayaa la helay" : "businesses found"}</p>
+            <h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-heading sm:text-[32px]">{isSomali ? "Ganacsiyada" : "Businesses"}</h1>
+            <p className="mt-2 text-[12px] font-medium text-muted">{isSomali ? "Ka hel ganacsiyada Soomaaliyeed ee lagu kalsoon yahay bulshadaada." : "Find trusted Somali-owned businesses in your community."}</p>
+            <p className="mt-5 flex items-center gap-2 text-[10px] font-bold text-foreground"><Building2 size={14} className="text-primary" /><span className="text-primary">{directoryTotal}</span> {isSomali ? "ganacsi ayaa la helay" : "businesses found"}</p>
           </div>
-          <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-1/2 opacity-70 md:block"><div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-violet-200/80 to-transparent" /><div className="absolute bottom-5 right-8 flex items-end gap-2 text-violet-300"><Building2 size={74} strokeWidth={1.2}/><Building2 size={110} strokeWidth={1.1}/><Building2 size={82} strokeWidth={1.2}/></div></div>
+          <div aria-hidden="true" className="absolute inset-y-0 right-0 hidden w-1/2 opacity-70 md:block"><div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-violet-200/80 to-transparent dark:from-violet-950/70" /><div className="absolute bottom-5 right-8 flex items-end gap-2 text-violet-300 dark:text-violet-700"><Building2 size={74} strokeWidth={1.2}/><Building2 size={110} strokeWidth={1.1}/><Building2 size={82} strokeWidth={1.2}/></div></div>
         </section>
         <BusinessDirectoryControls isSomali={isSomali} />
 
         {result.status === "error" ? (
-          <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-8 text-center">
-            <h2 className="text-2xl font-black text-amber-950">
+          <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-8 text-center dark:border-amber-800/60 dark:bg-amber-950/30">
+            <h2 className="text-2xl font-black text-amber-950 dark:text-amber-100">
               {isSomali
                 ? "Hagaha ganacsiyada hadda lama heli karo"
                 : "The business directory is temporarily unavailable"}
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-amber-900/80">
+            <p className="mx-auto mt-3 max-w-2xl text-amber-900/80 dark:text-amber-200/80">
               {isSomali
                 ? "Xogta lama soo qaadi karin. Fadlan mar kale isku day wax yar ka dib."
                 : "We could not load the directory data. Please try again in a moment."}
@@ -297,7 +301,7 @@ export default async function BusinessesPage({
               <div>
                 <h2
                   id="business-results-heading"
-                  className="text-2xl font-black text-slate-900"
+                  className="text-2xl font-black text-heading"
                 >
                   {query
                     ? isSomali
@@ -311,7 +315,7 @@ export default async function BusinessesPage({
                       ? "Ururrada la heli karo"
                       : "Featured organizations"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted">
                   {result.locationFallback
                     ? isSomali
                       ? "Ganacsi kuu dhow lama helin, sidaas darteed dhammaan ganacsiyada ayaan ku tusaynaa."
@@ -332,16 +336,16 @@ export default async function BusinessesPage({
             </div>
 
             {result.businesses.length === 0 ? (
-              <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
+              <div className="rounded-3xl border-2 border-dashed border-border bg-surface p-12 text-center dark:bg-surface">
                 <Building2
                   aria-hidden="true"
-                  className="mx-auto text-slate-300"
+                  className="mx-auto text-muted/50"
                   size={44}
                 />
-                <h2 className="mt-4 text-xl font-black text-slate-900">
+                <h2 className="mt-4 text-xl font-black text-heading">
                   {isSomali ? "Ganacsi lama helin" : "No businesses found"}
                 </h2>
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 text-muted">
                   {isSomali
                     ? "Isku day eray kale ama eeg dhammaan ganacsiyada."
                     : "Try another search term or browse all businesses."}
@@ -355,6 +359,7 @@ export default async function BusinessesPage({
                     business,
                     language,
                   );
+                  const displayName = getCanonicalBusinessName(business);
                   const businessPath = `/businesses/${business.slug || business.id}`;
                   const safeLogo = getSafeStoredUrl(business.logoUrl);
                   const safeBanner = getSafeStoredUrl(business.bannerUrl);
@@ -362,17 +367,14 @@ export default async function BusinessesPage({
                   const directionsQuery = [business.address, business.city, business.region]
                     .filter(Boolean)
                     .join(", ");
-                  const alternateName = isSomali
-                    ? business.name
-                    : business.nameSo?.trim();
 
                   return (
                     <article
                       key={`${business.type}-${business.id}`}
-                      className="group relative flex h-[255px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg sm:h-[275px]"
+                      className="group relative flex h-[255px] min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.28)] sm:h-[275px]"
                     >
-                      <Link href={businessPath} aria-label={`View ${localized.name}`} className="absolute inset-0 z-10"><span className="sr-only">View {localized.name}</span></Link>
-                      <div className="relative block h-[108px] shrink-0 overflow-hidden bg-slate-100 sm:h-[125px]">
+                      <Link href={businessPath} aria-label={`${isSomali ? "Eeg" : "View"} ${displayName}`} className="absolute inset-0 z-10"><span className="sr-only">{isSomali ? "Eeg" : "View"} {displayName}</span></Link>
+                      <div className="relative block h-[108px] shrink-0 overflow-hidden bg-surface-muted sm:h-[125px]">
                         {safeBanner && <img src={safeBanner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
                         {!safeBanner && safeLogo && <img src={safeLogo} alt="" className="h-full w-full object-contain p-6" />}
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
@@ -388,8 +390,8 @@ export default async function BusinessesPage({
                               src={safeLogo}
                               alt={
                                 isSomali
-                                  ? `Astaanta ${localized.name}`
-                                  : `${localized.name} logo`
+                                  ? `Astaanta ${displayName}`
+                                  : `${displayName} logo`
                               }
                               loading="lazy"
                               decoding="async"
@@ -407,39 +409,30 @@ export default async function BusinessesPage({
                           <span className="hidden rounded bg-primary/10 px-1.5 py-0.5 text-[7px] font-bold uppercase text-primary sm:inline-flex">
                             {businessTypeLabel(business.type, language)}
                           </span>
-                          <h3 className="mt-1 line-clamp-1 text-[11px] font-extrabold tracking-tight text-slate-950 sm:text-[13px]">
+                          <h3 className="mt-1 line-clamp-1 text-[11px] font-extrabold tracking-tight text-heading sm:text-[13px]">
                             <span className="transition-colors group-hover:text-primary">
-                              {localized.name}
+                              {displayName}
                             </span>
                           </h3>
-                          {alternateName &&
-                            alternateName !== localized.name && (
-                            <p
-                              lang={isSomali ? "en" : "so"}
-                              className="mt-0.5 truncate text-[8px] text-slate-500"
-                            >
-                              {alternateName}
-                            </p>
-                          )}
-                          {typeof business.rating === "number" && <p className="mt-1 flex items-center gap-1 text-[8px] font-semibold text-amber-500"><Star size={10} className="fill-amber-400" />{business.rating.toFixed(1)} <span className="font-normal text-slate-400">({business.reviewsCount ?? 0})</span></p>}
+                          {typeof business.rating === "number" && <p className="mt-1 flex items-center gap-1 text-[8px] font-semibold text-amber-500"><Star size={10} className="fill-amber-400" />{business.rating.toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0})</span></p>}
                         </div>
                       </div>
 
                       {location && (
-                        <p className="mt-2 flex items-start gap-1.5 text-[8px] font-medium text-slate-500 sm:text-[9px]">
+                        <p className="mt-2 flex items-start gap-1.5 text-[8px] font-medium text-muted sm:text-[9px]">
                           <MapPin
                             aria-hidden="true"
                             size={12}
                             className="mt-0.5 shrink-0 text-primary"
                           />
-                          <span className="truncate">{location}</span><span className="ml-auto shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[7px] font-bold text-emerald-600">{business.statusLabel === "Closed" ? "Closed" : "Open"}</span>
+                          <span className="truncate">{location}</span><span className="ml-auto shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[7px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">{business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Furan" : "Open")}</span>
                         </p>
                       )}
 
                       {(business.category || typeof business.distanceKm === "number") && (
                         <div className="mt-2 flex flex-wrap gap-1 text-[8px] font-bold">
-                          {business.category && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">{business.category}</span>}
-                          {typeof business.distanceKm === "number" && <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`}</span>}
+                          {business.category && <span className="rounded bg-surface-muted px-1.5 py-0.5 text-muted">{getBusinessCategoryLabel(business.category, isSomali)}</span>}
+                          {typeof business.distanceKm === "number" && <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">{business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`}</span>}
                         </div>
                       )}
 
@@ -447,8 +440,8 @@ export default async function BusinessesPage({
                         {localized.description
                           ? compactDescription(localized.description, 210)
                           : isSomali
-                            ? `${localized.name} waa urur ku jira hagaha ganacsiyada ${SITE_NAME}.`
-                            : `${localized.name} is listed in the ${SITE_NAME} business directory.`}
+                            ? `${displayName} waa urur ku jira hagaha ganacsiyada ${SITE_NAME}.`
+                            : `${displayName} is listed in the ${SITE_NAME} business directory.`}
                       </p>
 
                       {business.type !== "business" && <dl className="hidden">
@@ -479,9 +472,9 @@ export default async function BusinessesPage({
                         )}
                       </dl>}
 
-                      <div className="relative z-20 mt-auto grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 pt-2 text-[8px] font-semibold text-slate-600 sm:text-[9px]">
-                        {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 hover:text-primary"><Phone size={11} />{isSomali ? "Wac" : "Call"}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />{isSomali ? "Wac" : "Call"}</span>}
-                        {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 hover:text-primary"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
+                      <div className="relative z-20 mt-auto grid grid-cols-2 divide-x divide-border border-t border-border pt-2 text-[8px] font-semibold text-foreground sm:text-[9px]">
+                        {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 hover:text-primary"><Phone size={11} />{isSomali ? "Wac" : "Call"}</a> : <span className="flex items-center justify-center gap-1.5 text-muted/50"><Phone size={11} />{isSomali ? "Wac" : "Call"}</span>}
+                        {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 hover:text-primary"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="flex items-center justify-center gap-1.5 text-muted/50"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
                       </div>
                       </div>
                     </article>
@@ -489,8 +482,8 @@ export default async function BusinessesPage({
                 })}
               </div>
               <aside className="hidden space-y-3 lg:block">
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)]"><h3 className="flex items-center gap-2 text-[12px] font-extrabold"><Building2 size={14} className="text-primary" />Categories</h3><div className="mt-3 space-y-1"><Link href="/businesses" className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] font-bold ${filterParams.has("category") ? "text-slate-600 hover:bg-slate-50 hover:text-primary" : "bg-primary/10 text-primary"}`}><span>All Categories</span><span>{directoryTotal}</span></Link>{categoryCounts.slice(0, 8).map(([category, count]) => { const selected = filterParams.get("category") === category; return <Link key={category} href={`/businesses?category=${encodeURIComponent(category)}`} className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] ${selected ? "bg-primary/10 font-bold text-primary" : "font-medium text-slate-600 hover:bg-slate-50 hover:text-primary"}`}><span className="truncate">{category}</span><span>{count}</span></Link>; })}</div></div>
-                <div className="rounded-xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center"><Crown className="mx-auto text-primary" size={20}/><h3 className="mt-2 text-[12px] font-extrabold">Get Featured</h3><p className="mt-1 text-[9px] leading-4 text-slate-500">Boost your business visibility and reach more customers.</p><Link href="/contact" className="mt-3 flex h-9 items-center justify-center rounded-lg bg-primary text-[9px] font-bold text-white">Become Featured</Link></div>
+                <div className="rounded-xl border border-border bg-surface p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.28)]"><h3 className="flex items-center gap-2 text-[12px] font-extrabold text-heading"><Building2 size={14} className="text-primary" />{isSomali ? "Qaybaha" : "Categories"}</h3><div className="mt-3 space-y-1"><Link href="/businesses" className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] font-bold ${filterParams.has("category") ? "text-muted hover:bg-surface-muted hover:text-primary" : "bg-primary/10 text-primary"}`}><span>{isSomali ? "Dhammaan qaybaha" : "All Categories"}</span><span>{directoryTotal}</span></Link>{categoryCounts.slice(0, 8).map(([category, count]) => { const selected = filterParams.get("category") === category; return <Link key={category} href={`/businesses?category=${encodeURIComponent(category)}`} className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] ${selected ? "bg-primary/10 font-bold text-primary" : "font-medium text-muted hover:bg-surface-muted hover:text-primary"}`}><span className="truncate">{getBusinessCategoryLabel(category, isSomali)}</span><span>{count}</span></Link>; })}</div></div>
+                <div className="rounded-xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center dark:border-violet-900/60 dark:from-violet-950/35 dark:to-surface"><Crown className="mx-auto text-primary" size={20}/><h3 className="mt-2 text-[12px] font-extrabold text-heading">{isSomali ? "Noqo ganacsi la xushay" : "Get Featured"}</h3><p className="mt-1 text-[9px] leading-4 text-muted">{isSomali ? "Kordhi muuqaalka ganacsigaaga oo gaadh macaamiil badan." : "Boost your business visibility and reach more customers."}</p><Link href="/contact" className="mt-3 flex h-9 items-center justify-center rounded-lg bg-primary text-[9px] font-bold text-white">{isSomali ? "Noqo mid la xushay" : "Become Featured"}</Link></div>
               </aside>
               </div>
             )}
@@ -508,12 +501,12 @@ export default async function BusinessesPage({
                       filterParams.toString(),
                     )}
                     rel="prev"
-                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:border-primary hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-5 py-3 text-sm font-black text-foreground hover:border-primary hover:text-primary dark:bg-surface"
                   >
                     {isSomali ? "Hore" : "Previous"}
                   </Link>
                 )}
-                <span className="px-3 text-sm font-bold text-slate-600">
+                <span className="px-3 text-sm font-bold text-muted">
                   {isSomali ? "Bogga" : "Page"} {result.pagination.page} /{" "}
                   {result.pagination.totalPages}
                 </span>
@@ -525,7 +518,7 @@ export default async function BusinessesPage({
                       filterParams.toString(),
                     )}
                     rel="next"
-                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:border-primary hover:text-primary"
+                    className="rounded-xl border border-border bg-surface px-5 py-3 text-sm font-black text-foreground hover:border-primary hover:text-primary dark:bg-surface"
                   >
                     {isSomali ? "Xiga" : "Next"}
                   </Link>

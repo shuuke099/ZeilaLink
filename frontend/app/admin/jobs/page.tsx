@@ -17,13 +17,13 @@ export default function AdminJobsPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-end px-8 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm"
+          className="flex flex-col items-end rounded-2xl border border-slate-100 bg-white px-8 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"
         >
           <div className="flex items-center gap-2 mb-1">
             <Activity size={12} className="text-primary animate-pulse" />
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Active Listings</p>
           </div>
-          <p className="text-4xl font-black leading-none text-slate-900 tracking-tighter">
+          <p className="text-4xl font-black leading-none tracking-tighter text-slate-900 dark:text-white">
             {new Intl.NumberFormat('en-US').format(totalJobs)}
           </p>
         </motion.div>
@@ -33,11 +33,11 @@ export default function AdminJobsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="rounded-[2.5rem] border border-slate-100 bg-white shadow-sm overflow-hidden mb-12"
+        className="mb-12 overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="p-10 border-b border-slate-50 bg-slate-50/5 flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-slate-50 bg-slate-50/5 p-10 dark:border-slate-800">
           <div>
-            <h3 className="text-2xl font-black text-[#0b213f] tracking-tight">Active Opportunities</h3>
+            <h3 className="text-2xl font-black tracking-tight text-[#0b213f] dark:text-white">Active Opportunities</h3>
             <p className="text-sm font-medium text-slate-400 mt-1">Manage and oversee all job listings currently active on the platform.</p>
           </div>
           <div className="flex items-center gap-3">

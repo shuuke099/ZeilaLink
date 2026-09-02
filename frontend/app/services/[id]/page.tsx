@@ -29,6 +29,20 @@ const isSafeIdentifier = (value: string) =>
 const normalizeService = (value: unknown): ServiceItem | null => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const item = value as Record<string, unknown>;
+  const advancedConfig =
+    item.advancedConfig &&
+    typeof item.advancedConfig === "object" &&
+    !Array.isArray(item.advancedConfig)
+      ? (item.advancedConfig as Record<string, unknown>)
+      : {};
+  const detailString = (key: string) =>
+    typeof advancedConfig[key] === "string" ? advancedConfig[key] as string : "";
+  const detailList = (key: string) =>
+    Array.isArray(advancedConfig[key])
+      ? (advancedConfig[key] as unknown[]).filter(
+          (entry): entry is string => typeof entry === "string",
+        )
+      : [];
   if (
     typeof item.id !== "string" ||
     typeof item.title !== "string" ||
@@ -49,25 +63,19 @@ const normalizeService = (value: unknown): ServiceItem | null => {
     gallery: Array.isArray(item.gallery)
       ? item.gallery.filter((entry): entry is string => typeof entry === "string")
       : [],
-    includes: Array.isArray(item.includes)
-      ? item.includes.filter((entry): entry is string => typeof entry === "string")
-      : [],
-    highlights: Array.isArray(item.highlights)
-      ? item.highlights.filter((entry): entry is string => typeof entry === "string")
-      : [],
+    includes: detailList("includes"),
+    highlights: detailList("highlights"),
     packageName:
-      typeof item.packageName === "string" ? item.packageName : "",
+      detailString("packageName"),
     packageDescription:
-      typeof item.packageDescription === "string"
-        ? item.packageDescription
-        : "",
-    revisions: typeof item.revisions === "string" ? item.revisions : "",
+      detailString("packageDescription"),
+    revisions: detailString("revisions"),
     deliveryTime:
-      typeof item.deliveryTime === "string" ? item.deliveryTime : "",
-    support: typeof item.support === "string" ? item.support : "",
-    expertName: typeof item.expertName === "string" ? item.expertName : "",
-    expertRole: typeof item.expertRole === "string" ? item.expertRole : "",
-    expertImage: typeof item.expertImage === "string" ? item.expertImage : "",
+      detailString("deliveryTime"),
+    support: detailString("support"),
+    expertName: detailString("expertName"),
+    expertRole: detailString("expertRole"),
+    expertImage: detailString("expertImage"),
     isDemo: false,
   };
 };
@@ -273,8 +281,7 @@ export default async function ServiceDetailPage({
       {
         "@type": "ListItem",
         position: 3,
-        name:
-          !isEn && service.titleSo ? service.titleSo : service.title,
+        name: service.title,
         item: url,
       },
     ],

@@ -91,7 +91,7 @@ export default function DealsAndPromotions() {
 
   if (loading) {
     return (
-      <section className="w-full bg-white py-6">
+      <section className="w-full bg-white py-6 dark:bg-background">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="mb-4">
             <div className="h-6 w-48 animate-pulse rounded bg-slate-200" />
@@ -113,7 +113,7 @@ export default function DealsAndPromotions() {
 
   if (error) {
     return (
-      <section className="w-full bg-white py-6">
+      <section className="w-full bg-white py-6 dark:bg-background">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <p className="text-sm font-medium text-red-500">{error}</p>
         </div>
@@ -124,7 +124,7 @@ export default function DealsAndPromotions() {
   if (deals.length === 0) return null;
 
   return (
-    <section className="w-full bg-white py-6">
+    <section className="w-full bg-white py-6 dark:bg-background">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
@@ -170,7 +170,7 @@ export default function DealsAndPromotions() {
               return (
                 <article
                   key={deal.id}
-                  className="group min-w-[165px] max-w-[165px] snap-start overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:min-w-[185px] sm:max-w-[185px] lg:min-w-0 lg:max-w-none"
+                  className="group min-w-[165px] max-w-[165px] snap-start overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 sm:min-w-[185px] sm:max-w-[185px] lg:min-w-0 lg:max-w-none"
                 >
                   <Link href={`/deals/${dealIdentifier}`} className="block">
                     <div className="relative h-28 overflow-hidden bg-slate-100">

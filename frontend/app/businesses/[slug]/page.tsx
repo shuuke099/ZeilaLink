@@ -87,8 +87,8 @@ const profileDescription = (
     return compactDescription(localized.description);
   }
   return language === "so"
-    ? `Eeg astaanta ${localized.name}, ${businessTypeLabel(business.type, language)} ku jira hagaha ${SITE_NAME}.`
-    : `View ${localized.name}, a ${businessTypeLabel(business.type, language).toLowerCase()} in the ${SITE_NAME} directory.`;
+    ? `Eeg astaanta ${business.name}, ${businessTypeLabel(business.type, language)} ku jira hagaha ${SITE_NAME}.`
+    : `View ${business.name}, a ${businessTypeLabel(business.type, language).toLowerCase()} in the ${SITE_NAME} directory.`;
 };
 
 const joinedDate = (
@@ -96,7 +96,7 @@ const joinedDate = (
   language: DirectoryLanguage,
 ) => {
   if (!value || Number.isNaN(Date.parse(value))) return null;
-  return new Intl.DateTimeFormat(language === "so" ? "so-SO" : "en-US", {
+  return new Intl.DateTimeFormat("en-US", {
     month: "long",
     year: "numeric",
   }).format(new Date(value));
@@ -139,7 +139,7 @@ export async function generateMetadata({
 
   const localized = getLocalizedBusinessText(business, language);
   const typeLabel = businessTypeLabel(business.type, language);
-  const title = `${localized.name} – ${typeLabel} | ${SITE_NAME}`;
+  const title = `${business.name} – ${typeLabel} | ${SITE_NAME}`;
   const description = profileDescription(business, language);
   const canonical = absoluteUrl(
     `/businesses/${business.slug || business.id}`,
@@ -170,7 +170,7 @@ export async function generateMetadata({
         {
           url: image || absoluteUrl("/opengraph-image"),
           alt: image
-            ? `${localized.name} logo`
+            ? `${business.name} logo`
             : "ZeilaLink business directory",
         },
       ],
@@ -273,7 +273,7 @@ export default async function BusinessProfilePage({
           {
             "@type": "ListItem",
             position: 3,
-            name: localized.name,
+            name: business.name,
             item: canonical,
           },
         ],
@@ -281,7 +281,7 @@ export default async function BusinessProfilePage({
       {
         "@type": schemaType,
         "@id": `${canonical}#organization`,
-        name: localized.name,
+        name: business.name,
         alternateName:
           business.nameSo?.trim() && business.nameSo !== localized.name
             ? business.nameSo
@@ -306,7 +306,7 @@ export default async function BusinessProfilePage({
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafe]">
+    <div className="min-h-screen bg-[#fafafe] text-foreground dark:bg-slate-950">
       <script
         nonce={nonce}
         type="application/ld+json"

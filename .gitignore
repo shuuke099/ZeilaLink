@@ -51,3 +51,8 @@ backend/uploads/
 # Prisma Studio
 prisma/*.db
 prisma/*.db-journal
+
+NUL
+nul
+*/NUL
+*/nul

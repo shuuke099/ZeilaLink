@@ -229,53 +229,85 @@
    DARK MODE LEGACY COLOR OVERRIDES
    ========================================================= */
 
-[data-theme="dark"] .bg-white,
-[data-theme="dark"] .bg-slate-50,
-[data-theme="dark"] .bg-slate-100,
-[data-theme="dark"] .bg-gray-50,
-[data-theme="dark"] .bg-gray-100,
-[data-theme="dark"] .bg-blue-50,
-[data-theme="dark"] .bg-blue-100,
-[data-theme="dark"] .bg-primary-light {
-  background-color: rgb(var(--color-surface-muted)) !important;
+@layer utilities {
+:where([data-theme="dark"]) .bg-white {
+  background-color: rgb(var(--color-surface));
 }
 
-[data-theme="dark"] .border-slate-100,
-[data-theme="dark"] .border-slate-200,
-[data-theme="dark"] .border-slate-300,
-[data-theme="dark"] .border-gray-100,
-[data-theme="dark"] .border-gray-200,
-[data-theme="dark"] .border-gray-300,
-[data-theme="dark"] .border-blue-100,
-[data-theme="dark"] .border-blue-200 {
-  border-color: rgb(var(--color-border) / 0.55) !important;
+:where([data-theme="dark"]) .bg-slate-50,
+:where([data-theme="dark"]) .bg-slate-100,
+:where([data-theme="dark"]) .bg-gray-50,
+:where([data-theme="dark"]) .bg-gray-100,
+:where([data-theme="dark"]) .bg-blue-50,
+:where([data-theme="dark"]) .bg-blue-100,
+:where([data-theme="dark"]) .bg-primary-light {
+  background-color: rgb(var(--color-surface-muted));
 }
 
-[data-theme="dark"] .text-slate-900,
-[data-theme="dark"] .text-slate-800,
-[data-theme="dark"] .text-slate-700,
-[data-theme="dark"] .text-gray-900,
-[data-theme="dark"] .text-gray-800,
-[data-theme="dark"] .text-black {
-  color: rgb(var(--color-heading)) !important;
+:where([data-theme="dark"]) .bg-violet-50,
+:where([data-theme="dark"]) .bg-violet-100 {
+  background-color: rgb(46 16 101 / 0.48);
 }
 
-[data-theme="dark"] .text-slate-600,
-[data-theme="dark"] .text-slate-500,
-[data-theme="dark"] .text-slate-400,
-[data-theme="dark"] .text-gray-600,
-[data-theme="dark"] .text-gray-500,
-[data-theme="dark"] .text-gray-400 {
-  color: rgb(var(--color-foreground) / 0.75) !important;
+:where([data-theme="dark"]) .bg-emerald-50,
+:where([data-theme="dark"]) .bg-emerald-100 {
+  background-color: rgb(2 44 34 / 0.62);
 }
 
-[data-theme="dark"] .shadow-sm,
-[data-theme="dark"] .shadow-md,
-[data-theme="dark"] .shadow-lg,
-[data-theme="dark"] .shadow-xl,
-[data-theme="dark"] .shadow-2xl,
-[data-theme="dark"] .shadow-soft {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+:where([data-theme="dark"]) .bg-amber-50,
+:where([data-theme="dark"]) .bg-amber-100 {
+  background-color: rgb(69 26 3 / 0.55);
+}
+
+:where([data-theme="dark"]) .bg-red-50,
+:where([data-theme="dark"]) .bg-red-100,
+:where([data-theme="dark"]) .bg-rose-50,
+:where([data-theme="dark"]) .bg-rose-100 {
+  background-color: rgb(69 10 10 / 0.5);
+}
+
+:where([data-theme="dark"]) .border-slate-100,
+:where([data-theme="dark"]) .border-slate-200,
+:where([data-theme="dark"]) .border-slate-300,
+:where([data-theme="dark"]) .border-gray-100,
+:where([data-theme="dark"]) .border-gray-200,
+:where([data-theme="dark"]) .border-gray-300,
+:where([data-theme="dark"]) .border-blue-100,
+:where([data-theme="dark"]) .border-blue-200 {
+  border-color: rgb(var(--color-border) / 0.55);
+}
+
+:where([data-theme="dark"]) .border-violet-100,
+:where([data-theme="dark"]) .border-violet-200 {
+  border-color: rgb(109 40 217 / 0.45);
+}
+
+:where([data-theme="dark"]) .text-slate-900,
+:where([data-theme="dark"]) .text-slate-800,
+:where([data-theme="dark"]) .text-slate-700,
+:where([data-theme="dark"]) .text-gray-900,
+:where([data-theme="dark"]) .text-gray-800,
+:where([data-theme="dark"]) .text-black {
+  color: rgb(var(--color-heading));
+}
+
+:where([data-theme="dark"]) .text-slate-600,
+:where([data-theme="dark"]) .text-slate-500,
+:where([data-theme="dark"]) .text-slate-400,
+:where([data-theme="dark"]) .text-gray-600,
+:where([data-theme="dark"]) .text-gray-500,
+:where([data-theme="dark"]) .text-gray-400 {
+  color: rgb(var(--color-foreground) / 0.75);
+}
+
+:where([data-theme="dark"]) .shadow-sm,
+:where([data-theme="dark"]) .shadow-md,
+:where([data-theme="dark"]) .shadow-lg,
+:where([data-theme="dark"]) .shadow-xl,
+:where([data-theme="dark"]) .shadow-2xl,
+:where([data-theme="dark"]) .shadow-soft {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
 }
 
 /* =========================================================

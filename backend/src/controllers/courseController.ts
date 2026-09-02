@@ -10,6 +10,7 @@ import {
 import { createStableSlug, slugWhenMissing } from "../utils/slug";
 
 const COURSE_WRITE_FIELDS = new Set([
+  "providerId",
   "name",
   "nameSo",
   "description",
@@ -31,6 +32,8 @@ const COURSE_WRITE_FIELDS = new Set([
   "registrationDeadline",
   "schedule",
   "scheduleSo",
+  "learningOutcomes",
+  "requirements",
   "cost",
   "currency",
   "enrollmentUrl",
@@ -616,25 +619,60 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
       normalizedDates[field] = parsed;
     }
 
-    const provider = await prisma.provider.findUnique({
-      where: { contactUserId: req.user!.id },
-      select: {
-        id: true,
-        verified: true,
-        contactUserId: true,
-        user: { select: { isVerified: true } },
-      },
-    });
+    const requestedProviderId =
+      typeof payload.providerId === "string" ? payload.providerId.trim() : "";
+
+    const provider = req.user!.role === "admin"
+      ? requestedProviderId
+        ? await prisma.provider.findUnique({
+            where: { id: requestedProviderId },
+            select: {
+              id: true,
+              verified: true,
+              contactUserId: true,
+              user: { select: { isVerified: true } },
+            },
+          })
+        : null
+      : await prisma.provider.findUnique({
+          where: { contactUserId: req.user!.id },
+          select: {
+            id: true,
+            verified: true,
+            contactUserId: true,
+            user: { select: { isVerified: true } },
+          },
+        });
 
     if (!provider) {
       recordCourseEvent(req, "course.create", null, "denied", {
         reason: "provider_profile_required",
       });
 
-      return res.status(403).json({ error: "Provider profile required" });
+      return res.status(req.user!.role === "admin" ? 400 : 403).json({
+        error: req.user!.role === "admin"
+          ? "A valid provider is required"
+          : "Provider profile required",
+      });
     }
 
-    if (!provider.verified || !providerAccountIsEligible(provider)) {
+    const learningOutcomes = hasOwn(payload, "learningOutcomes")
+      ? parseStringArray(payload.learningOutcomes)
+      : [];
+    const requirements = hasOwn(payload, "requirements")
+      ? parseStringArray(payload.requirements)
+      : [];
+
+    if (learningOutcomes === undefined || requirements === undefined) {
+      return res.status(400).json({
+        error: "learningOutcomes and requirements must be arrays of strings",
+      });
+    }
+
+    if (
+      req.user!.role !== "admin" &&
+      (!provider.verified || !providerAccountIsEligible(provider))
+    ) {
       recordCourseEvent(req, "course.create", null, "denied", {
         reason: "verified_approved_provider_required",
       });
@@ -670,6 +708,8 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
           registrationDeadline: normalizedDates.registrationDeadline ?? null,
           schedule: normalizeOptionalString(payload.schedule),
           scheduleSo: normalizeOptionalString(payload.scheduleSo),
+          learningOutcomes,
+          requirements,
           cost,
           currency: normalizeOptionalString(payload.currency) || "USD",
           enrollmentUrl: normalizedUrls.enrollmentUrl ?? null,
@@ -914,6 +954,15 @@ export const updateCourse = async (req: AuthRequest, res: Response) => {
       }
 
       updates.gallery = gallery;
+    }
+
+    for (const field of ["learningOutcomes", "requirements"] as const) {
+      if (!hasOwn(payload, field)) continue;
+      const values = parseStringArray(payload[field]);
+      if (values === undefined) {
+        return res.status(400).json({ error: `${field} must be an array of strings` });
+      }
+      updates[field] = values;
     }
 
     let skillIds: string[] | undefined;
@@ -1271,6 +1320,15 @@ export const adminUpdateCourse = async (req: AuthRequest, res: Response) => {
       }
 
       updates.gallery = gallery;
+    }
+
+    for (const field of ["learningOutcomes", "requirements"] as const) {
+      if (!hasOwn(payload, field)) continue;
+      const values = parseStringArray(payload[field]);
+      if (values === undefined) {
+        return res.status(400).json({ error: `${field} must be an array of strings` });
+      }
+      updates[field] = values;
     }
 
     let skillIds: string[] | undefined;

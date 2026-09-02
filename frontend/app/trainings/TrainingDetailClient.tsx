@@ -34,21 +34,21 @@ export interface TrainingDetail {
 }
 
 type Props = { initialTraining: TrainingDetail; publicPath: string };
-const panel = 'rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)]';
+const panel = 'rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.28)]';
 
 export default function TrainingDetailClient({ initialTraining: training, publicPath }: Props) {
   const { language } = useLanguage();
   const isSo = language === 'so';
-  const name = isSo && training.nameSo?.trim() ? training.nameSo : training.name;
+  const name = training.name;
   const description = isSo && training.descriptionSo?.trim() ? training.descriptionSo : training.description;
   const duration = isSo && training.durationSo?.trim() ? training.durationSo : training.duration;
   const schedule = isSo && training.scheduleSo?.trim() ? training.scheduleSo : training.schedule;
-  const providerName = isSo && training.provider.nameSo?.trim() ? training.provider.nameSo : training.provider.name;
+  const providerName = training.provider.name;
   const providerDescription = isSo && training.provider.descriptionSo?.trim() ? training.provider.descriptionSo : training.provider.description;
   const format = (training.deliveryMode || 'in_person').replace('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
   const location = training.deliveryMode === 'online' ? 'Online' : [training.address, training.city, training.state, training.postalCode].filter(Boolean).join(', ') || 'Provided during registration';
   const price = training.cost === 0 ? (isSo ? 'Bilaash' : 'Free') : new Intl.NumberFormat('en-US', { style: 'currency', currency: training.currency || 'USD', maximumFractionDigits: 0 }).format(training.cost);
-  const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat(isSo ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : 'Flexible';
+  const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : 'Flexible';
   const enrollUrl = getSafeStoredUrl(training.enrollmentUrl) || getSafeStoredUrl(training.onlineUrl);
   const websiteUrl = getSafeStoredUrl(training.provider.website);
   const emailUrl = getSafeMailtoUrl(training.provider.email || undefined);
@@ -57,25 +57,25 @@ export default function TrainingDetailClient({ initialTraining: training, public
   const outcomes = training.learningOutcomes?.length ? training.learningOutcomes : (training.skills?.length ? training.skills.map((skill) => `Practical ${skill.name} skills`) : ['Practical, job-ready knowledge', 'Industry-standard tools and workflows', 'Hands-on exercises and guided practice', 'Confidence to apply your new skills']);
   const requirements = training.requirements?.length ? training.requirements : ['No prior professional experience required', 'Basic computer skills recommended', 'Reliable internet access for online sessions', 'Commitment to complete course activities'];
 
-  const registerButton = enrollUrl ? <a href={enrollUrl} target="_blank" rel="noopener noreferrer" className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-[11px] font-bold text-white transition hover:bg-violet-700">Visit Registration Page <ExternalLink size={13} /></a> : <span className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 px-4 text-[11px] font-bold text-slate-500">Registration link coming soon</span>;
+  const registerButton = enrollUrl ? <a href={enrollUrl} target="_blank" rel="noopener noreferrer" className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-[11px] font-bold text-white transition hover:bg-violet-700">Visit Registration Page <ExternalLink size={13} /></a> : <span className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 px-4 text-[11px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">Registration link coming soon</span>;
 
-  return <div className="min-h-screen bg-[#fafafe] text-slate-900"><Navbar /><main className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
+  return <div className="min-h-screen bg-[#fafafe] text-slate-900 dark:bg-slate-950 dark:text-slate-100"><Navbar /><main className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
       <div className="min-w-0 space-y-4">
         <section className={`${panel} overflow-hidden`}>
-          <div className="relative h-[230px] bg-gradient-to-br from-violet-100 to-slate-200 sm:h-[330px] lg:h-[390px]">
+          <div className="relative h-[230px] bg-gradient-to-br from-violet-100 to-slate-200 dark:from-violet-950 dark:to-slate-800 sm:h-[330px] lg:h-[390px]">
             {training.imageUrl ? <img src={training.imageUrl} alt={name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-violet-500"><GraduationCap size={72} /></div>}
             {training.featured && <span className="absolute left-3 top-3 rounded bg-violet-600 px-2 py-1 text-[8px] font-extrabold uppercase text-white">Featured</span>}
             {gallery.length > 1 && <span className="absolute bottom-3 right-3 rounded bg-slate-950/75 px-2 py-1 text-[9px] font-semibold text-white">1 / {gallery.length}</span>}
           </div>
           <div className="p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-4"><div><h1 className="text-[23px] font-extrabold leading-tight tracking-[-0.035em] text-slate-950 sm:text-[28px]">{name}</h1><p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-500">Offered by <span className="text-slate-800">{providerName}</span>{training.provider.verified && <CheckCircle2 size={14} className="fill-emerald-500 text-white" />}</p></div><button aria-label="Save course" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:text-violet-600"><Heart size={17} /></button></div>
+            <div className="flex items-start justify-between gap-4"><div><h1 className="text-[23px] font-extrabold leading-tight tracking-[-0.035em] text-slate-950 dark:text-white sm:text-[28px]">{name}</h1><p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Offered by <span className="text-slate-800 dark:text-slate-200">{providerName}</span>{training.provider.verified && <CheckCircle2 size={14} className="fill-emerald-500 text-white" />}</p></div><button aria-label="Save course" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:text-violet-600 dark:border-slate-700 dark:text-slate-500 dark:hover:text-violet-300"><Heart size={17} /></button></div>
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-medium text-slate-600">{training.provider.rating ? <span className="flex items-center gap-1 text-amber-600"><Star size={12} className="fill-amber-400 text-amber-400" />{training.provider.rating.toFixed(1)} rating</span> : null}<span className="flex items-center gap-1"><UsersRound size={12} /> Open enrollment</span></div>
             <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4 text-[10px] font-medium text-slate-600 sm:grid-cols-2 xl:grid-cols-4"><span className="flex items-center gap-2"><CalendarDays size={13} className="text-violet-600" />{formatDate(training.startDate)} – {formatDate(training.endDate)}</span><span className="flex items-center gap-2"><Clock3 size={13} className="text-violet-600" />{schedule || duration}</span><span className="flex items-center gap-2"><MapPin size={13} className="text-violet-600" />{location}</span><span className="flex items-center gap-2"><UserRound size={13} className="text-violet-600" />{training.level || 'All levels'}</span></div>
           </div>
         </section>
 
-        <section className="rounded-xl border border-violet-100 bg-violet-50/70 p-4"><div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-2.5"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700"><Globe2 size={14} /></span><div><p className="text-[11px] font-bold text-slate-900">This training is offered by an external provider.</p><p className="mt-1 text-[9px] leading-4 text-slate-500">ZeilaLink lists this opportunity to help you discover it. Registration and course delivery are managed by the provider.</p></div></div><div className="w-full shrink-0 sm:w-52">{registerButton}</div></div></section>
+        <section className="rounded-xl border border-violet-100 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/30"><div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-2.5"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-200"><Globe2 size={14} /></span><div><p className="text-[11px] font-bold text-slate-900 dark:text-white">This training is offered by an external provider.</p><p className="mt-1 text-[9px] leading-4 text-slate-500 dark:text-slate-300">ZeilaLink lists this opportunity to help you discover it. Registration and course delivery are managed by the provider.</p></div></div><div className="w-full shrink-0 sm:w-52">{registerButton}</div></div></section>
 
         <ContentPanel title={isSo ? 'Ku saabsan tababarkan' : 'About this training'}><p className="whitespace-pre-line text-[11px] leading-5 text-slate-600">{description}</p></ContentPanel>
 
@@ -93,12 +93,12 @@ export default function TrainingDetailClient({ initialTraining: training, public
 
         <section className={`${panel} p-4`}><h2 className="text-[12px] font-extrabold">How to join</h2><ol className="mt-3 space-y-2">{['Click the registration button', 'Create an account on the provider website', 'Complete registration and payment', 'Receive confirmation from the provider'].map((step, index) => <li key={step} className="flex gap-2 text-[9px] leading-4 text-slate-600"><span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-violet-100 text-[8px] font-bold text-violet-700">{index + 1}</span>{step}</li>)}</ol><div className="mt-4">{registerButton}</div></section>
 
-        <section className={`${panel} p-4`}><h2 className="flex items-center gap-2 text-[12px] font-extrabold"><MapPin size={14} className="text-violet-600" />Location</h2><p className="mt-2 text-[10px] font-semibold text-slate-700">{location}</p><div className="mt-3 grid h-24 place-items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef2ff_25%,#f8fafc_25%,#f8fafc_50%,#eef2ff_50%,#eef2ff_75%,#f8fafc_75%)] bg-[length:24px_24px]"><span className="grid h-8 w-8 place-items-center rounded-full bg-violet-600 text-white shadow-lg"><MapPin size={15} /></span></div></section>
+        <section className={`${panel} p-4`}><h2 className="flex items-center gap-2 text-[12px] font-extrabold"><MapPin size={14} className="text-violet-600" />Location</h2><p className="mt-2 text-[10px] font-semibold text-slate-700 dark:text-slate-200">{location}</p><div className="mt-3 grid h-24 place-items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef2ff_25%,#f8fafc_25%,#f8fafc_50%,#eef2ff_50%,#eef2ff_75%,#f8fafc_75%)] bg-[length:24px_24px] dark:bg-[linear-gradient(135deg,#1e1b4b_25%,#0f172a_25%,#0f172a_50%,#1e1b4b_50%,#1e1b4b_75%,#0f172a_75%)]"><span className="grid h-8 w-8 place-items-center rounded-full bg-violet-600 text-white shadow-lg"><MapPin size={15} /></span></div></section>
 
         <section className={`${panel} p-4`}><h2 className="flex items-center gap-2 text-[12px] font-extrabold"><FileCheck2 size={14} className="text-violet-600" />Eligibility & requirements</h2><div className="mt-3 space-y-2">{requirements.slice(0, 5).map((requirement) => <p key={requirement} className="flex gap-2 text-[9px] leading-4 text-slate-600"><Check size={11} className="mt-0.5 shrink-0 text-emerald-600" />{requirement}</p>)}</div></section>
 
         <ShareCard publicPath={publicPath} />
-        <div className="rounded-xl border border-violet-100 bg-violet-50 p-4"><p className="flex gap-2 text-[9px] leading-4 text-slate-600"><ShieldCheck size={15} className="shrink-0 text-violet-600" />This listing is offered by an external provider. Verify program details directly before registering.</p></div>
+        <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 dark:border-violet-900/60 dark:bg-violet-950/30"><p className="flex gap-2 text-[9px] leading-4 text-slate-600 dark:text-slate-300"><ShieldCheck size={15} className="shrink-0 text-violet-600" />This listing is offered by an external provider. Verify program details directly before registering.</p></div>
       </aside>
     </div>
   </main></div>;

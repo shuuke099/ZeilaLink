@@ -17,7 +17,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
   const isEn = language === "en";
 
   return (
-    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-10 sm:pb-12 sm:pt-12 lg:overflow-hidden lg:pb-28 lg:pt-16">
+    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-10 dark:bg-background sm:pb-12 sm:pt-12 lg:overflow-hidden lg:pb-28 lg:pt-16">
       <div className="home-section-content mx-auto w-full min-w-0 max-w-7xl">
         <div className="grid min-w-0 items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
           <div className="home-about-content relative min-w-0 max-w-full text-center lg:text-left">
@@ -69,7 +69,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
                 />
               </Link>
               <div className="grid min-w-0 grid-cols-1 gap-3 pt-4 sm:grid-cols-2 sm:gap-4">
-                <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
+                <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5">
                   <CheckCircle2 size={18} className="text-primary" />
                   <span className="min-w-0 whitespace-normal break-words text-sm font-bold text-slate-700">
                     {isEn
@@ -77,7 +77,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
                       : "Loo-shaqeeyayaal la Hubiyay"}
                   </span>
                 </div>
-                <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
+                <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5">
                   <CheckCircle2 size={18} className="text-primary" />
                   <span className="min-w-0 whitespace-normal break-words text-sm font-bold text-slate-700">
                     {isEn ? "Skill Training" : "Tababar Xirfadeed"}

@@ -238,10 +238,7 @@ export default async function TrainingDetailPage({
       {
         "@type": "ListItem",
         position: 3,
-        name:
-          language === "so" && training.nameSo
-            ? training.nameSo
-            : training.name,
+        name: training.name,
         item: url,
       },
     ],

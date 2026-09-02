@@ -187,7 +187,7 @@ export default function JobsClient({
       <Navbar />
 
       <div className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
-        <section className="relative min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 sm:px-7">
+        <section className="relative min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 dark:border-violet-900/50 dark:from-slate-950 dark:via-slate-950 dark:to-violet-950/60 sm:px-7">
           <div className="relative z-10 max-w-xl">
           <h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[32px]">
             {language === "en" ? "Jobs & Opportunities" : "Shaqooyin & Fursado"}
@@ -208,10 +208,10 @@ export default function JobsClient({
               e.preventDefault();
               void applySearch();
             }}
-            className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+            className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="grid gap-2 md:flex md:items-center">
-              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3">
+              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3 dark:bg-slate-950">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   type="text"
@@ -228,7 +228,7 @@ export default function JobsClient({
 
               <div className="hidden h-10 w-px bg-slate-300 md:block" />
 
-              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3">
+              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3 dark:bg-slate-950">
                 <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   type="text"
@@ -261,7 +261,7 @@ export default function JobsClient({
           </form>
         </section>
 
-        <section className="mt-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mt-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-primary-darker/70">
             <SlidersHorizontal size={14} />
             {language === "en" ? "Filters" : "Shaandhayn"}
@@ -276,7 +276,7 @@ export default function JobsClient({
                   employmentType: e.target.value,
                 }))
               }
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
             >
               <option value="">
                 {language === "en" ? "All Job Types" : "Nooc walba"}
@@ -289,7 +289,7 @@ export default function JobsClient({
             <select
               value={salaryRange}
               onChange={(e) => setSalaryRange(e.target.value as SalaryFilter)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
             >
               <option value="all">
                 {language === "en" ? "Salary Range" : "Mushahar"}
@@ -302,7 +302,7 @@ export default function JobsClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortFilter)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
             >
               <option value="newest">
                 {language === "en" ? "Newest First" : "Ugu Cusub"}
@@ -367,7 +367,7 @@ export default function JobsClient({
             </p>
           </div>
         ) : filteredAndSortedJobs.length === 0 ? (
-          <div className="mt-6 rounded-3xl border border-dashed border-border bg-white p-16 text-center">
+          <div className="mt-6 rounded-3xl border border-dashed border-border bg-white p-16 text-center dark:bg-slate-900">
             <p className="text-base font-semibold text-primary-darker">
               {jobs.length === 0
                 ? language === "en"
@@ -388,10 +388,10 @@ export default function JobsClient({
                     href={`/jobs/${job.slug || job.id}`}
                     className="group block h-full"
                   >
-                    <article className="flex h-[245px] min-w-0 flex-col rounded-lg border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-lg">
+                    <article className="flex h-[245px] min-w-0 flex-col rounded-lg border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
                             {job.employer.avatarUrl || job.employer.logoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -428,7 +428,7 @@ export default function JobsClient({
                         />
                       </div>
 
-                      <h3 className="line-clamp-2 text-[13px] font-extrabold leading-tight text-slate-950">
+                      <h3 className="line-clamp-2 text-[13px] font-extrabold leading-tight text-slate-950 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-violet-300">
                         {localized.title}
                       </h3>
 

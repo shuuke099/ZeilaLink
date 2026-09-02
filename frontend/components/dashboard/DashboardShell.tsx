@@ -53,9 +53,15 @@ export default function DashboardShell({
   const [showImageModal, setShowImageModal] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
   const isAdminSection = pathname?.startsWith('/admin') ?? false;
-  const isAdminUsersPage = pathname?.startsWith('/admin/users') ?? false;
-  const isAdminServicesPage = pathname?.startsWith('/admin/services') ?? false;
-  const isAdminWideTablePage = isAdminUsersPage || isAdminServicesPage;
+  const adminWideTablePages = new Set([
+    '/admin/users',
+    '/admin/jobs',
+    '/admin/businesses',
+    '/admin/services',
+    '/admin/service-bookings',
+    '/admin/providers',
+  ]);
+  const isAdminWideTablePage = pathname ? adminWideTablePages.has(pathname) : false;
   const isWorkerSection = pathname?.startsWith('/worker') ?? false;
   const isEmployerSection = pathname?.startsWith('/employer') ?? false;
   const isProviderSection = pathname?.startsWith('/provider') ?? false;
@@ -116,8 +122,8 @@ export default function DashboardShell({
     // "Qafiif" (Light) active style for sub-items vs Solid active style for top-level
     const activeClasses = isSimpleLayout
       ? isSubItem
-        ? 'bg-white/20 text-white border border-white/30 shadow-sm'
-        : 'bg-white text-[#2f67ea] shadow-[0_8px_18px_rgba(0,0,0,0.2)]'
+        ? 'border border-white/30 bg-white/20 text-white shadow-sm dark:border-violet-400/30 dark:bg-violet-500/20'
+        : 'bg-white text-[#2f67ea] shadow-[0_8px_18px_rgba(0,0,0,0.2)] dark:bg-violet-600 dark:text-white dark:shadow-[0_8px_24px_rgba(76,29,149,0.35)]'
       : 'bg-white/10 text-white shadow-lg backdrop-blur';
 
     const inactiveClasses = isSimpleLayout
@@ -128,7 +134,7 @@ export default function DashboardShell({
 
     const iconColorClasses = isSimpleLayout
       ? (isActive && !hasSubItems)
-        ? isSubItem ? 'text-white' : 'text-[#2f67ea]'
+        ? isSubItem ? 'text-white' : 'text-[#2f67ea] dark:text-white'
         : 'text-white/70 group-hover:text-white'
       : 'text-white';
 
@@ -157,7 +163,7 @@ export default function DashboardShell({
             {content}
           </button>
           {isExpanded && (
-            <div className={`mt-1 flex flex-col relative ${isSimpleLayout ? 'ml-6 border-l border-blue-100 pl-2' : 'ml-6 border-l border-white/10 pl-2'}`}>
+            <div className={`mt-1 flex flex-col relative ${isSimpleLayout ? 'ml-6 border-l border-blue-100 pl-2 dark:border-slate-700' : 'ml-6 border-l border-white/10 pl-2'}`}>
               {item.items?.map(subItem => renderNavLink(subItem, true))}
             </div>
           )}
@@ -179,11 +185,11 @@ export default function DashboardShell({
 
   return (
     <div
-      className={`flex h-screen overflow-hidden text-[#1f2a2e] ${isSimpleLayout ? 'bg-[#f8fafc]' : 'bg-[#f3f6f4]'}`}
+      className={`flex h-screen overflow-hidden text-[#1f2a2e] dark:text-slate-100 ${isSimpleLayout ? 'bg-[#f8fafc] dark:bg-slate-950' : 'bg-[#f3f6f4] dark:bg-slate-950'}`}
     >
       <aside
         className={`relative hidden shrink-0 lg:flex h-screen sticky top-0 overflow-hidden ${isSimpleLayout
-          ? 'w-72 bg-[#2f67ea] border-r border-[#275ad1]'
+          ? 'w-72 border-r border-[#275ad1] bg-[#2f67ea] dark:border-slate-800 dark:bg-[#090d1d]'
           : 'w-80 rounded-r-[48px] bg-[#1f3b2d] shadow-[40px_0_90px_rgba(15,36,28,0.35)]'
           } z-50 transition-all duration-300`}
       >
@@ -213,12 +219,12 @@ export default function DashboardShell({
                   <p className="text-base font-black text-white leading-tight truncate">
                     {user?.name || 'User'}
                   </p>
-                  <p className="text-xs font-semibold text-white/80">
+                  <p className="text-xs font-semibold text-white/80 dark:text-slate-400">
                     {user?.role === 'worker' ? 'Job Seeker' : 'Profile'}
                   </p>
                 </div>
               </Link>
-              <div className="mt-3 h-px w-full bg-white/20" />
+              <div className="mt-3 h-px w-full bg-white/20 dark:bg-slate-800" />
             </div>
           ) : (
             <Link href="/" className="flex items-center gap-4 mb-10">
@@ -258,16 +264,16 @@ export default function DashboardShell({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile Header */}
-        <header className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 lg:hidden shrink-0 z-40">
+        <header className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 transition-colors dark:border-slate-800 dark:bg-slate-950 lg:hidden shrink-0 z-40">
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-900 shadow-sm"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <span className="font-black text-slate-900 tracking-tighter uppercase text-lg">CONS<span className="text-blue-600">OLE</span></span>
+            <span className="font-black text-slate-900 tracking-tighter uppercase text-lg dark:text-white">CONS<span className="text-blue-600 dark:text-violet-400">OLE</span></span>
           </div>
 
           <button
@@ -279,11 +285,11 @@ export default function DashboardShell({
         </header>
 
         {mobileOpen && (
-          <div className="fixed inset-0 top-[73px] bg-white z-[60] lg:hidden p-4 overflow-y-auto">
+          <div className="fixed inset-0 top-[73px] bg-white z-[60] overflow-y-auto p-4 dark:bg-slate-950 lg:hidden">
             <div className="space-y-2">
               {navItems.map(item => renderNavLink(item, false))}
             </div>
-            <div className="mt-10 pt-6 border-t border-slate-100">
+            <div className="mt-10 border-t border-slate-100 pt-6 dark:border-slate-800">
               <button
                 onClick={logout}
                 className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-red-50 text-red-600 font-bold"
@@ -295,31 +301,31 @@ export default function DashboardShell({
         )}
 
         {/* Top Header Bar Desktop */}
-        <header className="hidden lg:flex items-center justify-end border-b border-slate-100 bg-white px-10 py-4 shrink-0 z-40">
+        <header className="hidden items-center justify-end border-b border-slate-100 bg-white px-10 py-4 transition-colors dark:border-slate-800 dark:bg-[#090d1d] lg:flex shrink-0 z-40">
           <div className="flex items-center gap-8">
             {isSimpleLayout && (
               <div className="flex items-center gap-2">
                 <Link
                   href={user?.role ? `/${user.role}/settings` : '/settings'}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-sm transition-all hover:text-blue-600 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-violet-400"
                 >
                   <Settings className="h-5 w-5" />
                 </Link>
-                <button className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                <button className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50 text-slate-400 shadow-sm transition-all hover:text-blue-600 dark:bg-slate-900 dark:text-slate-400 dark:hover:text-violet-400">
                   <Bell className="h-5 w-5" />
                   <span className="absolute top-3 right-3 h-2 w-2 rounded-full bg-blue-600" />
                 </button>
               </div>
             )}
 
-            <div className="h-10 w-[1px] bg-slate-100" />
+            <div className="h-10 w-[1px] bg-slate-100 dark:bg-slate-800" />
 
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-4 group"
               >
-                <div className="h-12 w-12 rounded-2xl bg-slate-100 p-0.5 border-2 border-white shadow-md ring-1 ring-slate-100 transition-transform group-hover:scale-105">
+                <div className="h-12 w-12 rounded-2xl border-2 border-white bg-slate-100 p-0.5 shadow-md ring-1 ring-slate-100 transition-transform group-hover:scale-105 dark:border-slate-700 dark:bg-slate-900 dark:ring-slate-700">
                   {user?.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -336,8 +342,8 @@ export default function DashboardShell({
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-[64px] w-72 rounded-3xl border border-slate-100 bg-white shadow-2xl py-3 z-[100] animate-in fade-in slide-in-from-top-4 duration-300 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-50 bg-slate-50/50">
+                <div className="absolute right-0 top-[64px] z-[100] w-72 overflow-hidden rounded-3xl border border-slate-100 bg-white py-3 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 dark:border-slate-700 dark:bg-slate-900">
+                  <div className="border-b border-slate-50 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/70">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Signed in as</p>
                     <p className="font-bold text-slate-900 truncate text-base">{user?.name || 'User'}</p>
                     <p className="text-xs text-blue-600 font-bold mt-0.5">{user?.email || ''}</p>
@@ -352,7 +358,7 @@ export default function DashboardShell({
                       <button
                         key={i}
                         onClick={() => { item.onClick(); setUserMenuOpen(false); }}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-600 hover:bg-blue-50/50 hover:text-blue-600 transition-all rounded-2xl"
+                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-50/50 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
                       >
                         <item.icon className={`h-4 w-4 ${item.color}`} />
                         {item.label}
@@ -360,7 +366,7 @@ export default function DashboardShell({
                     ))}
                   </div>
 
-                  <div className="mt-2 pt-2 px-2 border-t border-slate-50">
+                  <div className="mt-2 border-t border-slate-50 px-2 pt-2 dark:border-slate-800">
                     <button
                       onClick={() => { setUserMenuOpen(false); logout(); }}
                       className="flex items-center gap-3 w-full px-4 py-3 text-sm font-black text-red-600 hover:bg-red-50 hover:text-red-700 transition-all rounded-2xl"
@@ -375,7 +381,7 @@ export default function DashboardShell({
           </div>
         </header>
 
-        <main className={`flex-1 bg-[#f8fafc]/50 no-scrollbar ${isAdminWideTablePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main className={`flex-1 bg-[#f8fafc]/50 no-scrollbar transition-colors dark:bg-slate-950 ${isAdminWideTablePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           <div className={`${isAdminWideTablePage ? 'h-full w-full px-4 py-6 lg:px-6 lg:py-6' : 'max-w-[1600px] mx-auto px-10 py-12'}`}>
             {children}
           </div>

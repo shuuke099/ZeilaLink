@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ImagePlus, Plus, X } from 'lucide-react';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
@@ -18,6 +18,16 @@ type AdvancedConfig = {
   revisionLimit?: number;
   techStack?: string[];
   portfolioLink?: string;
+  includes?: string[];
+  highlights?: string[];
+  packageName?: string;
+  packageDescription?: string;
+  revisions?: string;
+  deliveryTime?: string;
+  support?: string;
+  expertName?: string;
+  expertRole?: string;
+  expertImage?: string;
 };
 
 type ServiceMode = 'draft' | 'publish';
@@ -26,8 +36,12 @@ type ServiceForm = {
   title: string;
   titleSo: string;
   category: string;
+  subcategory: string;
   provider: string;
+  businessId: string;
   priceLabel: string;
+  priceFrom: string;
+  priceType: string;
   image: string;
   description: string;
   descriptionSo: string;
@@ -35,15 +49,36 @@ type ServiceForm = {
   slaResponse: string;
   gallery: string[];
   attachments: string[];
+  phone: string;
+  email: string;
+  website: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  latitude: string;
+  longitude: string;
+  serviceArea: string;
+  remoteAvailable: boolean;
+  verified: boolean;
+  featured: boolean;
+  active: boolean;
   advancedConfig: AdvancedConfig;
 };
+
+type BusinessOption = { id: string; name: string };
 
 const initialForm: ServiceForm = {
   title: '',
   titleSo: '',
   category: '',
+  subcategory: '',
   provider: '',
+  businessId: '',
   priceLabel: '',
+  priceFrom: '',
+  priceType: 'fixed',
   image: '',
   description: '',
   descriptionSo: '',
@@ -51,7 +86,22 @@ const initialForm: ServiceForm = {
   slaResponse: 'Responds within 24 hours',
   gallery: [],
   attachments: [],
-  advancedConfig: {},
+  phone: '',
+  email: '',
+  website: '',
+  address: '',
+  city: '',
+  state: '',
+  postalCode: '',
+  country: 'Somalia',
+  latitude: '',
+  longitude: '',
+  serviceArea: '',
+  remoteAvailable: false,
+  verified: false,
+  featured: false,
+  active: true,
+  advancedConfig: { includes: [], highlights: [] },
 };
 
 const baseCategoryOptions = [
@@ -75,6 +125,7 @@ export default function AdminServiceNewPage() {
   const [heroUploading, setHeroUploading] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [attachmentsUploading, setAttachmentsUploading] = useState(false);
+  const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
 
   const currentCategory = form.category;
   const categoryOptions = useMemo(
@@ -84,6 +135,12 @@ export default function AdminServiceNewPage() {
     ],
     [customCategories],
   );
+
+  useEffect(() => {
+    api.get('/admin/businesses')
+      .then((response) => setBusinesses(response.data?.businesses || []))
+      .catch(() => setBusinesses([]));
+  }, []);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -148,6 +205,10 @@ export default function AdminServiceNewPage() {
     try {
       await api.post('/admin/services', {
         ...form,
+        priceFrom: form.priceFrom === '' ? null : Number(form.priceFrom),
+        latitude: form.latitude === '' ? null : Number(form.latitude),
+        longitude: form.longitude === '' ? null : Number(form.longitude),
+        serviceArea: form.serviceArea.split(',').map((item) => item.trim()).filter(Boolean),
         badge: form.category,
         mode,
         published: mode === 'publish',
@@ -187,12 +248,12 @@ export default function AdminServiceNewPage() {
     setShowCustomCategory(false);
   };
 
-  const fieldLabel = 'text-sm font-medium text-slate-700';
+  const fieldLabel = 'text-sm font-medium text-slate-700 dark:text-slate-200';
   const requiredLabel = 'text-sm font-medium text-red-500';
 
   return (
     <AdminDashboardPage title="" description="">
-      <div className="h-[calc(100vh-145px)] overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="h-[calc(100vh-145px)] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <form className="flex h-full min-h-0 flex-col" onSubmit={(event) => handleCreate(event, 'publish')}>
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
             <h1 className="text-4xl font-black text-slate-900">New Service</h1>
@@ -206,7 +267,7 @@ export default function AdminServiceNewPage() {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-6">
               <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="space-y-4">
@@ -341,6 +402,64 @@ export default function AdminServiceNewPage() {
               </div>
             </section>
 
+            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="mb-1 text-2xl font-black text-slate-900 dark:text-white">Public service details</h2>
+              <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">These values appear on the service detail page.</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className={fieldLabel}>Related business
+                  <select className="input-field mt-2" value={form.businessId} onChange={(e) => setForm((prev) => ({ ...prev, businessId: e.target.value }))}>
+                    <option value="">No linked business</option>
+                    {businesses.map((business) => <option key={business.id} value={business.id}>{business.name}</option>)}
+                  </select>
+                </label>
+                <label className={fieldLabel}>Subcategory<input className="input-field mt-2" value={form.subcategory} onChange={(e) => setForm((prev) => ({ ...prev, subcategory: e.target.value }))} placeholder="e.g. Oil change" /></label>
+                <label className={fieldLabel}>Starting price<input type="number" min="0" step="0.01" className="input-field mt-2" value={form.priceFrom} onChange={(e) => setForm((prev) => ({ ...prev, priceFrom: e.target.value }))} placeholder="39.99" /></label>
+                <label className={fieldLabel}>Price type<select className="input-field mt-2" value={form.priceType} onChange={(e) => setForm((prev) => ({ ...prev, priceType: e.target.value }))}><option value="fixed">Fixed price</option><option value="hourly">Hourly</option><option value="starting_at">Starting at</option><option value="quote">Request quote</option></select></label>
+                <label className={fieldLabel}>Delivery / duration<input className="input-field mt-2" value={form.advancedConfig.deliveryTime || ''} onChange={(e) => updateAdvanced({ deliveryTime: e.target.value })} placeholder="e.g. 45 minutes" /></label>
+                <label className={fieldLabel}>Package name<input className="input-field mt-2" value={form.advancedConfig.packageName || ''} onChange={(e) => updateAdvanced({ packageName: e.target.value })} placeholder="e.g. Standard" /></label>
+                <label className={`${fieldLabel} md:col-span-2`}>Package description<textarea className="input-field mt-2 min-h-[80px]" value={form.advancedConfig.packageDescription || ''} onChange={(e) => updateAdvanced({ packageDescription: e.target.value })} /></label>
+                <label className={fieldLabel}>Support / warranty<input className="input-field mt-2" value={form.advancedConfig.support || ''} onChange={(e) => updateAdvanced({ support: e.target.value })} placeholder="e.g. 30-day warranty" /></label>
+                <label className={fieldLabel}>Revisions / follow-ups<input className="input-field mt-2" value={form.advancedConfig.revisions || ''} onChange={(e) => updateAdvanced({ revisions: e.target.value })} placeholder="e.g. One follow-up included" /></label>
+                <label className={fieldLabel}>What is included<textarea className="input-field mt-2 min-h-[120px]" value={(form.advancedConfig.includes || []).join('\n')} onChange={(e) => updateAdvanced({ includes: e.target.value.split('\n').map((item) => item.trim()).filter(Boolean) })} placeholder="One item per line" /></label>
+                <label className={fieldLabel}>Highlights<textarea className="input-field mt-2 min-h-[120px]" value={(form.advancedConfig.highlights || []).join('\n')} onChange={(e) => updateAdvanced({ highlights: e.target.value.split('\n').map((item) => item.trim()).filter(Boolean) })} placeholder="One highlight per line" /></label>
+                <label className={fieldLabel}>Expert name<input className="input-field mt-2" value={form.advancedConfig.expertName || ''} onChange={(e) => updateAdvanced({ expertName: e.target.value })} /></label>
+                <label className={fieldLabel}>Expert role<input className="input-field mt-2" value={form.advancedConfig.expertRole || ''} onChange={(e) => updateAdvanced({ expertRole: e.target.value })} /></label>
+                <label className={`${fieldLabel} md:col-span-2`}>Expert image path or URL<input className="input-field mt-2" value={form.advancedConfig.expertImage || ''} onChange={(e) => updateAdvanced({ expertImage: e.target.value })} placeholder="/uploads/expert.jpg or https://..." /></label>
+              </div>
+            </section>
+
+            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="mb-5 text-2xl font-black text-slate-900 dark:text-white">Contact and service area</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="input-field" placeholder="Phone" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
+                <input type="email" className="input-field" placeholder="Public email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
+                <input type="url" className="input-field" placeholder="Website" value={form.website} onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))} />
+                <input className="input-field" placeholder="Country" value={form.country} onChange={(e) => setForm((prev) => ({ ...prev, country: e.target.value }))} />
+                <input className="input-field md:col-span-2" placeholder="Street address" value={form.address} onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))} />
+                <input className="input-field" placeholder="City" value={form.city} onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))} />
+                <input className="input-field" placeholder="State / region" value={form.state} onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))} />
+                <input className="input-field" placeholder="Postal code" value={form.postalCode} onChange={(e) => setForm((prev) => ({ ...prev, postalCode: e.target.value }))} />
+                <input className="input-field" placeholder="Service areas, comma separated" value={form.serviceArea} onChange={(e) => setForm((prev) => ({ ...prev, serviceArea: e.target.value }))} />
+                <input type="number" step="any" min="-90" max="90" className="input-field" placeholder="Latitude" value={form.latitude} onChange={(e) => setForm((prev) => ({ ...prev, latitude: e.target.value }))} />
+                <input type="number" step="any" min="-180" max="180" className="input-field" placeholder="Longitude" value={form.longitude} onChange={(e) => setForm((prev) => ({ ...prev, longitude: e.target.value }))} />
+              </div>
+              <div className="mt-5 flex flex-wrap gap-6 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.remoteAvailable} onChange={(e) => setForm((prev) => ({ ...prev, remoteAvailable: e.target.checked }))} />Remote available</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.verified} onChange={(e) => setForm((prev) => ({ ...prev, verified: e.target.checked }))} />Verified</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.featured} onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))} />Featured</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.active} onChange={(e) => setForm((prev) => ({ ...prev, active: e.target.checked }))} />Active</label>
+              </div>
+            </section>
+
+            <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="mb-5 text-2xl font-black text-slate-900 dark:text-white">Gallery and attachments</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-5 text-center text-sm font-semibold dark:border-slate-700">{galleryUploading ? 'Uploading gallery…' : `Upload gallery images (${form.gallery.length}/5)`}<input type="file" multiple accept="image/*" className="sr-only" onChange={onGalleryFilesSelected} disabled={galleryUploading || form.gallery.length >= 5} /></label>
+                <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-5 text-center text-sm font-semibold dark:border-slate-700">{attachmentsUploading ? 'Uploading attachments…' : `Upload attachments (${form.attachments.length})`}<input type="file" multiple className="sr-only" onChange={onAttachmentFilesSelected} disabled={attachmentsUploading} /></label>
+              </div>
+              {form.gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">{form.gallery.map((image, index) => <div key={`${image}-${index}`} className="relative h-24 overflow-hidden rounded-lg"><img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => setForm((prev) => ({ ...prev, gallery: prev.gallery.filter((_, itemIndex) => itemIndex !== index) }))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950/70 text-white" aria-label={`Remove gallery image ${index + 1}`}><X size={13} /></button></div>)}</div>}
+            </section>
+
             {(currentCategory === 'Cleaning & Maintenance' || currentCategory === 'Electronic & Mechanical Repair' || currentCategory === 'Design & Coding') && (
               <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
                 <h2 className="mb-4 text-2xl font-black text-slate-900">Advanced Inputs</h2>
@@ -422,7 +541,7 @@ export default function AdminServiceNewPage() {
             )}
           </div>
 
-          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur">
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
             <button type="button" disabled={submitting} onClick={() => void submitService('draft')} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
               Save as Draft
             </button>

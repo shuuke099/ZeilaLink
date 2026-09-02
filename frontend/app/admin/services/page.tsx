@@ -144,13 +144,13 @@ export default function AdminServicesPage() {
                 <button
                   type="button"
                   onClick={() => setMenuOpen((prev) => !prev)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <MoreHorizontal className="h-5 w-5" />
                 </button>
 
                 {menuOpen && (
-                  <div className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                  <div className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
                     <button
                       type="button"
                       onClick={() => {
@@ -169,7 +169,7 @@ export default function AdminServicesPage() {
                     <button
                       type="button"
                       onClick={handleExport}
-                      className="flex w-full items-center justify-between border-t border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50"
+                      className="flex w-full items-center justify-between border-t border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       <span className="inline-flex items-center gap-3 font-medium">
                         <Upload className="h-4 w-4 text-blue-500" />
@@ -186,7 +186,7 @@ export default function AdminServicesPage() {
           <div className="min-h-0 flex-1 overflow-auto">
             <table className="min-w-full border-collapse">
               <thead>
-                <tr className="sticky top-0 z-10 border-y border-slate-200 bg-slate-100 text-left text-xs font-bold uppercase text-slate-600">
+                <tr className="sticky top-0 z-10 border-y border-slate-200 bg-slate-100 text-left text-xs font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                   <th className="px-4 py-4">TITLE</th>
                   <th className="px-4 py-4">CATEGORY</th>
                   <th className="px-4 py-4">PROVIDER</th>
@@ -211,12 +211,12 @@ export default function AdminServicesPage() {
                   </tr>
                 ) : (
                   displayServices.map((service) => (
-                    <tr key={service.id} className="border-b border-slate-200 hover:bg-slate-50/60">
-                      <td className="px-4 py-5 text-base font-semibold text-blue-700">{service.title}</td>
-                      <td className="px-4 py-5 text-base text-slate-700">{service.category}</td>
-                      <td className="px-4 py-5 text-base text-slate-700">{service.provider}</td>
-                      <td className="px-4 py-5 text-base text-slate-700">{service.priceLabel}</td>
-                      <td className="px-4 py-5 text-base text-slate-700">{service._count?.bookings ?? 0}</td>
+                    <tr key={service.id} className="border-b border-slate-200 hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-900">
+                      <td className="px-4 py-5 text-base font-semibold text-blue-700 dark:text-blue-300">{service.title}</td>
+                      <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.category}</td>
+                      <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.provider}</td>
+                      <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.priceLabel}</td>
+                      <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service._count?.bookings ?? 0}</td>
                       <td className="px-4 py-5 text-base">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${service.published ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}

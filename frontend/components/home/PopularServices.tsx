@@ -71,7 +71,7 @@ function ServiceCard({ service }: { service: Service }) {
   const image = service.image || FALLBACK_IMAGE;
 
   return (
-    <article className="group w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+    <article className="group w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       <Link href={serviceUrl} className="block">
         {/* Image */}
         <div className="relative h-[125px] w-full overflow-hidden bg-gray-100 sm:h-[140px] md:h-[145px]">
@@ -123,7 +123,7 @@ function ServiceCard({ service }: { service: Service }) {
 
 function LoadingSkeleton() {
   return (
-    <section className="w-full bg-white  ">
+    <section className="w-full bg-white dark:bg-background">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         {/* Header */}
         <div className="mb-5 flex items-end justify-between">
@@ -225,7 +225,7 @@ export default function PopularServices() {
 
   if (error) {
     return (
-      <section className="w-full bg-white py-8 md:py-10">
+      <section className="w-full bg-white py-8 dark:bg-background md:py-10">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
             <p className="text-sm text-red-600">{error}</p>
@@ -244,7 +244,7 @@ export default function PopularServices() {
   ============================================================ */
 
   return (
-    <section className="w-full bg-white pb-5 md:pb-5">
+    <section className="w-full bg-white pb-5 dark:bg-background md:pb-5">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         {/* Header */}
         <div className="mb-5 flex items-end justify-between md:mb-6">

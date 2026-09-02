@@ -25,7 +25,7 @@ export default function CapabilitiesSection({
   const isEn = language === "en";
 
   return (
-    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-4 sm:pb-20 sm:pt-8 lg:pb-28 lg:pt-16">
+    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-4 dark:bg-background sm:pb-20 sm:pt-8 lg:pb-28 lg:pt-16">
       <div className="home-section-content max-w-7xl mx-auto">
         <div className="home-capabilities-content mb-10 text-center sm:mb-14 lg:mb-16">
           <div className={`${SECTION_EYEBROW_CLASS} mb-4`}>
@@ -133,7 +133,7 @@ export default function CapabilitiesSection({
               <Link
                 href={feature.href}
                 prefetch
-                className="group block h-full rounded-xl border border-slate-100 bg-white p-3 transition-all duration-500 hover:border-primary/20 hover:shadow-2xl sm:rounded-[2rem] sm:p-6 lg:rounded-[2.5rem] lg:p-10"
+                className="group block h-full rounded-xl border border-slate-100 bg-white p-3 transition-all duration-500 hover:border-primary/20 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-[2rem] sm:p-6 lg:rounded-[2.5rem] lg:p-10"
               >
                 <div
                   className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${feature.bg} shadow-sm transition-transform duration-500 group-hover:scale-110 sm:mb-6 sm:h-16 sm:w-16 sm:rounded-2xl lg:mb-8 lg:h-20 lg:w-20 lg:rounded-3xl`}

@@ -202,22 +202,22 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
         {statCards.map((card) => (
           <article
             key={card.id}
-            className="rounded-xl border border-[#e3e8ef] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
+            className="rounded-xl border border-[#e3e8ef] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900"
           >
             <div className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${card.iconClass}`}>
               <card.Icon className="h-4 w-4" />
             </div>
-            <p className="mt-3 text-sm font-medium text-[#5a6d8a]">{card.title}</p>
-            <p className="mt-1 text-[40px] font-bold leading-none text-[#0f2240]">{card.value}</p>
-            <p className={`mt-2 text-sm ${card.positive ? 'text-[#16a34a]' : 'text-[#5a6d8a]'}`}>{card.hint}</p>
+            <p className="mt-3 text-sm font-medium text-[#5a6d8a] dark:text-slate-300">{card.title}</p>
+            <p className="mt-1 text-[40px] font-bold leading-none text-[#0f2240] dark:text-white">{card.value}</p>
+            <p className={`mt-2 text-sm ${card.positive ? 'text-[#16a34a]' : 'text-[#5a6d8a] dark:text-slate-400'}`}>{card.hint}</p>
           </article>
         ))}
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-[#e3e8ef] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-        <div className="border-b border-[#edf1f6] px-4 py-3 md:px-5">
+      <section className="overflow-hidden rounded-xl border border-[#e3e8ef] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
+        <div className="border-b border-[#edf1f6] px-4 py-3 dark:border-slate-800 md:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="inline-flex rounded-lg bg-[#f3f6fb] p-1">
+            <div className="inline-flex rounded-lg bg-[#f3f6fb] p-1 dark:bg-slate-800">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -225,8 +225,8 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                   onClick={() => setStatus(tab.id)}
                   className={`rounded-md px-3 py-2 text-sm font-medium transition ${
                     status === tab.id
-                      ? 'bg-white text-[#1f7fe9] shadow-sm'
-                      : 'text-[#61758f] hover:text-[#31455f]'
+                      ? 'bg-white text-[#1f7fe9] shadow-sm dark:bg-violet-600 dark:text-white'
+                      : 'text-[#61758f] hover:text-[#31455f] dark:text-slate-300 dark:hover:text-white'
                   }`}
                 >
                   {tab.label}
@@ -241,12 +241,12 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search job titles, departments..."
-                  className="h-10 w-full rounded-lg border border-[#e2e8f0] bg-[#fbfcff] pl-9 pr-3 text-sm text-[#2a3952] outline-none transition focus:border-[#8ab1ff]"
+                  className="h-10 w-full rounded-lg border border-[#e2e8f0] bg-[#fbfcff] pl-9 pr-3 text-sm text-[#2a3952] outline-none transition focus:border-[#8ab1ff] dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                 />
               </label>
               <button
                 type="button"
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e2e8f0] bg-[#fbfcff] px-3 text-sm font-medium text-[#31455f] transition hover:bg-[#f2f6fb]"
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e2e8f0] bg-[#fbfcff] px-3 text-sm font-medium text-[#31455f] transition hover:bg-[#f2f6fb] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 <Filter className="h-4 w-4" />
                 Filters
@@ -258,7 +258,7 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
         <div className="overflow-x-auto">
           <table className="min-w-[860px] w-full">
             <thead>
-              <tr className="bg-[#f8fafd] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0b8]">
+              <tr className="bg-[#f8fafd] text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8fa0b8] dark:bg-slate-800 dark:text-slate-300">
                 <th className="px-5 py-3">Job Title &amp; Company</th>
                 <th className="px-5 py-3">Date Posted</th>
                 <th className="px-5 py-3">Applications</th>
@@ -293,7 +293,7 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                     applications > 60 ? 'Full pipeline' : applications > 20 ? '+12 this week' : '';
 
                   return (
-                    <tr key={job.id} className="border-t border-[#edf1f6] text-sm text-[#273754]">
+                    <tr key={job.id} className="border-t border-[#edf1f6] text-sm text-[#273754] dark:border-slate-800 dark:text-slate-200">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <span
@@ -302,15 +302,15 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                             <Icon className="h-4 w-4" />
                           </span>
                           <div>
-                            <p className="font-semibold text-[#152742]">{job.title}</p>
-                            <p className="text-xs text-[#7f90a9]">
+                            <p className="font-semibold text-[#152742] dark:text-white">{job.title}</p>
+                            <p className="text-xs text-[#7f90a9] dark:text-slate-400">
                               {job.employer?.name || 'Unknown'} -{' '}
                               {job.remote ? 'Remote' : job.location || 'On-site'}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-[#4e6584]">
+                      <td className="px-5 py-4 text-[#4e6584] dark:text-slate-300">
                         {job.createdAt
                           ? new Date(job.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
@@ -321,7 +321,7 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[#152742]">{applications}</span>
+                          <span className="font-semibold text-[#152742] dark:text-white">{applications}</span>
                           {appHint && <span className="text-xs text-[#16a34a]">{appHint}</span>}
                         </div>
                       </td>
@@ -344,7 +344,7 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
                       <td className="px-5 py-4 text-right">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#667b98] transition hover:bg-[#f1f5fb] hover:text-[#2e4464]"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#667b98] transition hover:bg-[#f1f5fb] hover:text-[#2e4464] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                           aria-label="More actions"
                         >
                           <MoreHorizontal className="h-4 w-4" />
@@ -357,8 +357,8 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-[#edf1f6] px-4 py-3 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-[#6f83a1]">
+        <div className="flex flex-col gap-3 border-t border-[#edf1f6] px-4 py-3 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-[#6f83a1] dark:text-slate-300">
             Showing {startIndex}-{endIndex} of {filteredJobs.length} results
           </p>
           <div className="flex items-center gap-2">
@@ -370,7 +370,7 @@ export default function JobManagement({ onSummaryChange }: JobManagementProps) {
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="inline-flex items-center gap-1 rounded-lg border border-[#dfe6f0] px-3 py-1.5 text-sm text-[#4b627f]">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[#dfe6f0] px-3 py-1.5 text-sm text-[#4b627f] dark:border-slate-700 dark:text-slate-200">
               <Activity className="h-3.5 w-3.5" />
               {currentPage} / {totalPages}
             </span>

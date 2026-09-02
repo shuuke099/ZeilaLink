@@ -581,7 +581,39 @@ const adminData = (body: Record<string, any>) => {
   const required = (key: string) => { const value = String(body[key] || "").trim(); if (!value) throw Object.assign(new Error(`${key} is required`), { status: 400 }); return value; };
   const optional = (key: string) => String(body[key] || "").trim() || null;
   const coordinate = (key: string, min: number, max: number) => { if (body[key] === "" || body[key] == null) return null; const value = Number(body[key]); if (!Number.isFinite(value) || value < min || value > max) throw Object.assign(new Error(`Invalid ${key}`), { status: 400 }); return value; };
-  return { name: required("name"), category: required("category"), description: required("description"), logoUrl: optional("logoUrl"), bannerUrl: optional("bannerUrl"), website: optional("website"), phone: optional("phone"), email: optional("email"), address: required("address"), city: required("city"), state: optional("region"), country: required("country"), postalCode: optional("postalCode"), latitude: coordinate("latitude", -90, 90), longitude: coordinate("longitude", -180, 180), hasPhysicalLocation: true, featured: body.featured === true, published: body.published !== false, active: true };
+  const stringArray = (key: string) => Array.isArray(body[key])
+    ? Array.from(new Set(body[key].filter((item: unknown): item is string => typeof item === "string").map((item: string) => item.trim()).filter(Boolean)))
+    : [];
+  return {
+    name: required("name"),
+    nameSo: optional("nameSo"),
+    category: required("category"),
+    subcategory: optional("subcategory"),
+    description: required("description"),
+    descriptionSo: optional("descriptionSo"),
+    logoUrl: optional("logoUrl"),
+    bannerUrl: optional("bannerUrl"),
+    gallery: stringArray("gallery"),
+    website: optional("website"),
+    phone: optional("phone"),
+    email: optional("email"),
+    address: required("address"),
+    city: required("city"),
+    state: optional("region"),
+    country: required("country"),
+    postalCode: optional("postalCode"),
+    latitude: coordinate("latitude", -90, 90),
+    longitude: coordinate("longitude", -180, 180),
+    timezone: optional("timezone"),
+    hasPhysicalLocation: body.hasPhysicalLocation !== false,
+    serviceArea: stringArray("serviceArea"),
+    remoteAvailable: body.remoteAvailable === true,
+    verified: body.verified === true,
+    claimed: body.claimed === true,
+    featured: body.featured === true,
+    published: body.published !== false,
+    active: body.active !== false,
+  };
 };
 const adminHours = (body: Record<string, any>) => { const value = body.openingHours && typeof body.openingHours === "object" ? body.openingHours : {}; return [{ dayOfWeek: 1, openTime: String(value.weekdays || "").trim() || null, closeTime: null, closed: !value.weekdays }, { dayOfWeek: 6, openTime: String(value.weekends || "").trim() || null, closeTime: null, closed: !value.weekends }]; };
 

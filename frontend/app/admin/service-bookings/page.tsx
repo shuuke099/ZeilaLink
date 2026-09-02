@@ -62,7 +62,7 @@ export default function AdminServiceBookingsPage() {
       title="Service Bookings"
       description="Track bookings made by users from the Services page."
     >
-      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         {loading ? (
           <p className="text-slate-500">Loading bookings...</p>
         ) : bookings.length === 0 ? (
@@ -71,7 +71,7 @@ export default function AdminServiceBookingsPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left border-b border-slate-200 text-slate-500">
+                <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-700 dark:text-slate-300">
                   <th className="py-2 pr-4">Service</th>
                   <th className="py-2 pr-4">Customer</th>
                   <th className="py-2 pr-4">Contact</th>
@@ -84,24 +84,24 @@ export default function AdminServiceBookingsPage() {
               </thead>
               <tbody>
                 {bookings.map((booking) => (
-                  <tr key={booking.id} className="border-b border-slate-100 align-top">
+                  <tr key={booking.id} className="border-b border-slate-100 align-top dark:border-slate-800">
                     <td className="py-3 pr-4">
-                      <p className="font-bold text-slate-900">{booking.service.title}</p>
+                      <p className="font-bold text-slate-900 dark:text-white">{booking.service.title}</p>
                       <p className="text-xs text-slate-500">{booking.service.category} | {booking.service.provider}</p>
                       <p className="text-xs text-primary font-semibold">{booking.service.priceLabel}</p>
                     </td>
-                    <td className="py-3 pr-4 text-slate-800 font-medium">{booking.customerName}</td>
-                    <td className="py-3 pr-4 text-slate-600">
+                    <td className="py-3 pr-4 font-medium text-slate-800 dark:text-slate-200">{booking.customerName}</td>
+                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                       <p>{booking.customerEmail}</p>
                       {booking.customerPhone && <p className="text-xs">{booking.customerPhone}</p>}
                       {booking.responsibleFullName && (
                         <p className="text-xs text-slate-500 mt-1">Responsible: {booking.responsibleFullName}</p>
                       )}
                     </td>
-                    <td className="py-3 pr-4 text-slate-600">
+                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                       {booking.serviceDateTime ? new Date(booking.serviceDateTime).toLocaleString() : 'Not set'}
                     </td>
-                    <td className="py-3 pr-4 text-slate-600">
+                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                       {booking.isRemote ? 'Remote / Online' : (booking.locationAddress || 'On-site')}
                     </td>
                     <td className="py-3 pr-4">
@@ -109,12 +109,12 @@ export default function AdminServiceBookingsPage() {
                         {booking.paymentStatus || 'pending'}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-slate-600">{new Date(booking.createdAt).toLocaleString()}</td>
+                    <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">{new Date(booking.createdAt).toLocaleString()}</td>
                     <td className="py-3 pr-4">
                       <select
                         value={booking.status}
                         onChange={(e) => updateStatus(booking.id, e.target.value)}
-                        className="rounded-lg border border-slate-300 px-2 py-1 bg-white"
+                        className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                       >
                         {statusOptions.map((status) => (
                           <option key={status} value={status}>

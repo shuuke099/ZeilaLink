@@ -202,7 +202,7 @@ export default function AdminOverviewPage() {
         description: 'Platform infrastructure total reach',
         icon: Users,
         actionIcon: Globe,
-        accent: 'text-[#3a73ec]',
+        accent: 'text-[#3a73ec] dark:text-violet-300',
       },
       {
         title: 'TALENTED WORKERS',
@@ -210,7 +210,7 @@ export default function AdminOverviewPage() {
         description: 'Active professional workforce',
         icon: Users,
         actionIcon: Star,
-        accent: 'text-[#3a73ec]',
+        accent: 'text-[#3a73ec] dark:text-violet-300',
       },
       {
         title: 'ELITE EMPLOYERS',
@@ -218,7 +218,7 @@ export default function AdminOverviewPage() {
         description: 'Verified hiring organizations',
         icon: Briefcase,
         actionIcon: ShieldCheck,
-        accent: 'text-[#3a73ec]',
+        accent: 'text-[#3a73ec] dark:text-violet-300',
       },
       {
         title: 'SKILL PROVIDERS',
@@ -226,7 +226,7 @@ export default function AdminOverviewPage() {
         description: 'Certified training partners',
         icon: GraduationCap,
         actionIcon: TrendingDown,
-        accent: 'text-slate-500',
+        accent: 'text-slate-500 dark:text-slate-300',
       },
     ],
     [metrics],
@@ -294,45 +294,45 @@ export default function AdminOverviewPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="rounded-2xl border border-slate-200 bg-[#f5f8ff] px-5 py-4 min-h-[125px]"
+              className="min-h-[125px] rounded-2xl border border-slate-200 bg-[#f5f8ff] px-5 py-4 transition-colors dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="flex items-center justify-between">
                 <div className={`inline-flex items-center gap-2 text-[11px] font-black tracking-wide ${card.accent}`}>
                   <card.icon size={14} />
                   <p>{card.title}</p>
                 </div>
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100/70 text-[#3a73ec]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100/70 text-[#3a73ec] dark:bg-violet-500/15 dark:text-violet-300">
                   <card.actionIcon size={15} />
                 </span>
               </div>
-              <p className="mt-4 text-3xl font-black text-[#102a66]">{loading ? '...' : card.value}</p>
+              <p className="mt-4 text-3xl font-black text-[#102a66] dark:text-white">{loading ? '...' : card.value}</p>
               <p className={`mt-1 text-xs font-semibold ${card.accent}`}>{card.description}</p>
             </motion.div>
           ))}
         </section>
 
-        <section className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm transition-colors dark:border-amber-500/25 dark:bg-slate-900">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                   <ShieldCheck size={18} />
                 </span>
                 <div>
-                  <h2 className="text-base font-black text-slate-900">Pending organization approvals</h2>
-                  <p className="text-xs text-slate-500">
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">Pending organization approvals</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Email-verified employers and providers waiting for admin review.
                   </p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
                 {loading ? '...' : pendingApprovalTotal} pending
               </span>
               <Link
                 href="/admin/users?status=pending_approval"
-                className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800"
+                className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 dark:text-violet-300 dark:hover:text-violet-200"
               >
                 View all
                 <ArrowRight size={14} />
@@ -342,29 +342,29 @@ export default function AdminOverviewPage() {
 
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {!loading && pendingApprovals.length === 0 ? (
-              <div className="rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700 lg:col-span-2">
+              <div className="rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 lg:col-span-2">
                 No organizations are waiting for approval.
               </div>
             ) : (
               pendingApprovals.map((pendingUser) => (
                 <div
                   key={pendingUser.id}
-                  className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-sm font-black text-slate-900">
+                      <p className="truncate text-sm font-black text-slate-900 dark:text-white">
                         {pendingUser.organization?.name || pendingUser.name}
                       </p>
                       <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700">
                         {pendingUser.organization?.type || pendingUser.role}
                       </span>
                     </div>
-                    <p className="mt-1 truncate text-xs text-slate-500">
+                    <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
                       {pendingUser.name} · {pendingUser.email}
                     </p>
                     {pendingUser.createdAt && (
-                      <p className="mt-1 text-[11px] font-semibold text-slate-400">
+                      <p className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                         Registered {new Date(pendingUser.createdAt).toLocaleDateString()}
                       </p>
                     )}
@@ -385,40 +385,40 @@ export default function AdminOverviewPage() {
         </section>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="text-sm font-bold text-slate-700 mb-4">Platform Health</h3>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 transition-colors dark:border-slate-800 dark:bg-slate-900">
+            <h3 className="mb-4 text-sm font-bold text-slate-700 dark:text-slate-200">Platform Health</h3>
             <div className="flex items-center justify-center">
               <div className="relative h-40 w-40">
                 <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-                  <circle cx="60" cy="60" r="48" stroke="#e5e7eb" strokeWidth="10" fill="none" />
+                  <circle cx="60" cy="60" r="48" strokeWidth="10" fill="none" className="stroke-slate-200 dark:stroke-slate-700" />
                   <circle cx="60" cy="60" r="48" stroke="#32c8d4" strokeWidth="10" fill="none" strokeDasharray="301.6" strokeDashoffset={301.6 * (1 - healthRatio / 100)} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-3xl font-black text-slate-900">{healthRatio}%</p>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white">{healthRatio}%</p>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Health Ratio</p>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="rounded-xl bg-slate-50 p-3 text-center">
+              <div className="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/70">
                 <p className="text-[10px] text-slate-400 font-semibold uppercase">Latency</p>
-                <p className="text-sm font-black text-slate-800">{latency}ms</p>
+                <p className="text-sm font-black text-slate-800 dark:text-white">{latency}ms</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3 text-center">
+              <div className="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800/70">
                 <p className="text-[10px] text-slate-400 font-semibold uppercase">Verified Ratio</p>
-                <p className="text-sm font-black text-slate-800">{verifiedRatio}%</p>
+                <p className="text-sm font-black text-slate-800 dark:text-white">{verifiedRatio}%</p>
               </div>
             </div>
           </div>
 
-          <div className="xl:col-span-2 rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 transition-colors dark:border-slate-800 dark:bg-slate-900 xl:col-span-2">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="text-sm font-bold text-slate-700">Earnings & Revenue</h3>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">Earnings & Revenue</h3>
                 <p className="text-[11px] text-slate-400">Derived from hiring activity and booking volume</p>
               </div>
-              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-[11px] font-semibold text-slate-500">
-                <span className="px-2 py-1 rounded bg-white shadow-sm text-slate-700">Daily</span>
+              <div className="inline-flex rounded-lg bg-slate-100 p-1 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <span className="rounded bg-white px-2 py-1 text-slate-700 shadow-sm dark:bg-slate-700 dark:text-white">Daily</span>
                 <span className="px-2 py-1">Monthly</span>
               </div>
             </div>

@@ -316,6 +316,10 @@ model Service {
   image   String?
   gallery String[] @default([])
 
+  slaResponse    String?  @map("sla_response")
+  attachments    String[] @default([])
+  advancedConfig Json     @default("{}") @map("advanced_config")
+
   phone   String?
   email   String?
   website String?
@@ -571,6 +575,9 @@ model Course {
 
   schedule   String?
   scheduleSo String? @map("schedule_so")
+
+  learningOutcomes String[] @default([]) @map("learning_outcomes")
+  requirements     String[] @default([])
 
   cost     Float  @default(0)
   currency String @default("USD")
