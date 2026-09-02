@@ -182,7 +182,7 @@ export default function FeaturedBusinesses() {
         {/* Section header */}
         <div className="mb-6 flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-xl font-bold text-slate-950 sm:text-2xl">
+            <h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
               Featured Businesses
             </h2>
 
@@ -236,7 +236,7 @@ export default function FeaturedBusinesses() {
                     <img src={image} alt={business.name} className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.03]" />
                   </Link>
                   <Link href={`/businesses/${businessUrl}`} className="block p-2.5 sm:p-3">
-                    <h3 className="truncate text-[11px] font-extrabold text-slate-950 transition group-hover:text-primary sm:text-[13px]">{business.name}</h3>
+                    <h3 className="truncate text-[11px] font-extrabold text-slate-950 transition group-hover:text-primary dark:text-white dark:group-hover:text-violet-300 sm:text-[13px]">{business.name}</h3>
                     <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2 text-[9px] font-medium text-slate-500 sm:text-[10px]"><p className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || "Online"}</span></p><span className="flex shrink-0 items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{Number(business.rating || 0).toFixed(1)}</span></div>
                   </Link>
                   <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 py-2 text-[8px] font-semibold text-slate-600 dark:divide-slate-800 dark:border-slate-800 sm:text-[9px]">

@@ -91,7 +91,7 @@ export default function JobsNearYou() {
   return (
     <section className="w-full bg-white dark:bg-background">
       <div className="mb-6 flex items-end justify-between gap-4">
-        <div><h2 className="text-xl font-bold text-slate-950 sm:text-2xl">
+        <div><h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
           Jobs Near You
         </h2><p className="mt-1 text-sm text-slate-500">Discover fresh opportunities from trusted employers.</p></div>
 
@@ -125,7 +125,7 @@ export default function JobsNearYou() {
         <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
           <Briefcase className="mb-3 h-8 w-8 text-violet-500" />
 
-          <p className="text-sm font-semibold text-slate-800">
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             No jobs available right now.
           </p>
 
@@ -163,7 +163,7 @@ export default function JobsNearYou() {
                 </div>
 
                 <div className="mt-3 min-w-0 flex-1">
-                  <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-slate-950 transition group-hover:text-violet-700">
+                  <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-slate-950 transition group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
                     {job.title}
                   </h3>
 

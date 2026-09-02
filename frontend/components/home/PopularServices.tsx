@@ -88,7 +88,7 @@ function ServiceCard({ service }: { service: Service }) {
 
         {/* Information */}
         <div className="p-3">
-          <h3 className="truncate text-sm font-bold text-slate-950 transition-colors group-hover:text-violet-700">
+          <h3 className="truncate text-sm font-bold text-slate-950 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
             {service.title}
           </h3>
 
@@ -249,7 +249,7 @@ export default function PopularServices() {
         {/* Header */}
         <div className="mb-5 flex items-end justify-between md:mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-950 md:text-2xl">
+            <h2 className="text-xl font-bold text-slate-950 dark:text-white md:text-2xl">
               Popular Services
             </h2>
 
