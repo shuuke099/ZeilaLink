@@ -295,7 +295,7 @@ export default async function ServiceDetailPage({
       />
       <Navbar />
 
-      <div className="mx-auto flex max-w-7xl justify-between px-4 pt-24 sm:px-6 lg:px-8">
+      <div className="hidden">
         <nav
           aria-label={isEn ? "Breadcrumb" : "Jidka bogga"}
           className="flex items-center gap-2 text-sm font-semibold text-slate-500"

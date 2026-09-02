@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, Navigation, Phone, Star, ChevronRight } from "lucide-react";
 
 import api from "@/lib/api";
 
@@ -144,7 +144,7 @@ export default function FeaturedBusinesses() {
   if (loading) {
     return (
       <section className="w-full bg-white py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="mb-6">
             <div className="h-7 w-52 animate-pulse rounded bg-gray-200" />
 
@@ -167,7 +167,7 @@ export default function FeaturedBusinesses() {
   if (error) {
     return (
       <section className="w-full bg-white py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="rounded-xl border border-red-100 bg-red-50 p-5">
             <p className="text-sm font-medium text-red-600">{error}</p>
           </div>
@@ -178,7 +178,7 @@ export default function FeaturedBusinesses() {
 
   return (
     <section className="w-full bg-white py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         {/* Section header */}
         <div className="mb-6 flex items-end justify-between gap-4">
           <div className="min-w-0">
@@ -223,21 +223,27 @@ export default function FeaturedBusinesses() {
               const location = [business.city, business.state]
                 .filter(Boolean)
                 .join(", ");
+              const directionsQuery = [business.address, business.city, business.state]
+                .filter(Boolean)
+                .join(", ");
 
               return (
-                <Link
-                  href={`/businesses/${businessUrl}`}
+                <article
                   key={business.id}
                   className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"
                 >
-                  <div className="h-[105px] overflow-hidden bg-slate-100 sm:h-[135px]">
+                  <Link href={`/businesses/${businessUrl}`} className="block h-[105px] overflow-hidden bg-slate-100 sm:h-[135px]">
                     <img src={image} alt={business.name} className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.03]" />
-                  </div>
-                  <div className="p-2.5 sm:p-3">
+                  </Link>
+                  <Link href={`/businesses/${businessUrl}`} className="block p-2.5 sm:p-3">
                     <h3 className="truncate text-[11px] font-extrabold text-slate-950 transition group-hover:text-primary sm:text-[13px]">{business.name}</h3>
-                    <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[9px] font-medium text-slate-500 sm:text-[10px]"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || "Online"}</span></p>
+                    <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2 text-[9px] font-medium text-slate-500 sm:text-[10px]"><p className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || "Online"}</span></p><span className="flex shrink-0 items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{Number(business.rating || 0).toFixed(1)}</span></div>
+                  </Link>
+                  <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 py-2 text-[8px] font-semibold text-slate-600 sm:text-[9px]">
+                    {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Phone size={11} />Call</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />Call</span>}
+                    {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Navigation size={11} />Directions</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />Directions</span>}
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>

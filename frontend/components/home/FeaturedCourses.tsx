@@ -26,7 +26,7 @@ export default function FeaturedCourses() {
   }, []);
 
   return <section className="w-full bg-white py-10 dark:bg-slate-950">
-    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div><h2 className="text-xl font-bold text-slate-950 sm:text-2xl dark:text-white">Featured Trainings</h2><p className="mt-1 text-sm text-slate-500">Build practical skills with trusted training providers.</p></div>
         <Link href="/training" className="flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900 sm:text-sm">View all trainings <ChevronRight size={17} /></Link>

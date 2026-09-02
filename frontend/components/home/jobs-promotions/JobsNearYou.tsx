@@ -72,7 +72,7 @@ export default function JobsNearYou() {
         const response = await api.get<JobsResponse>("/jobs", {
           params: {
             page: 1,
-            limit: 3,
+            limit: 6,
           },
         });
 
@@ -89,11 +89,11 @@ export default function JobsNearYou() {
   }, []);
 
   return (
-    <section className="flex h-full min-h-[300px] w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
-      <div className="flex items-center justify-between gap-4 px-5 pb-2 pt-4 sm:px-6">
-        <h2 className="text-base font-bold text-slate-950 sm:text-lg">
+    <section className="w-full bg-white">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div><h2 className="text-xl font-bold text-slate-950 sm:text-2xl">
           Jobs Near You
-        </h2>
+        </h2><p className="mt-1 text-sm text-slate-500">Discover fresh opportunities from trusted employers.</p></div>
 
         <Link
           href="/jobs"
@@ -105,32 +105,24 @@ export default function JobsNearYou() {
       </div>
 
       {loading && (
-        <div className="flex-1 px-5 sm:px-6">
-          {[1, 2, 3].map((item) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
+          {[1, 2, 3, 4, 5, 6].map((item) => (
             <div
               key={item}
-              className="flex min-h-[72px] animate-pulse items-center gap-3 border-b border-slate-100 py-3 last:border-b-0"
-            >
-              <div className="h-12 w-12 shrink-0 rounded-lg bg-slate-100" />
-
-              <div className="flex-1">
-                <div className="h-3.5 w-32 rounded bg-slate-100" />
-                <div className="mt-2 h-3 w-24 rounded bg-slate-100" />
-                <div className="mt-2 h-3 w-20 rounded bg-slate-100" />
-              </div>
-            </div>
+              className="h-[190px] animate-pulse rounded-lg border border-slate-200 bg-slate-100"
+            />
           ))}
         </div>
       )}
 
       {!loading && error && (
-        <div className="flex flex-1 items-center justify-center px-5 text-center">
+        <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-center">
           <p className="text-sm text-red-500">{error}</p>
         </div>
       )}
 
       {!loading && !error && jobs.length === 0 && (
-        <div className="flex flex-1 flex-col items-center justify-center px-5 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
           <Briefcase className="mb-3 h-8 w-8 text-violet-500" />
 
           <p className="text-sm font-semibold text-slate-800">
@@ -147,7 +139,7 @@ export default function JobsNearYou() {
       )}
 
       {!loading && !error && jobs.length > 0 && (
-        <div className="flex-1 px-5 sm:px-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
           {jobs.map((job) => {
             const jobUrl = job.slug || job.id;
             const posted = formatPostedTime(job.createdAt);
@@ -156,9 +148,9 @@ export default function JobsNearYou() {
               <Link
                 key={job.id}
                 href={`/jobs/${jobUrl}`}
-                className="group -mx-2 flex min-h-[76px] items-center gap-3 border-b border-slate-100 px-2 py-3 transition last:border-b-0 hover:bg-violet-50/40"
+                className="group flex h-[190px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
                   {job.employer.logoUrl ? (
                     <img
                       src={job.employer.logoUrl}
@@ -170,16 +162,16 @@ export default function JobsNearYou() {
                   )}
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-bold text-slate-950 transition group-hover:text-violet-700">
+                <div className="mt-3 min-w-0 flex-1">
+                  <h3 className="line-clamp-2 text-[12px] font-extrabold leading-tight text-slate-950 transition group-hover:text-violet-700">
                     {job.title}
                   </h3>
 
-                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                  <p className="mt-1 truncate text-[9px] font-medium text-slate-500">
                     {job.employer.name}
                   </p>
 
-                  <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+                  <div className="mt-2 flex items-center gap-1 text-[9px] text-slate-500">
                     <MapPin size={11} className="shrink-0" />
 
                     <span className="truncate">
@@ -187,22 +179,12 @@ export default function JobsNearYou() {
                     </span>
                   </div>
 
-                  <p className="mt-0.5 text-xs text-slate-600">
+                  <p className="mt-1 text-[9px] font-semibold text-primary">
                     {formatEmploymentType(job.employmentType)}
                   </p>
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end self-stretch py-1">
-                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
-                    New
-                  </span>
-
-                  {posted && (
-                    <span className="mt-auto text-[10px] text-slate-400">
-                      {posted}
-                    </span>
-                  )}
-                </div>
+                {posted && <span className="mt-auto text-[8px] font-medium text-slate-400">{posted}</span>}
               </Link>
             );
           })}

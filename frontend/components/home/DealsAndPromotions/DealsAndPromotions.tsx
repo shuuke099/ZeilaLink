@@ -92,7 +92,7 @@ export default function DealsAndPromotions() {
   if (loading) {
     return (
       <section className="w-full bg-white py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="mb-4">
             <div className="h-6 w-48 animate-pulse rounded bg-slate-200" />
             <div className="mt-2 h-3 w-64 animate-pulse rounded bg-slate-100" />
@@ -114,7 +114,7 @@ export default function DealsAndPromotions() {
   if (error) {
     return (
       <section className="w-full bg-white py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <p className="text-sm font-medium text-red-500">{error}</p>
         </div>
       </section>
@@ -125,7 +125,7 @@ export default function DealsAndPromotions() {
 
   return (
     <section className="w-full bg-white py-6">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-950 sm:text-xl">

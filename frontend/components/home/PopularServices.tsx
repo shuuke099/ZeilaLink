@@ -124,7 +124,7 @@ function ServiceCard({ service }: { service: Service }) {
 function LoadingSkeleton() {
   return (
     <section className="w-full bg-white  ">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         {/* Header */}
         <div className="mb-5 flex items-end justify-between">
           <div>
@@ -226,7 +226,7 @@ export default function PopularServices() {
   if (error) {
     return (
       <section className="w-full bg-white py-8 md:py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
             <p className="text-sm text-red-600">{error}</p>
           </div>
@@ -245,7 +245,7 @@ export default function PopularServices() {
 
   return (
     <section className="w-full bg-white pb-5 md:pb-5">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
         {/* Header */}
         <div className="mb-5 flex items-end justify-between md:mb-6">
           <div>

@@ -1,16 +1,10 @@
 import JobsNearYou from "./JobsNearYou";
-import GetFeaturedCard from "./GetFeaturedCard";
-import ZeilaMartCard from "./ZeilaMartCard";
 
 export default function HomeJobsAndPromotions() {
   return (
     <section className="w-full bg-white pb-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 lg:grid-cols-[1.35fr_0.75fr_1fr]">
-          <JobsNearYou />
-          <GetFeaturedCard />
-          <ZeilaMartCard />
-        </div>
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
+        <JobsNearYou />
       </div>
     </section>
   );

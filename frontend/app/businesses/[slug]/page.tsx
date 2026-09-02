@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import BusinessProfileView from "./BusinessProfileView";
 import { ServerApiError, serverApiGet } from "@/lib/serverApi";
 import { getSafeStoredUrl } from "@/lib/safeUrl";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
@@ -315,7 +316,9 @@ export default async function BusinessProfilePage({
       />
       <Navbar />
 
-      <main className="mx-auto max-w-[1440px] px-4 pb-16 pt-20 sm:px-6 lg:px-8">
+      <BusinessProfileView business={business} language={language} />
+
+      <main className="hidden">
         <section className="relative min-h-[280px] overflow-hidden rounded-xl border border-slate-200 bg-slate-950 text-white shadow-[0_2px_8px_rgba(15,23,42,.06)] sm:min-h-[320px]">
           {safeBanner && (
             // eslint-disable-next-line @next/next/no-img-element

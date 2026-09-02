@@ -163,8 +163,8 @@ export default function ServiceList({
                   key={category}
                   type="button"
                   onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
-                    active ? 'bg-primary text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                  className={`flex h-10 shrink-0 items-center rounded-lg border px-4 text-[11px] font-semibold transition ${
+                    active ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-primary'
                   }`}
                 >
                   {category}
@@ -192,8 +192,8 @@ export default function ServiceList({
                     key={category}
                     type="button"
                     onClick={() => setActiveCategory(category)}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-                      active ? 'bg-primary text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    className={`flex h-10 items-center rounded-lg border px-4 text-[11px] font-semibold transition ${
+                      active ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-primary'
                     }`}
                   >
                     {category}
@@ -215,7 +215,7 @@ export default function ServiceList({
         </div>
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {filteredServices.map((item) => {
             const title = !isEn && item.titleSo?.trim() ? item.titleSo : item.title;
             const description =
@@ -229,7 +229,7 @@ export default function ServiceList({
             <Link
               key={item.id}
               href={`/services/${item.slug || item.id}`}
-              className="group flex h-[270px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg sm:h-[290px]"
+              className="group flex h-[230px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-[250px]"
             >
               <div className="relative h-[105px] shrink-0 overflow-hidden bg-slate-100 sm:h-[120px]">
                 <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
@@ -245,30 +245,23 @@ export default function ServiceList({
                   <span className="font-medium truncate">{provider}</span>
                 </div>
 
-                <div className="flex min-h-0 items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h2 className="line-clamp-2 text-[11px] font-extrabold leading-[1.2] text-slate-900 sm:text-[13px]">{title}</h2>
-                    <p className="mt-1 line-clamp-2 text-[8px] leading-3 text-slate-500 sm:text-[9px] sm:leading-4">{description}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-[7px] uppercase font-bold text-slate-400">{isEn ? 'From' : 'Laga bilaabo'}</p>
-                    <p className="text-[12px] font-extrabold leading-none text-primary sm:text-[14px]">{item.priceLabel}</p>
-                  </div>
+                <div className="min-h-0 min-w-0">
+                  <h2 className="line-clamp-2 text-[11px] font-extrabold leading-[1.2] text-slate-900 sm:text-[13px]">{title}</h2>
+                  <p className="mt-1 line-clamp-2 text-[8px] leading-3 text-slate-500 sm:text-[9px] sm:leading-4">{description}</p>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-500 mt-3">
+                <div className="mt-auto flex min-w-0 items-end justify-between gap-2 pt-2 text-[11px] text-slate-500">
                   <div className="flex items-center gap-1">
                     <Star size={12} className="text-yellow-500 fill-yellow-500" />
                     <span className="font-semibold text-slate-700">{item.rating.toFixed(1)}</span>
                     <span>({item.reviews})</span>
                   </div>
+                  <div className="min-w-0 text-right">
+                    <p className="text-[7px] font-bold uppercase leading-none text-slate-400">{isEn ? 'From' : 'Laga bilaabo'}</p>
+                    <p className="mt-0.5 truncate text-[11px] font-extrabold leading-tight text-primary sm:text-[12px]">{item.priceLabel}</p>
+                  </div>
                 </div>
 
-                <div className="mt-auto block w-full rounded-md border border-primary/20 bg-primary/5 py-2 text-center text-[9px] font-bold text-primary sm:text-[10px]">
-                  {item.isDemo || usingDemoData
-                    ? (isEn ? 'Preview Demo' : 'Eeg Tusaalaha')
-                    : (isEn ? 'View Details' : 'Faahfaahin Eeg')}
-                </div>
               </div>
             </Link>
             );

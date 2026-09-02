@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   Briefcase,
   Building2,
-  DollarSign,
   MapPin,
   Search,
   SlidersHorizontal,
@@ -187,36 +186,33 @@ export default function JobsClient({
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="mx-auto max-w-7xl px-4 pb-14 pt-28 sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-4xl text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 sm:bg-white sm:py-1.5 sm:text-[11px] sm:text-primary-darker">
-            <Sparkles size={12} />
-            {language === "en" ? "Career Marketplace" : "Suuqa Shaqooyinka"}
-          </p>
-          <h1 className="mt-5 text-4xl font-black leading-none tracking-tight text-primary-darker sm:text-6xl">
-            {language === "en" ? "Find Your " : "Hel Shaqadaada "}
-            <span className="text-primary">
-              {language === "en" ? "Dream Job" : "Riyada"}
-            </span>
+      <div className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
+        <section className="relative min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 sm:px-7">
+          <div className="relative z-10 max-w-xl">
+          <h1 className="text-[28px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[32px]">
+            {language === "en" ? "Jobs & Opportunities" : "Shaqooyin & Fursado"}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm font-medium text-primary-darker/70 sm:text-base">
+          <p className="mt-2 text-[12px] font-medium leading-5 text-slate-600">
             {language === "en"
               ? "Browse curated opportunities from top employers on ZeilaLink and discover your next career move."
               : "Soo eeg fursadaha shaqo ee la kala xulay oo ka socda shirkadaha ugu wanaagsan."}
           </p>
+          <p className="mt-5 flex items-center gap-2 text-[10px] font-bold text-slate-700"><Briefcase size={14} className="text-primary"/><span className="text-primary">{jobs.length}</span>{language === "en" ? "jobs available" : "shaqo ayaa diyaar ah"}</p>
+          </div>
+          <div aria-hidden="true" className="absolute bottom-2 right-8 hidden items-end gap-3 text-violet-300 md:flex"><Briefcase size={68} strokeWidth={1.2}/><Sparkles size={92} strokeWidth={1}/></div>
         </section>
 
-        <section className="mx-auto mt-8 max-w-6xl">
+        <section className="mt-4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               void applySearch();
             }}
-            className="rounded-2xl border border-slate-300 bg-white p-2 shadow-[0_6px_16px_rgba(15,23,42,0.12)] sm:rounded-[2rem] sm:p-3"
+            className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
           >
             <div className="grid gap-2 md:flex md:items-center">
-              <div className="flex min-h-12 flex-1 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 sm:gap-3 sm:rounded-2xl sm:bg-transparent sm:px-4 sm:py-3">
-                <Search className="h-5 w-5 shrink-0 text-slate-600 sm:h-8 sm:w-8" />
+              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3">
+                <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   type="text"
                   value={searchDraft}
@@ -226,14 +222,14 @@ export default function JobsClient({
                       ? "Job title, keywords, or company"
                       : "Magaca shaqada, erayo muhiim ah, ama shirkad"
                   }
-                  className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 sm:text-xl"
+                  className="w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </div>
 
               <div className="hidden h-10 w-px bg-slate-300 md:block" />
 
-              <div className="flex min-h-12 flex-1 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 sm:gap-3 sm:rounded-2xl sm:bg-transparent sm:px-4 sm:py-3">
-                <MapPin className="h-5 w-5 shrink-0 text-slate-600 sm:h-8 sm:w-8" />
+              <div className="flex h-10 flex-1 items-center gap-2 rounded-lg bg-slate-50 px-3">
+                <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   type="text"
                   value={locationDraft}
@@ -243,14 +239,14 @@ export default function JobsClient({
                       ? 'City, state, or "remote"'
                       : 'Magaalo, gobol, ama "remote"'
                   }
-                  className="w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-500 sm:text-xl"
+                  className="w-full bg-transparent text-[11px] font-medium text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={searching}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1757c8] px-5 text-sm font-black text-white transition hover:bg-[#1148a8] active:scale-[0.99] md:ml-3 md:w-auto md:rounded-2xl md:px-10 md:text-xl"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 text-[11px] font-bold text-white transition hover:bg-primary-darker md:ml-2 md:w-auto"
               >
                 <Search className="h-4 w-4 md:hidden" />
                 {searching
@@ -265,7 +261,7 @@ export default function JobsClient({
           </form>
         </section>
 
-        <section className="mt-7 flex flex-col gap-3 rounded-2xl border border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mt-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-primary-darker/70">
             <SlidersHorizontal size={14} />
             {language === "en" ? "Filters" : "Shaandhayn"}
@@ -280,7 +276,7 @@ export default function JobsClient({
                   employmentType: e.target.value,
                 }))
               }
-              className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs font-bold text-primary-darker outline-none"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
             >
               <option value="">
                 {language === "en" ? "All Job Types" : "Nooc walba"}
@@ -293,7 +289,7 @@ export default function JobsClient({
             <select
               value={salaryRange}
               onChange={(e) => setSalaryRange(e.target.value as SalaryFilter)}
-              className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs font-bold text-primary-darker outline-none"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
             >
               <option value="all">
                 {language === "en" ? "Salary Range" : "Mushahar"}
@@ -306,7 +302,7 @@ export default function JobsClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortFilter)}
-              className="rounded-xl border border-border bg-surface-muted px-3 py-2 text-xs font-bold text-primary-darker outline-none"
+              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-600 outline-none focus:border-primary"
             >
               <option value="newest">
                 {language === "en" ? "Newest First" : "Ugu Cusub"}
@@ -383,7 +379,7 @@ export default function JobsClient({
             </p>
           </div>
         ) : (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {filteredAndSortedJobs.map((job) => {
               const localized = getLocalizedJobText(job, language);
               return (
@@ -392,10 +388,10 @@ export default function JobsClient({
                     href={`/jobs/${job.slug || job.id}`}
                     className="group block h-full"
                   >
-                    <article className="flex h-full flex-col rounded-3xl border border-border bg-white p-5 text-primary-darker shadow-soft transition-all duration-300 group-hover:-translate-y-1">
-                      <div className="mb-4 flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-muted">
+                    <article className="flex h-[245px] min-w-0 flex-col rounded-lg border border-slate-200 bg-white p-3 text-slate-900 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-lg">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                             {job.employer.avatarUrl || job.employer.logoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -416,11 +412,11 @@ export default function JobsClient({
                               />
                             )}
                           </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-darker/50">
+                          <div className="min-w-0">
+                            <p className="truncate text-[9px] font-bold text-slate-500">
                               {localized.employerName}
                             </p>
-                            <p className="text-xs font-bold text-primary-darker/70">
+                            <p className="truncate text-[9px] font-medium text-slate-500">
                               {job.remote ? "Remote Friendly" : job.location}
                             </p>
                           </div>
@@ -432,32 +428,32 @@ export default function JobsClient({
                         />
                       </div>
 
-                      <h3 className="text-lg font-black leading-tight text-primary-darker">
+                      <h3 className="line-clamp-2 text-[13px] font-extrabold leading-tight text-slate-950">
                         {localized.title}
                       </h3>
 
-                      <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-primary-darker/70">
+                      <p className="mt-2 line-clamp-3 text-[9px] leading-4 text-slate-500">
                         {localized.description}
                       </p>
 
-                      <div className="mt-5 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-[8px] font-bold text-primary">
                           <Briefcase size={12} />
                           {job.employmentType}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                        <span className="inline-flex min-w-0 items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[8px] font-bold text-emerald-700">
                           <MapPin size={12} />
                           {job.location}
                         </span>
                       </div>
 
-                      <div className="mt-auto border-t border-border pt-5">
-                        <div className="flex items-center justify-between">
-                          <p className="flex items-center gap-1 text-sm font-black text-primary-darker">
-                            <DollarSign size={14} />
+                      <div className="mt-auto border-t border-slate-100 pt-3">
+                        <div className="inline-flex max-w-full items-center gap-1 whitespace-nowrap">
+                          <p className="truncate text-[10px] font-extrabold text-primary">
                             {formatSalary(job)}
                           </p>
-                          <p className="text-xs font-semibold text-primary-darker/50">
+                          <span aria-hidden="true" className="text-[8px] text-slate-300">•</span>
+                          <p className="shrink-0 text-[8px] font-medium text-slate-400">
                             {formatDistance(
                               new Date(job.createdAt),
                               new Date(renderedAt),

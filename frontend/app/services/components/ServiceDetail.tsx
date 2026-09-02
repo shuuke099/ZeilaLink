@@ -1,14 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
+  Bookmark,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock3,
   Maximize2,
+  MapPin,
   MessageCircle,
+  Navigation,
+  Phone,
   RotateCcw,
   ShieldCheck,
+  Share2,
   Star,
   X,
 } from 'lucide-react';
@@ -305,7 +312,37 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
 
   return (
     <>
-    <section className="pt-6 pb-16 px-4 sm:px-6 lg:px-8 bg-background transition-colors">
+    <section className="bg-[#fafafe] px-4 pb-16 pt-3 sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-[1440px] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-4">
+          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)]">
+            <button type="button" onClick={() => setActiveGalleryIndex(0)} className="relative block h-[230px] w-full overflow-hidden bg-slate-100 sm:h-[350px] lg:h-[390px]"><img src={gallery[0]} alt={serviceTitle} className="h-full w-full object-cover"/><span className="absolute bottom-3 right-3 rounded bg-slate-950/75 px-2 py-1 text-[8px] font-bold text-white">1 / {gallery.length}</span></button>
+            {gallery.length > 1 && <div className="grid grid-cols-4 gap-2 border-b border-slate-100 p-2">{gallery.slice(0,4).map((image,index)=><button key={`${image}-${index}`} onClick={()=>setActiveGalleryIndex(index)} className="h-12 overflow-hidden rounded-md sm:h-16"><img src={image} alt={`${serviceTitle} ${index+1}`} className="h-full w-full object-cover"/></button>)}</div>}
+            <div className="p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div><h1 className="text-[23px] font-extrabold tracking-[-0.035em] text-slate-950 sm:text-[28px]">{serviceTitle}</h1><p className="mt-1 text-[10px] font-semibold text-slate-500">{serviceProvider} <span className="text-primary">●</span></p><div className="mt-2 flex flex-wrap gap-3 text-[9px]"><span className="flex items-center gap-1 text-amber-500"><Star size={11} className="fill-amber-400"/>{service.rating.toFixed(1)} ({service.reviews} reviews)</span><span className="text-slate-500">Open</span><span className="text-slate-500">{service.deliveryTime || 'Flexible scheduling'}</span></div></div><div className="shrink-0 text-right"><p className="text-[8px] uppercase text-slate-400">From</p><p className="text-lg font-extrabold text-primary">{service.priceLabel}</p></div></div>
+              <button type="button" onClick={()=>{setShowBookingForm(true);setBookingMessage(null)}} disabled={service.isDemo} className="mt-4 h-10 w-full rounded-lg bg-primary text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">{service.isDemo ? 'Demo preview' : isEn ? 'Request Service' : 'Dalbo Adeegga'}</button>
+              <div className="mt-3 grid grid-cols-4 gap-2"><button className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary"><Phone size={13}/>Call</button><button className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary"><Navigation size={13}/>Directions</button><button className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary"><MessageCircle size={13}/>Message</button><button className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary"><Bookmark size={13}/>Save</button></div>
+            </div>
+            <nav className="grid grid-cols-4 border-t border-slate-100 text-center text-[9px] font-semibold"><span className="py-3 text-slate-500">Overview</span><span className="border-b-2 border-primary py-3 text-primary">Details</span><span className="py-3 text-slate-500">Reviews ({service.reviews})</span><span className="py-3 text-slate-500">About</span></nav>
+          </section>
+
+          <DetailPanel title={isEn ? 'About this service' : 'Ku saabsan adeeggan'}><p className="text-[10px] leading-5 text-slate-600">{serviceDescription}</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{highlights.map(item=><p key={item} className="flex items-start gap-2 text-[9px] text-slate-600"><Check size={11} className="mt-0.5 shrink-0 text-primary"/>{item}</p>)}</div></DetailPanel>
+          <DetailPanel title="Service details"><div className="grid gap-3 text-[9px] sm:grid-cols-2 lg:grid-cols-4"><MiniInfo label="Price" value={service.priceLabel}/><MiniInfo label="Duration" value={service.deliveryTime || 'Flexible'}/><MiniInfo label="Package" value={service.packageName || 'Standard'}/><MiniInfo label="Support" value={service.support || 'Included'}/></div></DetailPanel>
+          <DetailPanel title="Gallery" action="View all"><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0,6).map((image,index)=><button key={`${image}-${index}`} onClick={()=>setActiveGalleryIndex(index)} className="h-24 overflow-hidden rounded-lg sm:h-32"><img src={image} alt={`${serviceTitle} gallery ${index+1}`} className="h-full w-full object-cover"/></button>)}</div></DetailPanel>
+        </div>
+
+        <aside className="space-y-3 lg:sticky lg:top-20">
+          <DetailPanel title={isEn ? "What's included" : 'Waxa ku jira'}><div className="space-y-2">{includes.map(item=><p key={item} className="flex items-start gap-2 text-[9px] text-slate-600"><Check size={11} className="mt-0.5 shrink-0 text-primary"/>{item}</p>)}</div></DetailPanel>
+          <DetailPanel title="Service process"><div className="space-y-3">{[['Book','Choose a date and time that works for you.'],['Inspect','We confirm your needs and service details.'],['Service','Your professional completes the service.'],['Review','We follow up to ensure satisfaction.']].map(([title,copy],index)=><div key={title} className="flex gap-2.5"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-primary/10 text-[8px] font-bold text-primary">{index+1}</span><div><p className="text-[9px] font-bold text-slate-700">{title}</p><p className="mt-0.5 text-[8px] leading-4 text-slate-500">{copy}</p></div></div>)}</div></DetailPanel>
+          <DetailPanel title={`About ${serviceProvider}`}><div className="flex gap-3"><img src={service.expertImage || service.image} alt={serviceProvider} className="h-12 w-12 rounded-full object-cover"/><div><p className="text-[10px] font-bold text-slate-800">{service.expertName || serviceProvider}</p><p className="mt-1 text-[8px] text-slate-500">{service.expertRole || serviceCategory}</p><p className="mt-1 flex items-center gap-1 text-[8px] text-amber-500"><Star size={9} className="fill-amber-400"/>{service.rating.toFixed(1)}</p></div></div><button className="mt-3 h-9 w-full rounded-lg border border-primary/30 text-[9px] font-bold text-primary">View Business Profile</button></DetailPanel>
+          <DetailPanel title="Reviews" action="View all"><div className="flex items-end gap-3"><strong className="text-4xl font-extrabold text-slate-950">{service.rating.toFixed(1)}</strong><div><div className="flex gap-0.5">{Array.from({length:5}).map((_,index)=><Star key={index} size={10} className={index<Math.round(service.rating)?'fill-amber-400 text-amber-400':'text-slate-200'}/>)}</div><p className="mt-1 text-[8px] text-slate-400">{service.reviews} reviews</p></div></div></DetailPanel>
+          <DetailPanel title="Share this service"><div className="flex gap-2">{['f','x','in','wa'].map(item=><span key={item} className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-[8px] font-bold text-primary">{item}</span>)}</div><button onClick={()=>void navigator.clipboard?.writeText(window.location.href)} className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-primary/30 text-[9px] font-bold text-primary"><Share2 size={12}/>Copy link</button></DetailPanel>
+        </aside>
+      </div>
+    </section>
+
+    {showBookingForm && !service.isDemo && <div className="fixed inset-0 z-[180] grid place-items-center bg-slate-950/55 p-4" onClick={()=>setShowBookingForm(false)}><div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-2xl" onClick={event=>event.stopPropagation()}><div className="flex items-center justify-between"><h2 className="text-sm font-extrabold">Request {serviceTitle}</h2><button onClick={()=>setShowBookingForm(false)}><X size={18}/></button></div><div className="mt-4 grid gap-3"><BookingInput label="Phone number" value={form.customerPhone} onChange={value=>setForm(prev=>({...prev,customerPhone:value}))}/><BookingInput label="Responsible full name" value={form.responsibleFullName} onChange={value=>setForm(prev=>({...prev,responsibleFullName:value}))}/><label className="text-[9px] font-semibold text-slate-600">Service date and time<input type="datetime-local" value={form.serviceDateTime} onChange={event=>setForm(prev=>({...prev,serviceDateTime:event.target.value}))} className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-[10px] outline-none focus:border-primary"/></label><BookingInput label="Location / Address" value={form.locationAddress} onChange={value=>setForm(prev=>({...prev,locationAddress:value}))}/><label className="text-[9px] font-semibold text-slate-600">Notes<textarea value={form.notes} onChange={event=>setForm(prev=>({...prev,notes:event.target.value}))} className="mt-1 min-h-20 w-full rounded-lg border border-slate-200 p-3 text-[10px] outline-none focus:border-primary"/></label><button onClick={handleBookService} disabled={isBooking} className="h-10 rounded-lg bg-primary text-[10px] font-bold text-white">{isBooking?'Redirecting…':'Continue to checkout'}</button>{bookingMessage&&<p className="text-[9px] font-semibold text-primary">{bookingMessage}</p>}</div></div></div>}
+
+    <section className="hidden">
       <div className="max-w-7xl mx-auto">
         <div className="mb-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
           {serviceCategory} | {serviceProvider}
@@ -652,4 +689,16 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
     )}
     </>
   );
+}
+
+function DetailPanel({ title, action, children }: { title: string; action?: string; children: ReactNode }) {
+  return <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] sm:p-5"><div className="mb-3 flex items-center justify-between"><h2 className="text-[12px] font-extrabold text-slate-900">{title}</h2>{action && <span className="text-[8px] font-semibold text-primary">{action}</span>}</div>{children}</section>;
+}
+
+function MiniInfo({ label, value }: { label: string; value: string }) {
+  return <div><p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">{label}</p><p className="mt-1 truncate font-semibold text-slate-700">{value}</p></div>;
+}
+
+function BookingInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return <label className="text-[9px] font-semibold text-slate-600">{label}<input value={value} onChange={event=>onChange(event.target.value)} className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-[10px] outline-none focus:border-primary"/></label>;
 }

@@ -359,16 +359,19 @@ export default async function BusinessesPage({
                   const safeLogo = getSafeStoredUrl(business.logoUrl);
                   const safeBanner = getSafeStoredUrl(business.bannerUrl);
                   const location = business.location || business.address;
+                  const directionsQuery = [business.address, business.city, business.region]
+                    .filter(Boolean)
+                    .join(", ");
                   const alternateName = isSomali
                     ? business.name
                     : business.nameSo?.trim();
 
                   return (
-                    <Link
-                      href={businessPath}
+                    <article
                       key={`${business.type}-${business.id}`}
-                      className="group flex h-[255px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg sm:h-[275px]"
+                      className="group relative flex h-[255px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg sm:h-[275px]"
                     >
+                      <Link href={businessPath} aria-label={`View ${localized.name}`} className="absolute inset-0 z-10"><span className="sr-only">View {localized.name}</span></Link>
                       <div className="relative block h-[108px] shrink-0 overflow-hidden bg-slate-100 sm:h-[125px]">
                         {safeBanner && <img src={safeBanner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
                         {!safeBanner && safeLogo && <img src={safeLogo} alt="" className="h-full w-full object-contain p-6" />}
@@ -476,12 +479,12 @@ export default async function BusinessesPage({
                         )}
                       </dl>}
 
-                      <div className="mt-auto grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 pt-2 text-[8px] font-semibold text-slate-600 sm:text-[9px]">
-                        <span className="flex items-center justify-center gap-1.5"><Phone size={11} />{isSomali ? "Wac" : "Call"}</span>
-                        <span className="flex items-center justify-center gap-1.5"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</span>
+                      <div className="relative z-20 mt-auto grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 pt-2 text-[8px] font-semibold text-slate-600 sm:text-[9px]">
+                        {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 hover:text-primary"><Phone size={11} />{isSomali ? "Wac" : "Call"}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />{isSomali ? "Wac" : "Call"}</span>}
+                        {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 hover:text-primary"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
                       </div>
                       </div>
-                    </Link>
+                    </article>
                   );
                 })}
               </div>

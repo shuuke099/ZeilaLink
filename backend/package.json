@@ -12,6 +12,8 @@
     "prisma:seed": "pnpm run prisma:generate && ts-node prisma/seed.ts",
     "prisma:seed:trainings": "ts-node prisma/seed-trainings.ts",
     "prisma:seed:businesses": "ts-node prisma/seed-businesses.ts",
+    "prisma:seed:services": "ts-node prisma/seed-services.ts",
+    "prisma:seed:jobs": "ts-node prisma/seed-jobs.ts",
     "db:studio": "prisma studio",
     "email:test": "node test-email.js",
     "security:check-passwords": "node scripts/check-password-security.js"

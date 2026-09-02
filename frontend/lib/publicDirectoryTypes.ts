@@ -95,6 +95,11 @@ export interface PublicBusiness {
   reviewsCount?: number | null;
   statusLabel?: string | null;
   bannerUrl?: string | null;
+  gallery?: string[];
+  subcategory?: string | null;
+  serviceArea?: string[];
+  remoteAvailable?: boolean;
+  verified?: boolean;
   openingHours?: Record<string, string> | null;
   createdAt?: string | null;
   jobCount?: number | null;
