@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Grid2X2, Heart, Search, Sparkles, Star, Wrench } from 'lucide-react';
+import { ChevronDown, Grid2X2, Heart, List, Search, Sparkles, Star, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { cachedApiGet } from '@/lib/api-cache';
 import { serviceCategories, services as fallbackServices } from '../data/services';
@@ -13,6 +13,8 @@ type ServiceListProps = {
   initialCategories?: string[];
   loadError?: boolean;
 };
+
+type ViewMode = 'grid' | 'list';
 
 export default function ServiceList({
   isEn,
@@ -33,6 +35,8 @@ export default function ServiceList({
   );
   const [showAllMobileFilters, setShowAllMobileFilters] = useState(false);
   const [usingDemoData, setUsingDemoData] = useState(!hasInitialServices);
+  const [view, setView] = useState<ViewMode>('grid');
+  const [sort, setSort] = useState('recommended');
 
   useEffect(() => {
     const loadServices = async () => {
@@ -70,7 +74,7 @@ export default function ServiceList({
   const filteredServices = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return services.filter((item) => {
+    const matches = services.filter((item) => {
       if (
         activeCategory !== 'All Services' &&
         item.category !== activeCategory
@@ -93,7 +97,14 @@ export default function ServiceList({
         .toLowerCase()
         .includes(query);
     });
-  }, [activeCategory, search, services]);
+
+    return matches.sort((a, b) => {
+      if (sort === 'rating') return b.rating - a.rating;
+      if (sort === 'reviews') return b.reviews - a.reviews;
+      if (sort === 'name') return a.title.localeCompare(b.title);
+      return 0;
+    });
+  }, [activeCategory, search, services, sort]);
 
   const mobileCategories = showAllMobileFilters ? categories : categories.slice(0, 4);
   const hasMoreMobileFilters = categories.length > mobileCategories.length;
@@ -201,7 +212,7 @@ export default function ServiceList({
             )}
           </div>
 
-          <div className="hidden flex-wrap items-center justify-between gap-4 md:flex">
+          <div className="hidden flex-wrap items-center gap-2.5 md:flex">
             <div className="flex flex-wrap gap-2.5">
               {categories.map((category) => {
                 const active = category === activeCategory;
@@ -220,20 +231,34 @@ export default function ServiceList({
               })}
             </div>
 
-            <p className="text-xs text-muted dark:text-slate-400">
-              {isEn ? 'Sort by:' : 'Kala sooc:'}{' '}
-              <span className="font-semibold text-foreground dark:text-slate-200">{isEn ? 'Recommended' : 'La taliyay'}</span>
-            </p>
           </div>
-
-          <p className="text-xs text-muted dark:text-slate-400 md:hidden">
-            {isEn ? 'Sort by:' : 'Kala sooc:'}{' '}
-            <span className="font-semibold text-foreground dark:text-slate-200">{isEn ? 'Recommended' : 'La taliyay'}</span>
-          </p>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+            {filteredServices.length} {isEn ? (filteredServices.length === 1 ? 'service found' : 'services found') : 'adeeg ayaa la helay'}
+          </p>
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+              aria-label={isEn ? 'Sort services' : 'Kala sooc adeegyada'}
+              className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-[10px] font-semibold text-slate-600 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:flex-none sm:px-3 sm:text-[11px]"
+            >
+              <option value="recommended">{isEn ? 'Sort: Recommended' : 'Kala sooc: La taliyay'}</option>
+              <option value="rating">{isEn ? 'Highest rated' : 'Qiimeynta ugu sarreysa'}</option>
+              <option value="reviews">{isEn ? 'Most reviewed' : 'Faallooyinka ugu badan'}</option>
+              <option value="name">{isEn ? 'Name: A-Z' : 'Magaca: A-Z'}</option>
+            </select>
+            <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+              <button type="button" onClick={() => setView('grid')} aria-label={isEn ? 'Grid view' : 'Muuqaal shabaq'} className={`grid h-9 w-9 place-items-center transition ${view === 'grid' ? 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300' : 'text-slate-400 hover:text-violet-600 dark:text-slate-500 dark:hover:text-violet-300'}`}><Grid2X2 size={15} /></button>
+              <button type="button" onClick={() => setView('list')} aria-label={isEn ? 'List view' : 'Muuqaal liis'} className={`grid h-9 w-9 place-items-center border-l border-slate-200 transition dark:border-slate-700 ${view === 'list' ? 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300' : 'text-slate-400 hover:text-violet-600 dark:text-slate-500 dark:hover:text-violet-300'}`}><List size={16} /></button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className={`order-2 ${view === 'grid' ? 'grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4' : 'grid gap-3'}`}>
           {filteredServices.map((item) => {
             // Titles and provider names are canonical listing data. The selected
             // language changes descriptive and interface copy only.
@@ -248,9 +273,9 @@ export default function ServiceList({
             <Link
               key={item.id}
               href={`/services/${item.slug || item.id}`}
-              className="group flex h-[230px] min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.35)] sm:h-[250px]"
+              className={`group min-w-0 overflow-hidden border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.35)] ${view === 'list' ? 'grid h-[190px] grid-cols-[140px_minmax(0,1fr)] rounded-xl sm:grid-cols-[260px_minmax(0,1fr)]' : 'flex h-[230px] flex-col rounded-lg sm:h-[250px]'}`}
             >
-              <div className="relative h-[105px] shrink-0 overflow-hidden bg-surface-muted dark:bg-slate-800 sm:h-[120px]">
+              <div className={`relative shrink-0 overflow-hidden bg-surface-muted dark:bg-slate-800 ${view === 'list' ? 'h-[190px] border-r border-border' : 'h-[105px] sm:h-[120px]'}`}>
                 <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
                 <span className="absolute left-2 top-2 rounded bg-primary px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white sm:text-[8px]">
@@ -258,15 +283,15 @@ export default function ServiceList({
                 </span><Heart size={16} className="absolute right-2 top-2 text-white drop-shadow" />
               </div>
 
-              <div className="flex min-h-0 flex-1 flex-col p-2.5 sm:p-3">
+              <div className={`flex min-h-0 flex-1 flex-col p-2.5 ${view === 'list' ? 'sm:p-5' : 'sm:p-3'}`}>
                 <div className="mb-1.5 flex items-center gap-2 text-[10px] text-muted dark:text-slate-400">
                   <span className="h-2 w-2 rounded-full bg-slate-800 dark:bg-slate-300" />
                   <span className="font-medium truncate">{provider}</span>
                 </div>
 
                 <div className="min-h-0 min-w-0">
-                  <h2 className="line-clamp-2 text-[11px] font-extrabold leading-[1.2] text-heading dark:text-white sm:text-[13px]">{title}</h2>
-                  <p className="mt-1 line-clamp-2 text-[8px] leading-3 text-muted dark:text-slate-400 sm:text-[9px] sm:leading-4">{description}</p>
+                  <h2 className={`line-clamp-2 font-extrabold leading-[1.2] text-heading dark:text-white ${view === 'list' ? 'text-sm sm:text-lg' : 'text-[11px] sm:text-[13px]'}`}>{title}</h2>
+                  <p className={`mt-1 text-muted dark:text-slate-400 ${view === 'list' ? 'line-clamp-3 text-xs leading-5 sm:text-sm' : 'line-clamp-2 text-[8px] leading-3 sm:text-[9px] sm:leading-4'}`}>{description}</p>
                 </div>
 
                 <div className="mt-auto flex min-w-0 items-end justify-between gap-2 pt-2 text-[11px] text-muted dark:text-slate-400">
@@ -286,7 +311,7 @@ export default function ServiceList({
             );
           })}
         </div>
-        <aside className="hidden space-y-3 lg:block">
+        <aside className="order-1 hidden space-y-3 lg:block">
           <div className="rounded-xl border border-border bg-surface p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.3)]">
             <h3 className="flex items-center gap-2 text-[12px] font-extrabold text-heading dark:text-white"><Grid2X2 size={14} className="text-primary" />{isEn ? 'Categories' : 'Qaybaha'}</h3>
             <div className="mt-3 space-y-1">{categories.map((category) => { const count = category === 'All Services' ? services.length : services.filter((service) => service.category === category).length; return <button key={category} onClick={() => setActiveCategory(category)} className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[9px] ${activeCategory === category ? 'bg-primary/10 font-bold text-primary dark:bg-primary/20' : 'font-medium text-muted hover:bg-surface-muted dark:text-slate-300 dark:hover:bg-slate-800'}`}><span className="truncate">{categoryLabel(category)}</span><span>{count}</span></button>; })}</div>

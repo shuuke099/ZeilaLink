@@ -365,7 +365,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         <div className="space-y-6">
             <nav
               aria-label={isEn ? "Breadcrumb" : "Jidka bogga"}
-              className="flex flex-wrap items-center gap-2 text-sm font-semibold text-primary-darker/65"
+              className="flex flex-wrap items-center gap-2 text-base font-semibold text-muted"
             >
               <Link href="/" className="hover:text-primary">
                 {isEn ? "Home" : "Bogga Hore"}
@@ -378,20 +378,20 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               <span aria-current="page">{localized.title}</span>
             </nav>
 
-            <section className="rounded-3xl border border-border bg-white p-6 shadow-soft sm:p-8">
+            <section className="rounded-3xl border border-border bg-surface p-6 shadow-soft sm:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="flex-1">
-                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-primary">
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-black uppercase tracking-wider text-primary">
                     <MapPin size={13} />
                     {job.location}
                   </div>
-                  <h1 className="text-4xl font-black tracking-tight text-primary-darker">
+                  <h1 className="text-4xl font-black tracking-tight text-heading">
                     {localized.title}
                   </h1>
-                  <p className="mt-2 text-sm font-semibold text-primary-darker/70">
-                    {localized.employerName}
-                    <span className="mx-2 text-primary-darker/40">•</span>
-                    {formatSalaryRange(job.salaryMin, job.salaryMax)}{" "}
+                  <p className="mt-3 text-base font-semibold text-muted">
+                    <span className="text-heading">{localized.employerName}</span>
+                    <span className="mx-2 text-muted/60">•</span>
+                    <span className="text-primary">{formatSalaryRange(job.salaryMin, job.salaryMax)}</span>{" "}
                     {isEn ? "/ year" : "/ sanadkii"}
                   </p>
                 </div>
@@ -402,11 +402,11 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
             <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
               <div className="space-y-6">
-                <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
-                  <h2 className="mb-4 text-xl font-black text-primary-darker">
+                <section className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+                  <h2 className="mb-4 text-xl font-black text-heading">
                     {isEn ? "Job Description" : "Faahfaahinta Shaqada"}
                   </h2>
-                  <div className="space-y-4 text-[15px] leading-relaxed text-primary-darker/80">
+                  <div className="space-y-4 text-base leading-7 text-foreground/75 sm:text-[17px]">
                     {descriptionParagraphs.map((paragraph, index) => (
                       <p key={index}>{paragraph}</p>
                     ))}
@@ -414,8 +414,8 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 </section>
 
                 {keyResponsibilities.length > 1 && (
-                  <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
-                    <h2 className="mb-4 text-xl font-black text-primary-darker">
+                  <section className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+                    <h2 className="mb-4 text-xl font-black text-heading">
                       {isEn
                         ? "Key Responsibilities"
                         : "Mas'uuliyadaha Muhiimka ah"}
@@ -430,7 +430,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                             className="rounded-2xl border border-border bg-surface-muted p-4"
                           >
                             <Icon size={16} className="mb-2 text-primary" />
-                            <p className="text-sm font-semibold text-primary-darker/80">
+                            <p className="text-base font-semibold leading-relaxed text-foreground/75">
                               {item}
                             </p>
                           </div>
@@ -441,8 +441,8 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 )}
 
                 {requirementItems.length > 0 && (
-                  <section className="rounded-3xl border border-border bg-white p-6 sm:p-8">
-                    <h2 className="mb-4 text-xl font-black text-primary-darker">
+                  <section className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+                    <h2 className="mb-4 text-xl font-black text-heading">
                       {isEn
                         ? "Qualifications & Skills"
                         : "Aqoonta iyo Xirfadaha"}
@@ -451,7 +451,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                       {requirementItems.map((item, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-3 text-sm font-semibold text-primary-darker/80"
+                          className="flex items-start gap-3 text-base font-semibold leading-relaxed text-foreground/75"
                         >
                           <CheckCircle2
                             size={16}
@@ -477,7 +477,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                           key={index}
                           className="rounded-xl border border-white/25 bg-primary-dark/35 p-3"
                         >
-                          <p className="text-sm font-semibold text-white/90">
+                          <p className="text-base font-semibold leading-relaxed text-white/90">
                             {item}
                           </p>
                         </div>
@@ -488,50 +488,50 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               </div>
 
               <aside className="space-y-6">
-                <section className="rounded-3xl border border-border bg-white p-6">
-                  <h3 className="text-lg font-black text-primary-darker">
+                <section className="rounded-3xl border border-border bg-surface p-6">
+                  <h3 className="text-lg font-black text-heading">
                     {isEn ? "Job Summary" : "Soo Koobidda Shaqada"}
                   </h3>
                   <div className="mt-5 space-y-4">
-                    <div className="flex items-start gap-3 text-sm text-primary-darker/80">
+                    <div className="flex items-start gap-3 rounded-2xl bg-surface-muted p-3 text-base text-foreground/75">
                       <CalendarDays size={16} className="mt-0.5 text-primary" />
                       <div>
-                        <p className="font-black text-primary-darker">
+                        <p className="text-xs font-black uppercase tracking-wider text-muted">
                           {isEn ? "Posted on" : "La daabacay"}
                         </p>
-                        <p>
+                        <p className="mt-1 font-bold text-heading">
                           {postedDate ?? (isEn ? "Recently" : "Dhowaan")}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 text-sm text-primary-darker/80">
+                    <div className="flex items-start gap-3 rounded-2xl bg-surface-muted p-3 text-base text-foreground/75">
                       <Briefcase size={16} className="mt-0.5 text-primary" />
                       <div>
-                        <p className="font-black text-primary-darker">
+                        <p className="text-xs font-black uppercase tracking-wider text-muted">
                           {isEn ? "Job Type" : "Nooca Shaqada"}
                         </p>
-                        <p>{job.employmentType}</p>
+                        <p className="mt-1 font-bold text-heading">{job.employmentType}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 text-sm text-primary-darker/80">
+                    <div className="flex items-start gap-3 rounded-2xl bg-surface-muted p-3 text-base text-foreground/75">
                       <DollarSign size={16} className="mt-0.5 text-primary" />
                       <div>
-                        <p className="font-black text-primary-darker">
+                        <p className="text-xs font-black uppercase tracking-wider text-muted">
                           {isEn ? "Salary Range" : "Xadka Mushaharka"}
                         </p>
-                        <p>{formatSalaryRange(job.salaryMin, job.salaryMax)}</p>
+                        <p className="mt-1 font-bold text-primary">{formatSalaryRange(job.salaryMin, job.salaryMax)}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 text-sm text-primary-darker/80">
+                    <div className="flex items-start gap-3 rounded-2xl bg-surface-muted p-3 text-base text-foreground/75">
                       <MapPin size={16} className="mt-0.5 text-primary" />
                       <div>
-                        <p className="font-black text-primary-darker">
+                        <p className="text-xs font-black uppercase tracking-wider text-muted">
                           {isEn ? "Location" : "Goobta"}
                         </p>
-                        <p>
+                        <p className="mt-1 font-bold text-heading">
                           {job.remote
                             ? `${job.location} (${isEn ? "Remote option" : "Shaqo fog"})`
                             : job.location}
@@ -540,23 +540,23 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     </div>
 
                     {deadlineDate && (
-                      <div className="flex items-start gap-3 text-sm text-primary-darker/80">
+                      <div className="flex items-start gap-3 rounded-2xl bg-surface-muted p-3 text-base text-foreground/75">
                         <Clock3 size={16} className="mt-0.5 text-primary" />
                         <div>
-                          <p className="font-black text-primary-darker">
+                          <p className="text-xs font-black uppercase tracking-wider text-muted">
                             {isEn
                               ? "Deadline"
                               : "Waqtiga Kama Dambaysta ah"}
                           </p>
-                          <p>{deadlineDate}</p>
+                          <p className="mt-1 font-bold text-heading">{deadlineDate}</p>
                         </div>
                       </div>
                     )}
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-border bg-white p-6">
-                  <h3 className="mb-4 text-lg font-black text-primary-darker">
+                <section className="rounded-3xl border border-border bg-surface p-6">
+                  <h3 className="mb-4 text-lg font-black text-heading">
                     {isEn ? "About" : "Ku saabsan"} {localized.employerName}
                   </h3>
                   <div className="space-y-4">
@@ -577,12 +577,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                           <Building2 size={18} className="text-primary" />
                         )}
                       </div>
-                      <p className="font-black text-primary-darker">
+                      <p className="font-black text-heading">
                         {localized.employerName}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm font-semibold text-primary-darker/80">
+                    <div className="flex items-center gap-2 text-base font-semibold text-muted">
                       <Globe size={15} className="text-primary" />
                       {job.remote
                         ? isEn
@@ -592,7 +592,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     </div>
 
                     {localized.employerDescription && (
-                      <p className="text-sm leading-relaxed text-primary-darker/80">
+                      <p className="text-base leading-7 text-foreground/75">
                         {localized.employerDescription.length > 220
                           ? `${localized.employerDescription.slice(0, 220)}...`
                           : localized.employerDescription}
@@ -602,7 +602,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     {businessPath && (
                       <Link
                         href={businessPath}
-                        className="inline-flex text-sm font-black text-primary hover:underline"
+                        className="inline-flex text-base font-black text-primary hover:underline"
                       >
                         {isEn
                           ? "View business profile"
@@ -615,12 +615,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             </div>
 
             {(job.descriptionSo || job.titleSo) && (
-              <details className="rounded-3xl border border-border bg-white p-6">
-                <summary className="cursor-pointer text-base font-black text-primary-darker">
+              <details className="rounded-3xl border border-border bg-surface p-6">
+                <summary className="cursor-pointer text-base font-black text-primary">
                   {isEn ? "Akhri af-Soomaali" : "Read in English"}
                 </summary>
-                <div className="mt-4 space-y-3 text-sm leading-relaxed text-primary-darker/80">
-                  <h2 className="text-xl font-black text-primary-darker">
+                <div className="mt-4 space-y-3 text-base leading-7 text-foreground/75">
+                  <h2 className="text-xl font-black text-heading">
                     {isEn ? job.titleSo || job.title : job.title}
                   </h2>
                   <p className="whitespace-pre-line">
@@ -633,12 +633,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             )}
 
             <section className="rounded-3xl border border-primary/15 bg-primary/5 p-6">
-              <h2 className="text-lg font-black text-primary-darker">
+              <h2 className="text-lg font-black text-heading">
                 {isEn
                   ? "Explore more on ZeilaLink"
                   : "Wax badan ka eeg ZeilaLink"}
               </h2>
-              <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
+              <div className="mt-3 flex flex-wrap gap-3 text-base font-bold">
                 <Link href="/jobs" className="text-primary hover:underline">
                   {isEn ? "More jobs" : "Shaqooyin kale"}
                 </Link>

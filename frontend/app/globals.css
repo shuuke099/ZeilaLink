@@ -338,6 +338,27 @@
   border-color: rgb(var(--color-border));
 }
 
+/* Detail pages use compact headings but comfortably readable supporting copy. */
+.detail-readable .text-\[8px\] {
+  font-size: 0.75rem !important;
+  line-height: 1.05rem !important;
+}
+
+.detail-readable .text-\[9px\] {
+  font-size: 0.8125rem !important;
+  line-height: 1.2rem !important;
+}
+
+.detail-readable .text-\[10px\] {
+  font-size: 0.875rem !important;
+  line-height: 1.35rem !important;
+}
+
+.detail-readable .text-\[11px\] {
+  font-size: 0.9375rem !important;
+  line-height: 1.45rem !important;
+}
+
 /* =========================================================
    MOBILE
    ========================================================= */

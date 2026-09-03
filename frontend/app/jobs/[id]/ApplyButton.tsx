@@ -27,7 +27,7 @@ export default function ApplyButton({ jobId }: ApplyButtonProps) {
       type="button"
       onClick={handleApplyClick}
       disabled={loading}
-      className="btn-primary rounded-xl px-6 py-3 text-sm font-black uppercase tracking-wider disabled:cursor-wait disabled:opacity-60"
+      className="btn-primary rounded-xl px-6 py-3 text-base font-black uppercase tracking-wider disabled:cursor-wait disabled:opacity-60"
     >
       Apply Now
     </button>

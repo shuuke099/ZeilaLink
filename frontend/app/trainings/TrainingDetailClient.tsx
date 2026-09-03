@@ -11,6 +11,7 @@ import {
   Monitor, Phone, Share2, ShieldCheck, Star, UserRound, UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import ImagePreviewModal from '@/components/ImagePreviewModal';
 
 export interface TrainingDetail {
   id: string; slug?: string | null; name: string; nameSo?: string | null;
@@ -37,6 +38,7 @@ type Props = { initialTraining: TrainingDetail; publicPath: string };
 const panel = 'rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.28)]';
 
 export default function TrainingDetailClient({ initialTraining: training, publicPath }: Props) {
+  const [activeImage, setActiveImage] = React.useState<number | null>(null);
   const { language } = useLanguage();
   const isSo = language === 'so';
   const name = training.name;
@@ -59,15 +61,14 @@ export default function TrainingDetailClient({ initialTraining: training, public
 
   const registerButton = enrollUrl ? <a href={enrollUrl} target="_blank" rel="noopener noreferrer" className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 text-[11px] font-bold text-white transition hover:bg-violet-700">Visit Registration Page <ExternalLink size={13} /></a> : <span className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 px-4 text-[11px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">Registration link coming soon</span>;
 
-  return <div className="min-h-screen bg-[#fafafe] text-slate-900 dark:bg-slate-950 dark:text-slate-100"><Navbar /><main className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
+  return <div className="detail-readable min-h-screen bg-[#fafafe] text-slate-900 dark:bg-slate-950 dark:text-slate-100"><Navbar /><main className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8">
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
       <div className="min-w-0 space-y-4">
         <section className={`${panel} overflow-hidden`}>
-          <div className="relative h-[230px] bg-gradient-to-br from-violet-100 to-slate-200 dark:from-violet-950 dark:to-slate-800 sm:h-[330px] lg:h-[390px]">
+          <button type="button" onClick={() => training.imageUrl && setActiveImage(0)} disabled={!training.imageUrl} aria-label={`Preview ${name} image`} className="relative block h-[230px] w-full bg-gradient-to-br from-violet-100 to-slate-200 text-left dark:from-violet-950 dark:to-slate-800 sm:h-[330px] lg:h-[390px]">
             {training.imageUrl ? <img src={training.imageUrl} alt={name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-violet-500"><GraduationCap size={72} /></div>}
             {training.featured && <span className="absolute left-3 top-3 rounded bg-violet-600 px-2 py-1 text-[8px] font-extrabold uppercase text-white">Featured</span>}
-            {gallery.length > 1 && <span className="absolute bottom-3 right-3 rounded bg-slate-950/75 px-2 py-1 text-[9px] font-semibold text-white">1 / {gallery.length}</span>}
-          </div>
+          </button>
           <div className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-4"><div><h1 className="text-[23px] font-extrabold leading-tight tracking-[-0.035em] text-slate-950 dark:text-white sm:text-[28px]">{name}</h1><p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Offered by <span className="text-slate-800 dark:text-slate-200">{providerName}</span>{training.provider.verified && <CheckCircle2 size={14} className="fill-emerald-500 text-white" />}</p></div><button aria-label="Save course" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:text-violet-600 dark:border-slate-700 dark:text-slate-500 dark:hover:text-violet-300"><Heart size={17} /></button></div>
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-medium text-slate-600">{training.provider.rating ? <span className="flex items-center gap-1 text-amber-600"><Star size={12} className="fill-amber-400 text-amber-400" />{training.provider.rating.toFixed(1)} rating</span> : null}<span className="flex items-center gap-1"><UsersRound size={12} /> Open enrollment</span></div>
@@ -79,7 +80,7 @@ export default function TrainingDetailClient({ initialTraining: training, public
 
         <ContentPanel title={isSo ? 'Ku saabsan tababarkan' : 'About this training'}><p className="whitespace-pre-line text-[11px] leading-5 text-slate-600">{description}</p></ContentPanel>
 
-        {gallery.length > 1 && <ContentPanel title="Gallery" action={`${gallery.length} photos`}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0, 6).map((image, index) => <img key={`${image}-${index}`} src={image} alt={`${name} gallery ${index + 1}`} className="h-24 w-full rounded-lg object-cover sm:h-32" />)}</div></ContentPanel>}
+        {gallery.length > 1 && <ContentPanel title="Gallery" action={`${gallery.length} photos`}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0, 6).map((image, index) => <button type="button" key={`${image}-${index}`} onClick={() => setActiveImage(index)} aria-label={`Preview ${name} image ${index + 1}`} className="h-24 overflow-hidden rounded-lg sm:h-32"><img src={image} alt={`${name} gallery ${index + 1}`} className="h-full w-full object-cover" /></button>)}</div></ContentPanel>}
 
         <ContentPanel title={isSo ? 'Waxaad baran doontaa' : 'What you will learn'}><div className="grid gap-x-8 gap-y-2 sm:grid-cols-2">{outcomes.slice(0, 10).map((outcome) => <p key={outcome} className="flex items-start gap-2 text-[10px] leading-4 text-slate-600"><CheckCircle2 size={13} className="mt-0.5 shrink-0 text-violet-600" />{outcome}</p>)}</div></ContentPanel>
 
@@ -101,7 +102,7 @@ export default function TrainingDetailClient({ initialTraining: training, public
         <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 dark:border-violet-900/60 dark:bg-violet-950/30"><p className="flex gap-2 text-[9px] leading-4 text-slate-600 dark:text-slate-300"><ShieldCheck size={15} className="shrink-0 text-violet-600" />This listing is offered by an external provider. Verify program details directly before registering.</p></div>
       </aside>
     </div>
-  </main></div>;
+  </main><ImagePreviewModal images={gallery} activeIndex={activeImage} title={name} onChange={setActiveImage} onClose={() => setActiveImage(null)}/></div>;
 }
 
 function ContentPanel({ title, action, children }: { title: string; action?: string; children: React.ReactNode }) { return <section className={`${panel} p-4 sm:p-5`}><div className="mb-3 flex items-center justify-between"><h2 className="text-[13px] font-extrabold text-slate-900">{title}</h2>{action && <span className="text-[9px] font-semibold text-violet-700">{action}</span>}</div>{children}</section>; }

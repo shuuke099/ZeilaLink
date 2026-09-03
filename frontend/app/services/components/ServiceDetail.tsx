@@ -323,22 +323,21 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
 
   return (
     <>
-    <section className="bg-background-muted px-4 pb-16 pt-3 text-foreground transition-colors dark:bg-slate-950 sm:px-6 lg:px-8">
+    <section className="detail-readable bg-background-muted px-4 pb-16 pt-3 text-foreground transition-colors dark:bg-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1440px] items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-4">
           <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.35)]">
-            <div className="h-[230px] w-full overflow-hidden bg-surface-muted dark:bg-slate-800 sm:h-[350px] lg:h-[390px]">
+            <button type="button" onClick={() => setActiveGalleryIndex(0)} aria-label={isEn ? 'Preview service image' : 'Daawo sawirka adeegga'} className="block h-[230px] w-full overflow-hidden bg-surface-muted text-left dark:bg-slate-800 sm:h-[350px] lg:h-[390px]">
               <img
                 src={gallery[0]}
                 alt={serviceTitle}
                 className="h-full w-full object-cover"
               />
-            </div>
+            </button>
             <div className="p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div><h1 className="text-[23px] font-extrabold tracking-[-0.035em] text-heading dark:text-white sm:text-[28px]">{serviceTitle}</h1><p className="mt-1 text-[10px] font-semibold text-muted dark:text-slate-400">{serviceProvider} <span className="text-primary">●</span></p><div className="mt-2 flex flex-wrap gap-3 text-[9px]"><span className="flex items-center gap-1 text-amber-500"><Star size={11} className="fill-amber-400"/>{service.rating.toFixed(1)} ({service.reviews} {isEn ? 'reviews' : 'faallo'})</span><span className="text-muted dark:text-slate-400">{isEn ? 'Open' : 'Furan'}</span><span className="text-muted dark:text-slate-400">{service.deliveryTime || (isEn ? 'Flexible scheduling' : 'Jadwal dabacsan')}</span></div></div><div className="shrink-0 text-right"><p className="text-[8px] uppercase text-muted dark:text-slate-500">{isEn ? 'From' : 'Laga bilaabo'}</p><p className="text-lg font-extrabold text-primary">{service.priceLabel}</p></div></div>
               <button type="button" onClick={()=>{setShowBookingForm(true);setBookingMessage(null)}} disabled={service.isDemo} className="mt-4 h-10 w-full rounded-lg bg-primary text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400">{service.isDemo ? (isEn ? 'Demo preview' : 'Tusaale') : isEn ? 'Request Service' : 'Dalbo Adeegga'}</button>
               <div className="mt-3 grid grid-cols-4 gap-2"><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Phone size={13}/>{isEn ? 'Call' : 'Wac'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Navigation size={13}/>{isEn ? 'Directions' : 'Jihada'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><MessageCircle size={13}/>{isEn ? 'Message' : 'Fariin'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Bookmark size={13}/>{isEn ? 'Save' : 'Kaydi'}</button></div>
             </div>
-            <nav className="grid grid-cols-4 border-t border-border text-center text-[9px] font-semibold dark:border-slate-800"><span className="py-3 text-muted dark:text-slate-400">{isEn ? 'Overview' : 'Guudmar'}</span><span className="border-b-2 border-primary py-3 text-primary">{isEn ? 'Details' : 'Faahfaahin'}</span><span className="py-3 text-muted dark:text-slate-400">{isEn ? 'Reviews' : 'Faallooyin'} ({service.reviews})</span><span className="py-3 text-muted dark:text-slate-400">{isEn ? 'About' : 'Ku saabsan'}</span></nav>
           </section>
 
           <DetailPanel title={isEn ? 'About this service' : 'Ku saabsan adeeggan'}><p className="text-[10px] leading-5 text-muted dark:text-slate-300">{serviceDescription}</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{highlights.map(item=><p key={item} className="flex items-start gap-2 text-[9px] text-muted dark:text-slate-300"><Check size={11} className="mt-0.5 shrink-0 text-primary"/>{item}</p>)}</div></DetailPanel>

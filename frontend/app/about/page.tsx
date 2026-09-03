@@ -13,7 +13,7 @@ export default function AboutPage() {
   const getT = (key: string) => t(key, language);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-primary/20">
+    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-primary/20">
       <Navbar />
 
       {/* Hero Section - Matching Homepage Light Color BG */}

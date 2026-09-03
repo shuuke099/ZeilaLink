@@ -21,7 +21,7 @@ export default function ContactPage() {
   const isEn = language === "en";
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-primary selection:text-white">
+    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-primary selection:text-white">
       <Navbar />
 
       {/* Contact Section - 'Concierge Desk' Layout Redesign */}

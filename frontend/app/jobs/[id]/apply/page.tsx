@@ -51,8 +51,8 @@ export default function ApplyPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-primary-darker mb-6">Apply for Job</h1>
+      <main className="mx-auto max-w-2xl px-4 pb-12 pt-28 sm:pt-32">
+        <h1 className="mb-6 text-3xl font-bold text-heading">Apply for Job</h1>
 
         {submitted ? (
           <div className="card">
@@ -111,7 +111,7 @@ export default function ApplyPage() {
             </button>
           </form>
         )}
-      </div>
+      </main>
     </div>
   );
 }

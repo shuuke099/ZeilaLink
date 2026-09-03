@@ -24,10 +24,12 @@ export default function HomePage() {
       <FeaturedCourses />
       <DealsAndPromotions />
       <HomeJobsAndPromotions />
-      <StatsSection language={language} />
-      <AboutSection language={language} />
-      <CapabilitiesSection language={language} />
-      <SupportSection language={language} />
+      <div className="font-sans">
+        <StatsSection language={language} />
+        <AboutSection language={language} />
+        <CapabilitiesSection language={language} />
+        <SupportSection language={language} />
+      </div>
     </div>
   );
 }

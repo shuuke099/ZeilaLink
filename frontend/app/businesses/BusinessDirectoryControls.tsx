@@ -58,6 +58,7 @@ export default function BusinessDirectoryControls({ isSomali }: { isSomali: bool
     if (searchParams.get("lat")) params.set("lat", searchParams.get("lat")!);
     if (searchParams.get("lng")) params.set("lng", searchParams.get("lng")!);
     params.set("radius", "50");
+    if (searchParams.get("view") === "list") params.set("view", "list");
     router.replace(`/businesses?${params.toString()}`, { scroll: false });
   };
 
