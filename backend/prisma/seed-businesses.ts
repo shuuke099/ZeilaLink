@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 async function loadOwners() {
   const [admin, worker, employee, employerUser, providerUser] = await Promise.all([
-    prisma.user.findUnique({ where: { email: "admin@zeilalink.com" }, select: { id: true } }),
+    prisma.user.findUnique({ where: { email: "abduladimabdullahi95@gmail.com" }, select: { id: true } }),
     prisma.user.findUnique({ where: { email: "hodan.ali@example.com" }, select: { id: true } }),
     prisma.user.findUnique({ where: { email: "fadumo.yusuf@example.com" }, select: { id: true } }),
     prisma.user.findUnique({ where: { email: "abdi.hassan@example.com" }, select: { id: true } }),

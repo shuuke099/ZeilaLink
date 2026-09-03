@@ -26,7 +26,7 @@ export async function seedUsers(prisma: PrismaClient) {
       id: "seed-user-admin",
       slug: "admin-user",
       name: "Admin User",
-      email: "admin@zeilalink.com",
+      email: "abduladimabdullahi95@gmail.com",
       passwordHash,
       role: UserRole.admin,
       phone: null,
@@ -306,9 +306,12 @@ export async function seedUsers(prisma: PrismaClient) {
 
   for (const user of userSeeds) {
     const seededUser = await prisma.user.upsert({
-      where: {
-        email: user.email,
-      },
+      // The admin seed has a stable ID so its login email can be changed
+      // without creating a second administrator account.
+      where:
+        user.id === "seed-user-admin"
+          ? { id: user.id }
+          : { email: user.email },
 
       update: {
         slug: user.slug,

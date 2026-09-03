@@ -287,7 +287,7 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
 
           {loadError && jobs.length === 0 ? <EmptyState title={isSomali ? "Liiska shaqooyinka hadda lama heli karo." : "Job listings are temporarily unavailable."}/> : filteredAndSortedJobs.length === 0 ? <EmptyState title={isSomali ? "Shaqooyin lama helin." : "No jobs match your current filters."} action={resetFilters}/> : (
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.45fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
-              <div className="space-y-3 lg:max-h-[2158px] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+              <div className="space-y-3 lg:pr-2">
                 {filteredAndSortedJobs.map((job) => <JobListCard key={job.id} job={job} isSomali={isSomali} language={language} renderedAt={renderedAt} selected={job.id === selectedJob?.id} saved={savedJobs.has(job.id)} onSelect={() => setSelectedJobId(job.id)} onSave={() => toggleSaved(job.id)}/>) }
               </div>
               {selectedJob && (
@@ -335,7 +335,7 @@ function JobPreview({ job, language, isSomali, saved, copied, onSave, onShare }:
   const benefits = toListItems(localized.benefits);
   const detailHref = `/jobs/${job.slug || job.id}`;
   const applyHref = `/jobs/${encodeURIComponent(job.id)}/apply`;
-  return <aside className="sticky top-20 hidden max-h-[calc(100vh-96px)] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-surface shadow-[0_12px_40px_rgba(15,23,42,.08)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:block">
+  return <aside className="hidden overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_12px_40px_rgba(15,23,42,.08)] lg:block">
     <div className="border-b border-border bg-gradient-to-br from-primary/10 via-surface to-surface p-6 xl:p-7">
       <div className="flex items-start justify-between gap-5"><div className="flex min-w-0 gap-3"><Logo job={job} large/><div className="min-w-0"><p className="text-xs font-bold text-primary">{localized.employerName}</p><h2 className="mt-1 text-2xl font-black leading-tight tracking-tight text-heading xl:text-[28px]">{localized.title}</h2></div></div><span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-600"><ShieldCheck size={13}/>{isSomali ? "La xaqiijiyey" : "Verified role"}</span></div>
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs"><Meta icon={<MapPin size={13}/>} value={job.location}/><Meta icon={<Briefcase size={13}/>} value={job.employmentType}/>{job.remote && <Meta icon={<CheckCircle2 size={13}/>} value="Remote"/>}<span className="inline-flex items-center rounded-lg bg-surface px-2.5 py-1.5 font-extrabold text-primary shadow-sm">{formatSalary(job)}</span></div>
