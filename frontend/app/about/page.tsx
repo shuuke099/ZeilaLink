@@ -33,12 +33,12 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 sm:mb-10 sm:px-5 sm:py-2.5">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black tracking-[0.3em] uppercase">
+            <span className="text-[10px] font-bold tracking-[0.3em] uppercase">
               {isEn ? 'PIONEERING PROGRESS' : 'HORMUUDKA HORUMARKA'}
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter">
+          <h1 className="mb-8 font-sans text-5xl font-bold leading-[1.1] tracking-tighter text-slate-900 md:text-6xl lg:text-7xl">
             {isEn ? (
               <>Designing the <br /><span className="text-primary italic">Future of Work</span></>
             ) : (
@@ -65,7 +65,7 @@ export default function AboutPage() {
               { label: isEn ? 'REGION GOAL' : 'YOOLKA GOBOLLADA', value: '18', icon: Globe },
             ].map((stat, idx) => (
               <div key={idx} className="group">
-                <div className="text-4xl lg:text-5xl font-black text-white mb-2 tracking-tighter group-hover:text-primary transition-colors">
+                <div className="mb-2 text-4xl font-bold tracking-tighter text-white transition-colors group-hover:text-primary lg:text-5xl">
                   {stat.value}
                 </div>
                 <div className="text-[10px] font-bold text-slate-500 tracking-[0.2em] uppercase">
@@ -96,8 +96,8 @@ export default function AboutPage() {
 
             <div className="space-y-10">
               <div className="space-y-4">
-                <h3 className="text-primary font-black text-sm tracking-widest uppercase">Our Mission</h3>
-                <h2 className="text-5xl font-black text-slate-900 leading-[1.1]">The Pursuit of <br />Excellence.</h2>
+                <h3 className="font-sans text-sm font-bold uppercase tracking-widest text-primary">Our Mission</h3>
+                <h2 className="font-sans text-5xl font-bold leading-[1.1] text-slate-900">The Pursuit of <br />Excellence.</h2>
               </div>
               <p className="text-slate-600 text-lg leading-relaxed">
                 {isEn
@@ -107,12 +107,12 @@ export default function AboutPage() {
               <div className="grid sm:grid-cols-2 gap-8 pt-6">
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                   <ShieldCheck className="text-primary mb-4" size={32} />
-                  <h4 className="font-black text-slate-900 mb-2">Verified Only</h4>
+                  <h4 className="mb-2 font-sans font-bold text-slate-900">Verified Only</h4>
                   <p className="text-sm text-slate-500">Every employer and role undergoes a rigorous premium verification process.</p>
                 </div>
                 <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
                   <Zap className="text-primary mb-4" size={32} />
-                  <h4 className="font-black text-slate-900 mb-2">Instant Connect</h4>
+                  <h4 className="mb-2 font-sans font-bold text-slate-900">Instant Connect</h4>
                   <p className="text-sm text-slate-500">Our intelligent systems link talent with opportunities in real-time.</p>
                 </div>
               </div>
@@ -125,12 +125,12 @@ export default function AboutPage() {
       <section className="py-24 bg-slate-900 text-white text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(var(--color-primary-rgb),0.2),transparent_60%)]" />
         <div className="max-w-3xl mx-auto px-4 relative z-10">
-          <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">Ready to start your <br /><span className="text-primary">Elite Journey?</span></h2>
+          <h2 className="mb-8 font-sans text-4xl font-bold leading-tight md:text-5xl">Ready to start your <br /><span className="text-primary">Elite Journey?</span></h2>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link href="/jobs" className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black transition-transform hover:scale-105">
+            <Link href="/jobs" className="rounded-2xl bg-white px-10 py-5 font-bold text-slate-900 transition-transform hover:scale-105">
               Explore Careers
             </Link>
-            <Link href="/contact" className="bg-white/10 backdrop-blur-md border border-white/20 px-10 py-5 rounded-2xl font-black hover:bg-white/20 transition-all">
+            <Link href="/contact" className="rounded-2xl border border-white/20 bg-white/10 px-10 py-5 font-bold backdrop-blur-md transition-all hover:bg-white/20">
               Concierge Desk
             </Link>
           </div>

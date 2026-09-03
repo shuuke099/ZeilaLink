@@ -29,7 +29,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
   const isEn = language === "en";
 
   return (
-    <section className="home-support-section relative overflow-hidden bg-background-muted px-4 pb-14 pt-10 sm:pb-16 sm:pt-12 lg:pb-20 lg:pt-16">
+    <section className="home-support-section relative overflow-hidden bg-background-muted px-4 pb-14 pt-10 font-sans sm:pb-16 sm:pt-12 lg:pb-20 lg:pt-16">
       <div className="home-mobile-decoration pointer-events-none absolute inset-0">
         <div className="absolute -left-32 top-8 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
         <div className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sky-400/10 blur-3xl" />
@@ -48,7 +48,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 : "Xarunta Taageerada Caalamiga"}
             </span>
           </div>
-          <h2 className="mb-4 text-3xl font-black leading-tight tracking-tight text-heading sm:text-4xl lg:text-5xl">
+          <h2 className="mb-4 font-sans text-3xl font-bold leading-tight tracking-tight text-heading sm:text-4xl lg:text-5xl">
             {isEn ? (
               <>
                 Support that keeps you{" "}
@@ -78,10 +78,10 @@ export default function SupportSection({ language }: SupportSectionProps) {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/15 text-blue-300 sm:h-14 sm:w-14">
                 <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
               </div>
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-blue-300">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-blue-300">
                 {isEn ? "Direct assistance" : "Caawimaad toos ah"}
               </p>
-              <h3 className="mb-4 text-2xl font-black leading-tight text-white sm:text-3xl">
+              <h3 className="mb-4 font-sans text-2xl font-bold leading-tight text-white sm:text-3xl">
                 {isEn
                   ? "Talk to our support team"
                   : "La hadal kooxdayada taageerada"}
@@ -96,7 +96,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 href="https://wa.me/19522288655"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-black text-white no-underline shadow-lg shadow-emerald-950/20 transition-all hover:-translate-y-0.5 hover:bg-[#20bd5a] hover:shadow-xl sm:w-auto sm:px-7"
+                className="group inline-flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-bold text-white no-underline shadow-lg shadow-emerald-950/20 transition-all hover:-translate-y-0.5 hover:bg-[#20bd5a] hover:shadow-xl sm:w-auto sm:px-7"
               >
                 <WhatsAppIcon size={20} fill="white" />
                 {isEn ? "Message on WhatsApp" : "Nagala soo xiriir WhatsApp"}
@@ -118,14 +118,14 @@ export default function SupportSection({ language }: SupportSectionProps) {
           <div className="bg-gradient-to-br from-surface via-surface to-surface-muted p-5 sm:p-8 lg:col-span-7 lg:p-10">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 sm:mb-7">
               <div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                   {isEn ? "Talent support desk" : "Miiska taageerada"}
                 </p>
-                <h3 className="text-xl font-black text-heading sm:text-2xl">
+                <h3 className="font-sans text-xl font-bold text-heading sm:text-2xl">
                   {isEn ? "Choose how to reach us" : "Dooro sida aad nala soo xiriirayso"}
                 </h3>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 {isEn ? "Available 24/7" : "Furan 24/7"}
               </div>
@@ -139,10 +139,10 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 <div className={SUPPORT_ICON_CLASS}>
                   <Phone size={19} />
                 </div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
                   {isEn ? "Call support" : "Wac taageerada"}
                 </p>
-                <p className="text-base font-black text-heading sm:text-lg">
+                <p className="text-base font-bold text-heading sm:text-lg">
                   +1 (952) 228-8655
                 </p>
               </a>
@@ -154,10 +154,10 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 <div className={SUPPORT_ICON_CLASS}>
                   <Mail size={19} />
                 </div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
                   {isEn ? "Email inquiries" : "Su'aalaha iimaylka"}
                 </p>
-                <p className="break-all text-base font-black text-heading sm:text-lg">
+                <p className="break-all text-base font-bold text-heading sm:text-lg">
                   contact@zeilalink.com
                 </p>
               </a>
@@ -166,10 +166,10 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 <div className={SUPPORT_ICON_CLASS}>
                   <MapPin size={19} />
                 </div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
                   {isEn ? "Support location" : "Goobta taageerada"}
                 </p>
-                <p className="text-base font-black text-heading sm:text-lg">
+                <p className="text-base font-bold text-heading sm:text-lg">
                   Minnesota, USA
                 </p>
               </div>
@@ -178,10 +178,10 @@ export default function SupportSection({ language }: SupportSectionProps) {
                 <div className={SUPPORT_ICON_CLASS}>
                   <Clock size={19} />
                 </div>
-                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-muted">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted">
                   {isEn ? "Availability" : "Waqtiga la heli karo"}
                 </p>
-                <p className="text-base font-black text-heading sm:text-lg">
+                <p className="text-base font-bold text-heading sm:text-lg">
                   {isEn ? "Every day, 24 hours" : "Maalin kasta, 24 saac"}
                 </p>
               </div>
@@ -195,7 +195,7 @@ export default function SupportSection({ language }: SupportSectionProps) {
               </p>
               <Link
                 href="/contact"
-                className="group inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 py-3 text-sm font-black text-primary transition-all hover:border-primary hover:bg-primary hover:text-white"
+                className="group inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-5 py-3 text-sm font-bold text-primary transition-all hover:border-primary hover:bg-primary hover:text-white"
               >
                 {isEn ? "Open contact page" : "Fur bogga xiriirka"}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

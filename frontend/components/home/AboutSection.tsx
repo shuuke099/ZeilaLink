@@ -17,7 +17,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
   const isEn = language === "en";
 
   return (
-    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-10 dark:bg-background sm:pb-12 sm:pt-12 lg:overflow-hidden lg:pb-28 lg:pt-16">
+    <section className="home-about-section relative w-full max-w-full bg-white px-4 pb-8 pt-10 font-sans dark:bg-background sm:pb-12 sm:pt-12 lg:overflow-hidden lg:pb-28 lg:pt-16">
       <div className="home-section-content mx-auto w-full min-w-0 max-w-7xl">
         <div className="grid min-w-0 items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-20">
           <div className="home-about-content relative min-w-0 max-w-full text-center lg:text-left">
@@ -30,7 +30,7 @@ export default function AboutSection({ language }: AboutSectionProps) {
               </span>
             </div>
 
-            <h2 className="mb-5 max-w-full whitespace-normal break-words text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
+            <h2 className="mb-5 max-w-full whitespace-normal break-words font-sans text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
               {isEn ? (
                 <>
                   We're Building the <br />
@@ -109,12 +109,12 @@ export default function AboutSection({ language }: AboutSectionProps) {
             >
               <div className="flex items-center gap-5">
                 <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <div className="text-white text-3xl font-black">
+                  <div className="text-3xl font-bold text-white">
                     {HOME_STATS.workers}
                   </div>
                 </div>
                 <div>
-                  <div className="text-lg font-black text-slate-900">
+                  <div className="text-lg font-bold text-slate-900">
                     {isEn ? "Illustrative Goal" : "Yool Tusaale ah"}
                   </div>
                   <div className="text-sm text-slate-500 font-bold uppercase tracking-wider">

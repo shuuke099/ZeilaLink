@@ -83,7 +83,7 @@ export default function Footer() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 overflow-hidden"
       >
-        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-52 -left-36 h-[28rem] w-[28rem] rounded-full bg-cyan-400/5 blur-3xl" />
         <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:64px_64px]" />
       </div>
@@ -98,12 +98,12 @@ export default function Footer() {
               onPointerEnter={() => prefetchRoute("/")}
               onTouchStart={() => prefetchRoute("/")}
               onFocus={() => prefetchRoute("/")}
-              className="group inline-flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              className="group inline-flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="ZeilaLink home"
             >
               <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white shadow-lg shadow-black/20 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
                 <Image
-                  src="/icon.png"
+                  src="/footer-icon-primary.png"
                   alt=""
                   width={44}
                   height={44}
@@ -111,7 +111,7 @@ export default function Footer() {
                 />
               </span>
               <span className="text-2xl font-black tracking-tight text-white">
-                Zeila<span className="text-blue-400">Link</span>
+                Zeila<span className="text-primary">Link</span>
               </span>
             </Link>
 
@@ -127,7 +127,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.045] text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:bg-blue-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.045] text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:bg-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <Icon size={17} aria-hidden="true" />
                 </a>
@@ -154,9 +154,9 @@ export default function Footer() {
                     onPointerEnter={() => prefetchRoute(link.href)}
                     onTouchStart={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
-                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-blue-400" />
+                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-primary" />
                     {link.label}
                   </Link>
                 </li>
@@ -177,9 +177,9 @@ export default function Footer() {
                     onPointerEnter={() => prefetchRoute(link.href)}
                     onTouchStart={() => prefetchRoute(link.href)}
                     onFocus={() => prefetchRoute(link.href)}
-                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                    className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-blue-400" />
+                    <span className="h-1 w-1 rounded-full bg-slate-600 transition-all duration-300 group-hover:w-3 group-hover:bg-primary" />
                     {link.label}
                   </Link>
                 </li>
@@ -210,7 +210,7 @@ export default function Footer() {
                 onPointerEnter={() => prefetchRoute(link.href)}
                 onTouchStart={() => prefetchRoute(link.href)}
                 onFocus={() => prefetchRoute(link.href)}
-                className="transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                className="transition-colors hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {link.label}
               </Link>

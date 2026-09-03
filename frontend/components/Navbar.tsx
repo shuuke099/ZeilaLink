@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import darLogo from "@/assets/dar.png";
-import lightLogo from "@/assets/light.png";
+import lightLogo from "@/assets/light-primary.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";

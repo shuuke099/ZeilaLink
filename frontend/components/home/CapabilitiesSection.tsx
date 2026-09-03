@@ -25,7 +25,7 @@ export default function CapabilitiesSection({
   const isEn = language === "en";
 
   return (
-    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-4 dark:bg-background sm:pb-20 sm:pt-8 lg:pb-28 lg:pt-16">
+    <section className="home-capabilities-section relative bg-white px-4 pb-10 pt-4 font-sans dark:bg-background sm:pb-20 sm:pt-8 lg:pb-28 lg:pt-16">
       <div className="home-section-content max-w-7xl mx-auto">
         <div className="home-capabilities-content mb-10 text-center sm:mb-14 lg:mb-16">
           <div className={`${SECTION_EYEBROW_CLASS} mb-4`}>
@@ -34,7 +34,7 @@ export default function CapabilitiesSection({
               {isEn ? "Our Capabilities" : "Awoodahayada"}
             </span>
           </div>
-          <h2 className="mb-5 text-3xl font-black leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
+          <h2 className="mb-5 font-sans text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-6 sm:text-4xl lg:text-5xl">
             {isEn ? "Empowering Your Success" : "Awoodsiinta Guushaada"}
           </h2>
             <p className="text-slate-500 max-w-2xl mx-auto text-lg">
@@ -140,13 +140,13 @@ export default function CapabilitiesSection({
                 >
                   <feature.icon className={`h-5 w-5 sm:h-8 sm:w-8 lg:h-9 lg:w-9 ${feature.color}`} />
                 </div>
-                <h3 className="mb-1.5 text-[15px] font-black leading-tight text-slate-900 sm:mb-3 sm:text-xl lg:mb-4 lg:text-2xl">
+                <h3 className="mb-1.5 font-sans text-[15px] font-bold leading-tight text-slate-900 sm:mb-3 sm:text-xl lg:mb-4 lg:text-2xl">
                   {feature.title}
                 </h3>
                 <p className="mb-3 line-clamp-5 text-[11px] leading-[1.45] text-slate-500 sm:mb-6 sm:line-clamp-none sm:text-sm sm:leading-relaxed lg:mb-8 lg:text-lg">
                   {feature.description}
                 </p>
-                <div className="flex items-center text-[11px] font-black text-primary transition-all group-hover:gap-3 sm:text-sm lg:text-base">
+                <div className="flex items-center text-[11px] font-bold text-primary transition-all group-hover:gap-3 sm:text-sm lg:text-base">
                   <span className="truncate">{isEn ? feature.linkTextEn : feature.linkTextSo}</span>
                   <ArrowRight className="ml-1 h-3.5 w-3.5 shrink-0 sm:h-5 sm:w-5" />
                 </div>

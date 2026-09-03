@@ -32,14 +32,14 @@ export default function ContactPage() {
             <div className="lg:pr-20 py-10">
               <div className="mb-6 inline-flex items-center space-x-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-blue-600 shadow-sm sm:mb-8 sm:px-5 sm:py-2.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
                   {isEn
                     ? "Global Support Center"
                     : "Xarunta Taageerada Caalamiga"}
                 </span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tighter leading-tight">
+              <h1 className="mb-6 font-sans text-5xl font-bold leading-tight tracking-tighter text-slate-900 md:text-6xl">
                 {isEn ? (
                   <>
                     Get in{" "}
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 </a>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
-                  <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                     {isEn
                       ? "Typical response time: Under 5 minutes"
                       : "Waqtiga jawaabta caadiga ah: In ka yar 5 daqiiqo"}
@@ -88,14 +88,14 @@ export default function ContactPage() {
             {/* Right Column: Information Desk */}
             <div className="lg:pl-20 py-10 lg:border-l border-slate-100 space-y-16">
               <div>
-                <h3 className="text-[11px] font-black text-primary uppercase tracking-[0.3em] mb-10">
+                <h3 className="mb-10 font-sans text-[11px] font-bold uppercase tracking-[0.3em] text-primary">
                   {isEn ? "Talent Support Desk" : "Miiska Taageerada Tayada"}
                 </h3>
 
                 <div className="space-y-10">
                   {/* Location */}
                   <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    <p className="text-[11px] font-bold uppercase leading-none tracking-widest text-slate-400">
                       {isEn ? "LOCATION" : "GOOBTA"}
                     </p>
                     <p className="text-xl font-bold text-slate-900 leading-tight">
@@ -107,7 +107,7 @@ export default function ContactPage() {
 
                   {/* Connect */}
                   <div className="space-y-6">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    <p className="text-[11px] font-bold uppercase leading-none tracking-widest text-slate-400">
                       {isEn ? "CONNECT" : "XIRIIRKA"}
                     </p>
                     <div className="space-y-4 max-w-sm">
@@ -138,7 +138,7 @@ export default function ContactPage() {
 
                   {/* Inquiries */}
                   <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    <p className="text-[11px] font-bold uppercase leading-none tracking-widest text-slate-400">
                       {isEn ? "INQUIRIES" : "CODSIGA"}
                     </p>
                     <a
@@ -151,7 +151,7 @@ export default function ContactPage() {
 
                   {/* Availability */}
                   <div className="space-y-3">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    <p className="text-[11px] font-bold uppercase leading-none tracking-widest text-slate-400">
                       {isEn ? "AVAILABILITY" : "OOGOLAASHAHA"}
                     </p>
                     <p className="text-slate-500 font-medium leading-relaxed max-w-sm">
