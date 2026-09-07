@@ -186,7 +186,7 @@ export default function FeaturedBusinesses() {
               Featured Businesses
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[9px] text-slate-500 sm:text-[10px]">
               Discover top-rated businesses in your community.
             </p>
           </div>

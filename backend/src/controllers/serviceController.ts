@@ -8,6 +8,7 @@ import {
   makeCacheKey,
 } from "../utils/cache";
 import { createStableSlug, slugWhenMissing } from "../utils/slug";
+import { notifyOpportunitySubscribers } from "../utils/opportunityAlerts";
 
 /* =========================================================
    HELPERS
@@ -1193,6 +1194,14 @@ export const createAdminService = async (req: AuthRequest, res: Response) => {
 
     void invalidateCacheByPrefix(["services:list", "services:detail"]);
 
+    if (service.published) {
+      void notifyOpportunitySubscribers({
+        type: "service",
+        title: service.title,
+        path: `/services/${service.slug || service.id}`,
+      });
+    }
+
     return res.status(201).json(service);
   } catch (error) {
     console.error("createAdminService:", error);
@@ -1513,6 +1522,14 @@ export const updateAdminService = async (req: AuthRequest, res: Response) => {
     });
 
     void invalidateCacheByPrefix(["services:list", "services:detail"]);
+
+    if (!existing.published && updated.published) {
+      void notifyOpportunitySubscribers({
+        type: "service",
+        title: updated.title,
+        path: `/services/${updated.slug || updated.id}`,
+      });
+    }
 
     return res.json(updated);
   } catch (error) {

@@ -363,21 +363,6 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-28 sm:px-6 lg:px-8">
         <div className="space-y-6">
-            <nav
-              aria-label={isEn ? "Breadcrumb" : "Jidka bogga"}
-              className="flex flex-wrap items-center gap-2 text-base font-semibold text-muted"
-            >
-              <Link href="/" className="hover:text-primary">
-                {isEn ? "Home" : "Bogga Hore"}
-              </Link>
-              <span aria-hidden="true">/</span>
-              <Link href="/jobs" className="hover:text-primary">
-                {isEn ? "Jobs" : "Shaqooyin"}
-              </Link>
-              <span aria-hidden="true">/</span>
-              <span aria-current="page">{localized.title}</span>
-            </nav>
-
             <section className="rounded-3xl border border-border bg-surface p-6 shadow-soft sm:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="flex-1">
@@ -385,7 +370,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                     <MapPin size={13} />
                     {job.location}
                   </div>
-                  <h1 className="text-4xl font-black tracking-tight text-heading">
+                  <h1 className="text-2xl font-black leading-tight tracking-tight text-heading sm:text-3xl lg:text-4xl">
                     {localized.title}
                   </h1>
                   <p className="mt-3 text-base font-semibold text-muted">

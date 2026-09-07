@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image, { StaticImageData } from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Briefcase,
   Building2,
@@ -20,43 +21,19 @@ type HeroSectionProps = {
   heroImage: StaticImageData | string;
 };
 
-const quickLinks = [
-  {
-    label: "Businesses",
-    href: "/businesses",
-    icon: Building2,
-  },
-  {
-    label: "Services",
-    href: "/services",
-    icon: Users,
-  },
-  {
-    label: "Jobs",
-    href: "/jobs",
-    icon: Briefcase,
-  },
-  {
-    label: "Courses",
-    href: "/training",
-    icon: GraduationCap,
-  },
-  {
-    label: "ZeilaMart",
-    href: "/zeilamart",
-    icon: ShoppingBag,
-    desktopOnly: true,
-  },
-  {
-    label: "Deals",
-    href: "/deals",
-    icon: Tag,
-    desktopOnly: true,
-  },
-];
-
 export default function HeroSection({ heroImage }: HeroSectionProps) {
   const router = useRouter();
+  const { language } = useLanguage();
+  const isSomali = language === "so";
+
+  const quickLinks = [
+    { label: isSomali ? "Ganacsiyo" : "Businesses", href: "/businesses", icon: Building2 },
+    { label: isSomali ? "Adeegyo" : "Services", href: "/services", icon: Users },
+    { label: isSomali ? "Shaqooyin" : "Jobs", href: "/jobs", icon: Briefcase },
+    { label: isSomali ? "Tababaro" : "Courses", href: "/training", icon: GraduationCap },
+    { label: "ZeilaMart", href: "/zeilamart", icon: ShoppingBag, desktopOnly: true },
+    { label: isSomali ? "Qiimo-dhimis" : "Deals", href: "/deals", icon: Tag, desktopOnly: true },
+  ];
 
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("Minneapolis, MN");
@@ -94,8 +71,8 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
             src={heroImage}
             alt="Minneapolis skyline"
             fill
-            priority
-            sizes="53vw"
+            loading="eager"
+            sizes="(min-width: 1024px) 53vw, 100vw"
             className="object-cover object-center"
           />
 
@@ -145,9 +122,9 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                   dark:text-white
                 "
               >
-                Connect. Discover.
+                {isSomali ? "Xiriir. Sahamin." : "Connect. Discover."}
                 <br />
-                <span className="text-primary">Support Somali Businesses.</span>
+                <span className="text-primary">{isSomali ? "Taageer Ganacsiyada Soomaaliyeed." : "Support Somali Businesses."}</span>
               </h1>
 
               {/* DESCRIPTION */}
@@ -162,9 +139,9 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                   dark:text-slate-300
                 "
               >
-                Your trusted community hub for businesses, services,
+                {isSomali ? "Xarunta bulshada lagu kalsoon yahay ee ganacsiyada, adeegyada," : "Your trusted community hub for businesses, services,"}
                 <br className="hidden xl:block" />
-                jobs, real estate, cars, electronics, clothes and more.
+                {isSomali ? "shaqooyinka, guryaha, baabuurta, elektaroonigga, dharka iyo wax ka badan." : "jobs, real estate, cars, electronics, clothes and more."}
               </p>
 
               {/* ====================================================
@@ -212,8 +189,8 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                     type="search"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search businesses, services, jobs..."
-                    aria-label="Search ZeilaLink"
+                    placeholder={isSomali ? "Raadi ganacsiyo, adeegyo, shaqooyin..." : "Search businesses, services, jobs..."}
+                    aria-label={isSomali ? "Ka raadi ZeilaLink" : "Search ZeilaLink"}
                     className="
                       h-full
                       min-w-0
@@ -260,7 +237,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                     <select
                       value={location}
                       onChange={(event) => setLocation(event.target.value)}
-                      aria-label="Location"
+                      aria-label={isSomali ? "Goobta" : "Location"}
                       className="
                         h-full
                         w-full
@@ -321,7 +298,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                     <select
                       value={category}
                       onChange={(event) => setCategory(event.target.value)}
-                      aria-label="Category"
+                      aria-label={isSomali ? "Qaybta" : "Category"}
                       className="
                         h-full
                         w-full
@@ -337,12 +314,12 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                         dark:text-slate-200
                       "
                     >
-                      <option value="">All Categories</option>
-                      <option value="business">Businesses</option>
-                      <option value="service">Services</option>
-                      <option value="job">Jobs</option>
-                      <option value="training">Courses</option>
-                      <option value="deal">Deals</option>
+                      <option value="">{isSomali ? "Dhammaan qaybaha" : "All Categories"}</option>
+                      <option value="business">{isSomali ? "Ganacsiyo" : "Businesses"}</option>
+                      <option value="service">{isSomali ? "Adeegyo" : "Services"}</option>
+                      <option value="job">{isSomali ? "Shaqooyin" : "Jobs"}</option>
+                      <option value="training">{isSomali ? "Tababaro" : "Courses"}</option>
+                      <option value="deal">{isSomali ? "Qiimo-dhimis" : "Deals"}</option>
                     </select>
 
                     <ChevronDown
@@ -373,7 +350,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                       active:scale-[0.98]
                     "
                   >
-                    Search
+                    {isSomali ? "Raadi" : "Search"}
                   </button>
                 </div>
               </form>
@@ -480,7 +457,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                   dark:text-white
                 "
               >
-                Welcome to ZeilaLink
+                {isSomali ? "Ku soo dhowow ZeilaLink" : "Welcome to ZeilaLink"}
               </h2>
 
               <p
@@ -493,8 +470,9 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                   dark:text-slate-300
                 "
               >
-                Empowering our community by connecting people with trusted local
-                businesses and great opportunities.
+                {isSomali
+                  ? "Waxaan awoodsiinnaa bulshadeenna annagoo dadka ku xirayna ganacsiyo maxalli ah oo lagu kalsoon yahay iyo fursado wanaagsan."
+                  : "Empowering our community by connecting people with trusted local businesses and great opportunities."}
               </p>
             </div>
           </div>
@@ -511,8 +489,8 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
             src={heroImage}
             alt="Minneapolis skyline"
             fill
-            priority
-            sizes="100vw"
+            loading="eager"
+            sizes="(max-width: 1023px) 100vw, 53vw"
             className="object-cover object-[68%_center]"
           />
 
@@ -559,14 +537,14 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                 dark:text-white
               "
             >
-              Connect.
+              {isSomali ? "Xiriir." : "Connect."}
               <br />
-              Discover.
+              {isSomali ? "Sahamin." : "Discover."}
               <br />
               <span className="text-primary">
-                Support Somali
+                {isSomali ? "Taageer Ganacsiyada" : "Support Somali"}
                 <br />
-                Businesses.
+                {isSomali ? "Soomaaliyeed." : "Businesses."}
               </span>
             </h1>
 
@@ -582,8 +560,9 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                 dark:text-slate-200
               "
             >
-              Find trusted businesses, services, jobs and more in your
-              community.
+              {isSomali
+                ? "Ka hel bulshadaada ganacsiyo, adeegyo, shaqooyin iyo waxyaabo kale oo lagu kalsoon yahay."
+                : "Find trusted businesses, services, jobs and more in your community."}
             </p>
           </div>
         </div>
@@ -619,8 +598,8 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search businesses, services..."
-                aria-label="Search ZeilaLink"
+                placeholder={isSomali ? "Raadi ganacsiyo, adeegyo..." : "Search businesses, services..."}
+                aria-label={isSomali ? "Ka raadi ZeilaLink" : "Search ZeilaLink"}
                 className="
                   min-w-0
                   flex-1

@@ -8,6 +8,7 @@ import {
   makeCacheKey,
 } from "../utils/cache";
 import { createStableSlug, slugWhenMissing } from "../utils/slug";
+import { notifyOpportunitySubscribers } from "../utils/opportunityAlerts";
 
 const COURSE_WRITE_FIELDS = new Set([
   "providerId",
@@ -747,6 +748,11 @@ export const createCourse = async (req: AuthRequest, res: Response) => {
       recordCourseEvent(req, "course.publish", course.id, "success", {
         source: "create",
       });
+      void notifyOpportunitySubscribers({
+        type: "training",
+        title: course.name,
+        path: `/training/${course.slug || course.id}`,
+      });
     }
 
     return res.status(201).json(presentCourse(course));
@@ -1020,6 +1026,11 @@ export const updateCourse = async (req: AuthRequest, res: Response) => {
     if (!course.published && updated.published) {
       recordCourseEvent(req, "course.publish", updated.id, "success", {
         source: "update",
+      });
+      void notifyOpportunitySubscribers({
+        type: "training",
+        title: updated.name,
+        path: `/training/${updated.slug || updated.id}`,
       });
     } else if (course.published && !updated.published) {
       recordCourseEvent(req, "course.unpublish", updated.id, "success", {
@@ -1387,6 +1398,11 @@ export const adminUpdateCourse = async (req: AuthRequest, res: Response) => {
     if (!existing.published && updated.published) {
       recordCourseEvent(req, "course.publish", updated.id, "success", {
         source: "admin",
+      });
+      void notifyOpportunitySubscribers({
+        type: "training",
+        title: updated.name,
+        path: `/training/${updated.slug || updated.id}`,
       });
     } else if (existing.published && !updated.published) {
       recordCourseEvent(req, "course.unpublish", updated.id, "success", {

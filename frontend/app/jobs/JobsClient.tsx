@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight, Bell, Bookmark, Briefcase, Building2, CheckCircle2,
@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { formatDistance } from "date-fns";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import api from "@/lib/api";
 import { cachedApiGet } from "@/lib/api-cache";
 import { getLocalizedJobText, parseJobsResponse, type PublicJob } from "./jobTypes";
 
@@ -49,6 +51,7 @@ interface JobsClientProps { initialJobs: PublicJob[]; loadError: boolean; render
 
 export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsClientProps) {
   const { language } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const isSomali = language === "so";
   const [jobs, setJobs] = useState(initialJobs);
   const [search, setSearch] = useState("");
@@ -67,12 +70,15 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
   const [selectedJobId, setSelectedJobId] = useState(initialJobs[0]?.id ?? "");
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [alertsSaving, setAlertsSaving] = useState(false);
+  const [alertsError, setAlertsError] = useState("");
   const [copied, setCopied] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const jobPreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -80,6 +86,24 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
       if (Array.isArray(stored)) setRecentSearches(stored.filter((item): item is string => typeof item === "string").slice(0, 5));
     } catch { /* Ignore invalid data saved by an older version. */ }
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setAlertsEnabled(false);
+      return;
+    }
+
+    let active = true;
+    api.get<{ enabled: boolean }>("/auth/email-alerts")
+      .then(({ data }) => {
+        if (active) setAlertsEnabled(Boolean(data.enabled));
+      })
+      .catch(() => {
+        if (active) setAlertsError(isSomali ? "Digniinaha lama soo dejin karin." : "Could not load alert settings.");
+      });
+    return () => { active = false; };
+  }, [authLoading, isSomali, user]);
 
   const searchSuggestions = useMemo(() => {
     const query = searchDraft.trim().toLowerCase();
@@ -171,6 +195,37 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
   const toggleSaved = (id: string) => setSavedJobs((current) => {
     const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next;
   });
+
+  const selectJob = (id: string) => {
+    setSelectedJobId(id);
+    window.requestAnimationFrame(() => {
+      jobPreviewRef.current?.scrollTo({
+        behavior: "smooth",
+        top: 0,
+      });
+    });
+  };
+
+  const toggleEmailAlerts = async () => {
+    if (!user) {
+      window.location.assign("/login");
+      return;
+    }
+
+    const nextEnabled = !alertsEnabled;
+    setAlertsSaving(true);
+    setAlertsError("");
+    try {
+      const { data } = await api.put<{ enabled: boolean }>("/auth/email-alerts", {
+        enabled: nextEnabled,
+      });
+      setAlertsEnabled(Boolean(data.enabled));
+    } catch {
+      setAlertsError(isSomali ? "Digniinaha lama beddeli karin." : "Could not update email alerts.");
+    } finally {
+      setAlertsSaving(false);
+    }
+  };
 
   const removeRecentSearch = (value: string) => {
     const nextRecent = recentSearches.filter((item) => item !== value);
@@ -268,8 +323,10 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
 
         <div className="mt-1 flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs text-foreground">
           <p className="flex min-w-0 items-center gap-2"><Sparkles size={15} className="shrink-0 text-primary"/><span className="truncate">{isSomali ? "Shaqooyin la xaqiijiyey oo ka socda loo-shaqeeyayaal lagu kalsoon yahay." : "Verified opportunities from trusted employers, updated as new roles are published."}</span></p>
-          <button type="button" onClick={() => setAlertsEnabled((value) => !value)} className="hidden shrink-0 font-bold text-primary hover:text-primary-dark sm:block">{alertsEnabled ? (isSomali ? "Digniinadu waa shidan yihiin" : "Alerts enabled") : isSomali ? "Hel digniino" : "Get job alerts"}</button>
+          <button type="button" onClick={() => void toggleEmailAlerts()} disabled={alertsSaving || authLoading} className="hidden shrink-0 font-normal text-primary hover:text-primary-dark disabled:opacity-60 sm:block">{alertsSaving ? (isSomali ? "Kaydinaya..." : "Saving...") : alertsEnabled ? (isSomali ? "Digniinaha iimaylka waa shidan yihiin" : "Email alerts enabled") : isSomali ? "Hel digniino iimayl" : "Get email alerts"}</button>
         </div>
+
+        {alertsError && <p role="alert" className="mt-2 text-xs font-normal text-red-600">{alertsError}</p>}
 
         {(loadError || searchLoadError) && jobs.length > 0 && <p role="status" className="mt-4 rounded-xl border border-amber-300/40 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-foreground">{isSomali ? "Raadinta tooska ah hadda lama heli karo; natiijooyinkani waxay adeegsanayaan shaqooyinkii ugu dambeeyay." : "Live search is temporarily unavailable, so these results use the latest jobs already loaded."}</p>}
 
@@ -280,18 +337,20 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
               <p className="mt-1 text-xs text-muted">{isSomali ? "Dooro shaqo si aad u aragto faahfaahinta" : "Select a role to review the full opportunity"}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => setAlertsEnabled((value) => !value)} aria-pressed={alertsEnabled} className={`hidden h-9 items-center gap-2 rounded-full border px-3 text-xs font-bold transition sm:flex ${alertsEnabled ? "border-primary bg-primary text-white" : "border-border bg-surface text-muted hover:text-primary"}`}><Bell size={14}/>{isSomali ? "Digniin" : "Alerts"}<span className={`h-2 w-2 rounded-full ${alertsEnabled ? "bg-white" : "bg-border"}`}/></button>
+              <button type="button" onClick={() => void toggleEmailAlerts()} disabled={alertsSaving || authLoading} aria-pressed={alertsEnabled} className={`hidden h-9 items-center gap-2 rounded-full border px-3 text-xs font-normal transition disabled:opacity-60 sm:flex ${alertsEnabled ? "border-primary bg-primary text-white" : "border-border bg-surface text-muted hover:text-primary"}`}><Bell size={14}/>{alertsSaving ? (isSomali ? "Kaydinaya..." : "Saving...") : isSomali ? "Digniin" : "Alerts"}<span className={`h-2 w-2 rounded-full ${alertsEnabled ? "bg-white" : "bg-border"}`}/></button>
               <FilterSelect label={isSomali ? "Kala saar" : "Sort"} value={sortBy} onChange={(value) => setSortBy(value as SortFilter)} options={[["newest", "Newest"], ["oldest", "Oldest"], ["salary-high", "Highest salary"], ["salary-low", "Lowest salary"]]} compact/>
             </div>
           </div>
 
           {loadError && jobs.length === 0 ? <EmptyState title={isSomali ? "Liiska shaqooyinka hadda lama heli karo." : "Job listings are temporarily unavailable."}/> : filteredAndSortedJobs.length === 0 ? <EmptyState title={isSomali ? "Shaqooyin lama helin." : "No jobs match your current filters."} action={resetFilters}/> : (
-            <div className="grid items-start gap-5 lg:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.45fr)] xl:grid-cols-[430px_minmax(0,1fr)]">
-              <div className="space-y-3 lg:pr-2">
-                {filteredAndSortedJobs.map((job) => <JobListCard key={job.id} job={job} isSomali={isSomali} language={language} renderedAt={renderedAt} selected={job.id === selectedJob?.id} saved={savedJobs.has(job.id)} onSelect={() => setSelectedJobId(job.id)} onSave={() => toggleSaved(job.id)}/>) }
+            <div className="grid items-start gap-5 lg:h-[calc(100vh-6rem)] lg:min-h-0 lg:grid-cols-[minmax(340px,0.78fr)_minmax(0,1.45fr)] lg:overflow-hidden xl:grid-cols-[430px_minmax(0,1fr)]">
+              <div className="space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-3 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+                {filteredAndSortedJobs.map((job) => <JobListCard key={job.id} job={job} isSomali={isSomali} language={language} renderedAt={renderedAt} selected={job.id === selectedJob?.id} saved={savedJobs.has(job.id)} onSelect={() => selectJob(job.id)} onSave={() => toggleSaved(job.id)}/>) }
               </div>
               {selectedJob && (
-                <JobPreview job={selectedJob} language={language} isSomali={isSomali} saved={savedJobs.has(selectedJob.id)} copied={copied} onSave={() => toggleSaved(selectedJob.id)} onShare={() => void shareSelectedJob()}/>
+                <div ref={jobPreviewRef} className="lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
+                  <JobPreview job={selectedJob} language={language} isSomali={isSomali} saved={savedJobs.has(selectedJob.id)} copied={copied} onSave={() => toggleSaved(selectedJob.id)} onShare={() => void shareSelectedJob()}/>
+                </div>
               )}
             </div>
           )}
@@ -302,22 +361,24 @@ export default function JobsClient({ initialJobs, loadError, renderedAt }: JobsC
 }
 
 function FilterToggle({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
-  return <button type="button" onClick={onClick} aria-pressed={active} className={`h-9 shrink-0 rounded-full border px-4 text-xs font-bold transition ${active ? "border-primary bg-primary text-white shadow-sm" : "border-border bg-surface text-foreground hover:border-primary/40 hover:text-primary"}`}>{children}</button>;
+  return <button type="button" onClick={onClick} aria-pressed={active} className={`h-9 shrink-0 rounded-full border px-4 text-xs font-normal transition ${active ? "border-primary bg-primary text-white shadow-sm" : "border-border bg-surface text-foreground hover:border-primary/40 hover:text-primary"}`}>{children}</button>;
 }
 
 function FilterSelect({ label, value, onChange, options, compact = false }: { label: string; value: string; onChange: (value: string) => void; options: string[][]; compact?: boolean }) {
-  return <label className="relative shrink-0"><span className="sr-only">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className={`${compact ? "h-9 pl-3 pr-8" : "h-9 pl-4 pr-9"} appearance-none rounded-full border border-border bg-surface text-xs font-bold text-foreground outline-none transition hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/15`}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}</select><ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"/></label>;
+  return <label className="relative shrink-0"><span className="sr-only">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className={`${compact ? "h-9 pl-3 pr-8" : "h-9 pl-4 pr-9"} appearance-none rounded-full border border-border bg-surface text-xs font-normal text-foreground outline-none transition hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/15`}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}</select><ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"/></label>;
 }
 
 function JobListCard({ job, language, isSomali, renderedAt, selected, saved, onSelect, onSave }: { job: PublicJob; language: "en" | "so"; isSomali: boolean; renderedAt: string; selected: boolean; saved: boolean; onSelect: () => void; onSave: () => void }) {
   const localized = getLocalizedJobText(job, language);
   const href = `/jobs/${job.slug || job.id}`;
-  return <article className={`group relative overflow-hidden rounded-2xl border bg-surface p-4 shadow-[0_3px_12px_rgba(15,23,42,.04)] transition lg:h-[205px] ${selected ? "border-primary ring-2 ring-primary/10" : "border-border hover:border-primary/40 hover:shadow-lg"}`}>
-    <button type="button" onClick={onSelect} className="absolute inset-0 z-0 hidden cursor-pointer lg:block" aria-label={`${isSomali ? "Fiiri" : "Preview"} ${localized.title}`}/>
+  return <article className={`group relative overflow-hidden rounded-2xl border bg-surface p-4 shadow-[0_3px_12px_rgba(15,23,42,.04)] transition lg:h-[205px] ${selected ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/25" : "border-border hover:border-primary/40 hover:shadow-lg"}`}>
+    {selected && <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primary" />}
+    <button type="button" onClick={onSelect} aria-pressed={selected} className="absolute inset-0 z-0 hidden cursor-pointer lg:block" aria-label={`${isSomali ? "Fiiri" : "Preview"} ${localized.title}`}/>
     <Link href={href} className="absolute inset-0 z-0 lg:hidden" aria-label={`${isSomali ? "Fur" : "Open"} ${localized.title}`}/>
     <div className="pointer-events-none relative z-[1]">
       <div className="flex items-start gap-3">
         <Logo job={job}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-extrabold text-heading">{localized.employerName}</p><p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted"><MapPin size={11}/>{job.remote ? (isSomali ? "Shaqo fog" : "Remote friendly") : job.location}</p></div>
+        {selected && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-primary"><CheckCircle2 size={11}/>{isSomali ? "La doortay" : "Selected"}</span>}
         <button type="button" onClick={onSave} aria-label={saved ? "Remove saved job" : "Save job"} className="pointer-events-auto rounded-lg p-2 text-muted transition hover:bg-primary/10 hover:text-primary"><Bookmark size={17} className={saved ? "fill-primary text-primary" : ""}/></button>
       </div>
       <h2 className="mt-3 line-clamp-2 text-base font-extrabold leading-snug text-heading transition group-hover:text-primary">{localized.title}</h2>

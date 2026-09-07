@@ -248,6 +248,7 @@ export default async function TrainingDetailPage({
     <>
       <script
         nonce={nonce}
+        suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify([

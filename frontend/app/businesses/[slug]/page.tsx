@@ -309,6 +309,7 @@ export default async function BusinessProfilePage({
     <div className="min-h-screen bg-[#fafafe] text-foreground dark:bg-slate-950">
       <script
         nonce={nonce}
+        suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),

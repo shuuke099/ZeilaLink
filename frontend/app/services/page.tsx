@@ -112,6 +112,7 @@ export default async function ServicesPage() {
     <div className="min-h-screen bg-background transition-colors">
       <script
         nonce={nonce}
+        suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),

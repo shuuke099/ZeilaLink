@@ -28,6 +28,45 @@ const MAXIMUM_OTP_ATTEMPTS = 5;
 const DUMMY_PASSWORD_HASH =
   '$2a$12$x1eDZ8jc/ae4vJkAZhUF9Oo4cN3hnnprme8jUbrxnQ8uXPy6yZHgy';
 const PUBLIC_REGISTRATION_ROLES = new Set(['worker', 'employer', 'provider']);
+
+export const getEmailAlerts = async (req: AuthRequest, res: Response) => {
+  if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { emailAlertsEnabled: true },
+  });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  return res.json({ enabled: user.emailAlertsEnabled });
+};
+
+export const updateEmailAlerts = async (req: AuthRequest, res: Response) => {
+  if (!req.user?.id) return res.status(401).json({ error: 'Unauthorized' });
+  if (typeof req.body?.enabled !== 'boolean') {
+    return res.status(400).json({ error: 'enabled must be a boolean' });
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { emailAlertsEnabled: req.body.enabled },
+    select: { emailAlertsEnabled: true },
+  });
+
+  recordAuditEvent({
+    userId: req.user.id,
+    action: 'email_alerts.update',
+    resourceType: 'user',
+    resourceId: req.user.id,
+    meta: {
+      result: 'success',
+      enabled: user.emailAlertsEnabled,
+      ...requestAuditMeta(req),
+    },
+  });
+
+  return res.json({ enabled: user.emailAlertsEnabled });
+};
 const CURRENT_TERMS_VERSION = '2026-07-20';
 const CURRENT_PRIVACY_VERSION = '2026-07-20';
 const COMPROMISED_LEGACY_PASSWORDS = new Set([

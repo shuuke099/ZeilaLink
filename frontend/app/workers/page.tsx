@@ -222,6 +222,7 @@ export default async function WorkersPage({
     <div className="min-h-screen bg-background">
       <script
         nonce={nonce}
+        suppressHydrationWarning
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify([breadcrumbData, collectionData]).replace(

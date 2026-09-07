@@ -96,7 +96,6 @@ export default function AboutSection({ language }: AboutSectionProps) {
                 src={aboutTeamImage}
                 alt="Team working together"
                 sizes="(max-width: 1023px) 100vw, 50vw"
-                priority
                 placeholder="blur"
                 className="aspect-square h-full w-full object-cover"
               />

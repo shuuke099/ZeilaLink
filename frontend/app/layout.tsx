@@ -81,6 +81,7 @@ export function generateMetadata(): Metadata {
       : undefined,
     other: {
       'content-language': 'en, so',
+      'mobile-web-app-capable': 'yes',
       ...(BING_SITE_VERIFICATION
         ? { 'msvalidate.01': BING_SITE_VERIFICATION }
         : {}),

@@ -135,6 +135,8 @@ router.post(
 );
 router.get('/session', optionalAuthenticate, authController.getSession);
 router.get('/me', authenticate, authController.getCurrentUser);
+router.get('/email-alerts', authenticate, authController.getEmailAlerts);
+router.put('/email-alerts', authenticate, authController.updateEmailAlerts);
 router.post('/logout', authController.logout);
 router.get('/users/:id/profile', authenticate, requireSelfOrAdmin('id'), authController.getProfile);
 router.put('/users/:id', authenticate, requireSelfOrAdmin('id'), authController.updateProfile);

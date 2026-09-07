@@ -253,7 +253,7 @@ export default function PopularServices() {
               Popular Services
             </h2>
 
-            <p className="mt-1 hidden text-sm text-slate-500 md:block">
+            <p className="mt-1 hidden text-[9px] text-slate-500 sm:text-[10px] md:block">
               Book trusted professionals for your everyday needs.
             </p>
           </div>

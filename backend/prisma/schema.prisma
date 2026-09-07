@@ -23,6 +23,7 @@ model User {
   profilePublic       Boolean             @default(false) @map("profile_public")
   preferredLanguage   String              @default("en") @map("preferred_language")
   isVerified          Boolean             @default(false) @map("is_verified")
+  emailAlertsEnabled  Boolean             @default(false) @map("email_alerts_enabled")
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
   avatarUrl           String?             @map("avatar_url")

@@ -9,6 +9,7 @@ import {
 } from "../utils/cache";
 import { presentResume } from "../utils/resume";
 import { createStableSlug, slugWhenMissing } from "../utils/slug";
+import { notifyOpportunitySubscribers } from "../utils/opportunityAlerts";
 
 const toBoolean = (value: any): boolean =>
   value === true || value === "true" || value === "1";
@@ -551,6 +552,11 @@ export const createJob = async (req: AuthRequest, res: Response) => {
       recordJobEvent(req, "job.publish", job.id, "success", {
         source: "create",
       });
+      void notifyOpportunitySubscribers({
+        type: "job",
+        title: job.title,
+        path: `/jobs/${job.slug || job.id}`,
+      });
     }
     res.status(201).json(job);
   } catch (error: any) {
@@ -742,6 +748,11 @@ export const updateJob = async (req: AuthRequest, res: Response) => {
       recordJobEvent(req, "job.publish", updated.id, "success", {
         source: "update",
       });
+      void notifyOpportunitySubscribers({
+        type: "job",
+        title: updated.title,
+        path: `/jobs/${updated.slug || updated.id}`,
+      });
     } else if (job.published && !updated.published) {
       recordJobEvent(req, "job.unpublish", updated.id, "success", {
         source: "update",
@@ -830,6 +841,13 @@ export const publishJob = async (req: AuthRequest, res: Response) => {
     recordJobEvent(req, "job.publish", updated.id, "success", {
       source: "publish_endpoint",
     });
+    if (!job.published) {
+      void notifyOpportunitySubscribers({
+        type: "job",
+        title: updated.title,
+        path: `/jobs/${updated.slug || updated.id}`,
+      });
+    }
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: "Failed to change job publication" });
