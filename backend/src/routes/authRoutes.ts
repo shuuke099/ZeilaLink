@@ -84,7 +84,7 @@ const passwordResetRequestLimiter = rateLimit({
 });
 
 const passwordResetRequestAccountLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
+  windowMs: 30 * 60 * 1000,
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
