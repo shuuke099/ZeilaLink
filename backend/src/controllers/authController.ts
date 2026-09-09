@@ -253,11 +253,12 @@ export const register = async (req: Request, res: Response) => {
     // addresses so registration cannot be used as a fast account oracle.
     const passwordHash = await hashPassword(password);
 
-    // Existing accounts receive the same public response without another email.
+    // Do not create another account for an address that is already registered.
     const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
-      return res.status(202).json({
-        message: 'If this address can be registered, a verification email will arrive shortly.',
+      return res.status(409).json({
+        error: 'An account with this email address already exists.',
+        code: 'EMAIL_ALREADY_EXISTS',
       });
     }
 
@@ -372,8 +373,9 @@ export const register = async (req: Request, res: Response) => {
     
     // Handle Prisma validation errors
     if (databaseCode === 'P2002') {
-      return res.status(202).json({
-        message: 'If this address can be registered, a verification email will arrive shortly.',
+      return res.status(409).json({
+        error: 'An account with this email address already exists.',
+        code: 'EMAIL_ALREADY_EXISTS',
       });
     }
     
@@ -411,22 +413,38 @@ export const login = async (req: Request, res: Response) => {
     });
 
     // Always run bcrypt so unknown accounts and incorrect passwords have
-    // comparable response timing and return the same public error.
+    // comparable response timing.
     const isValid = await verifyPassword(
       password,
       user?.passwordHash || DUMMY_PASSWORD_HASH,
     );
-    if (!user || !isValid) {
+    if (!user) {
       recordAuditEvent({
         action: 'login_failed',
         resourceType: 'session',
         meta: {
           identifier: identifierFingerprint(email),
-          result: 'invalid_credentials',
+          result: 'email_not_found',
           ...requestAuditMeta(req),
         },
       });
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(404).json({
+        error: 'No account exists with this email address.',
+        code: 'EMAIL_NOT_FOUND',
+      });
+    }
+    if (!isValid) {
+      recordAuditEvent({
+        userId: user.id,
+        action: 'login_failed',
+        resourceType: 'session',
+        resourceId: user.id,
+        meta: { result: 'incorrect_password', ...requestAuditMeta(req) },
+      });
+      return res.status(401).json({
+        error: 'The password you entered is incorrect.',
+        code: 'INCORRECT_PASSWORD',
+      });
     }
 
     if (COMPROMISED_LEGACY_PASSWORDS.has(password)) {
@@ -1072,10 +1090,16 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user?.isVerified) {
-      // Don't reveal if user exists
-      return res.status(202).json({
-        message: 'If a verified account exists, a reset code will arrive shortly',
+    if (!user) {
+      return res.status(404).json({
+        error: 'No account exists with this email address.',
+        code: 'EMAIL_NOT_FOUND',
+      });
+    }
+    if (!user.isVerified) {
+      return res.status(403).json({
+        error: 'This email address has not been verified.',
+        code: 'EMAIL_VERIFICATION_REQUIRED',
       });
     }
 
@@ -1117,7 +1141,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       meta: { result: 'smtp_accepted', ...requestAuditMeta(req) },
     });
     return res.status(202).json({
-      message: 'If a verified account exists, a reset code will arrive shortly',
+      message: 'A password reset code has been sent to your email address.',
     });
   } catch {
     res.status(500).json({ error: 'Unable to process password reset request' });

@@ -53,8 +53,8 @@ function ForgotPasswordContent() {
       setStep('otp');
       toast.success(
         isEn
-          ? 'If this is a verified account, an OTP will arrive shortly.'
-          : 'Haddii kani yahay akoon la xaqiijiyay, OTP ayaa iman doona wax yar kadib.',
+          ? 'A password reset OTP has been sent to your email.'
+          : 'OTP-ga beddelka furaha ayaa loo diray iimaylkaaga.',
       );
     } catch (err: any) {
       toast.error(extractErrorMessage(err, isEn ? 'Failed to send OTP' : 'Waa lagu fashilmay dirista OTP'));
@@ -131,8 +131,8 @@ function ForgotPasswordContent() {
       setOtp('');
       toast.success(
         isEn
-          ? 'If this is a verified account, a new OTP will arrive shortly.'
-          : 'Haddii kani yahay akoon la xaqiijiyay, OTP cusub ayaa iman doona wax yar kadib.',
+          ? 'A new password reset OTP has been sent to your email.'
+          : 'OTP cusub oo beddelka furaha ah ayaa loo diray iimaylkaaga.',
       );
     } catch (err: any) {
       toast.error(

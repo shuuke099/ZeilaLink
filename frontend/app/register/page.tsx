@@ -166,7 +166,7 @@ function RegisterContent() {
         acceptedTerms: true,
       });
 
-      toast.success("If the address is available, a verification email will arrive shortly.");
+      toast.success("Account created. A verification email has been sent.");
 
       const params = new URLSearchParams({ email: formData.email.trim() });
       router.push(`/verify-email?${params.toString()}`);
