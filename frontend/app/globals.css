@@ -126,6 +126,41 @@
    ========================================================= */
 
 @layer components {
+  /* Training card titles keep their current size; all supporting metadata is
+     intentionally larger for readability on both phone and desktop. */
+  a[href^="/training/"] > .flex.flex-1.flex-col > p,
+  a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
+    font-size: 10px !important;
+    line-height: 1rem !important;
+  }
+
+  a[href^="/training/"] > .flex.flex-1.flex-col > div span {
+    font-size: 9px !important;
+  }
+
+  a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
+    font-size: 13px !important;
+  }
+
+  a[href^="/training/"] > .flex.flex-1.flex-col > div:nth-of-type(2) > span {
+    font-size: 9px !important;
+  }
+
+  @media (min-width: 640px) {
+    a[href^="/training/"] > .flex.flex-1.flex-col > p,
+    a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
+      font-size: 11px !important;
+    }
+
+    a[href^="/training/"] > .flex.flex-1.flex-col > div span {
+      font-size: 10px !important;
+    }
+
+    a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
+      font-size: 14px !important;
+    }
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-xl
       px-4 sm:px-6
@@ -232,6 +267,38 @@
 @layer utilities {
 :where([data-theme="dark"]) .bg-white {
   background-color: rgb(var(--color-surface));
+}
+
+/* Training-card supporting copy is intentionally larger than the compact
+   metadata defaults; the course title keeps its existing responsive scale. */
+@layer components {
+  a[href^="/training/"] > .flex.flex-1.flex-col > p {
+    font-size: 10px !important;
+  }
+
+  a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
+    font-size: 10px !important;
+    line-height: 1rem !important;
+  }
+
+  a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
+    font-size: 13px !important;
+  }
+
+  @media (min-width: 640px) {
+    a[href^="/training/"] > .flex.flex-1.flex-col > p,
+    a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
+      font-size: 11px !important;
+    }
+
+    a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
+      font-size: 14px !important;
+    }
+
+    a[href^="/training/"] > .flex.flex-1.flex-col > div:nth-of-type(2) > span {
+      font-size: 10px !important;
+    }
+  }
 }
 
 :where([data-theme="dark"]) .bg-slate-50,
