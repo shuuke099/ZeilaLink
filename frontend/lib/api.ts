@@ -115,6 +115,10 @@ To fix:
 
 Then refresh this page.`;
 
+      // Calling screens show this failure. Log the verbose diagnostic only
+      // when API debugging is explicitly enabled.
+      if (!debugApi) return Promise.reject(error);
+
       console.error("❌ [api] Connection error:", {
         url: error.config?.url,
         baseURL: error.config?.baseURL,

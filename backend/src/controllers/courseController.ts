@@ -200,11 +200,6 @@ const presentCourse = (course: any) => ({
   skills: course.skills.map((entry: any) => entry.skill),
 });
 
-const publicProviderWhere = {
-  verified: true,
-  OR: [{ contactUserId: null }, { user: { is: { isVerified: true } } }],
-};
-
 const syncCourseSkills = async (
   transaction: any,
   courseId: string,
@@ -288,7 +283,6 @@ export const getCourses = async (req: AuthRequest, res: Response) => {
 
     if (requirePublished) {
       where.published = true;
-      where.provider = publicProviderWhere;
     }
 
     if (typeof search === "string" && search.trim()) {

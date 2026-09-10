@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -43,12 +43,15 @@ export default function TrainingsClient({ initialTrainings, loadError = false }:
   const [sort, setSort] = useState('upcoming');
   const [view, setView] = useState<ViewMode>('grid');
   const [mobileFilters, setMobileFilters] = useState(false);
-  const skippedInitialFetch = useRef(false);
   const { language } = useLanguage();
 
   useEffect(() => { const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 250); return () => window.clearTimeout(timer); }, [search]);
   useEffect(() => {
-    if (!skippedInitialFetch.current && !debouncedSearch) { skippedInitialFetch.current = true; return; }
+    if (!debouncedSearch) {
+      setTrainings(initialTrainings);
+      setLoading(false);
+      return;
+    }
     const fetchTrainings = async () => {
       try {
         setLoading(true);
@@ -56,10 +59,12 @@ export default function TrainingsClient({ initialTrainings, loadError = false }:
         if (debouncedSearch) params.set('search', debouncedSearch);
         const data = await cachedApiGet<{ courses?: Training[] }>(`/courses?${params}`, undefined, 30_000);
         setTrainings(Array.from(new Map((data.courses || []).map((item) => [item.id, item])).values()));
-      } catch { setTrainings([]); } finally { setLoading(false); }
+      } catch {
+        setTrainings(initialTrainings);
+      } finally { setLoading(false); }
     };
     void fetchTrainings();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, initialTrainings]);
 
   const locations = useMemo(() => Array.from(new Set(trainings.map((item) => [item.city, item.state].filter(Boolean).join(', ')).filter(Boolean))).sort(), [trainings]);
   const visibleTrainings = useMemo(() => {
