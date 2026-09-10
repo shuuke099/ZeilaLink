@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "frame-src 'none'",
+    "frame-src 'self' https://www.google.com",
     "object-src 'none'",
     `script-src ${scriptSources.join(" ")}`,
     "script-src-attr 'none'",

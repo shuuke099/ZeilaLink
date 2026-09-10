@@ -1,81 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
-import {
-  BookOpen,
-  GraduationCap,
-  Award,
-  MoreVertical,
-  CheckCircle2,
-  Clock,
-  Users,
-  Search,
-  Plus,
-  Eye,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowUpDown, BookOpen, ChevronDown, ChevronRight, Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
 
 interface TrainingRow {
   id: string;
   name: string;
   category?: string | null;
   cost?: number | null;
+  imageUrl?: string | null;
   published?: boolean;
   provider?: { name?: string };
   _count?: { userCertifications: number };
 }
 
+type StatusFilter = 'all' | 'active' | 'pending';
+const filters: Array<{ id: StatusFilter; label: string }> = [
+  { id: 'all', label: 'All Programs' },
+  { id: 'active', label: 'Active Programs' },
+  { id: 'pending', label: 'Pending Programs' },
+];
+
 export default function TrainingManagement() {
   const [trainings, setTrainings] = useState<TrainingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending'>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sortAscending, setSortAscending] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  const handleEdit = async (training: TrainingRow) => {
-    const name = window.prompt('Training name', training.name);
-    if (name === null || !name.trim()) return;
-    const category = window.prompt('Category', training.category || 'Professional');
-    if (category === null) return;
-    const costInput = window.prompt('Cost', String(training.cost ?? 0));
-    if (costInput === null || Number.isNaN(Number(costInput))) return;
-    try {
-      setBusyId(training.id);
-      const response = await api.put(`/admin/courses/${training.id}`, { name: name.trim(), category: category.trim(), cost: Number(costInput) });
-      setTrainings((current) => current.map((item) => item.id === training.id ? { ...item, ...response.data } : item));
-      setError(null);
-    } catch (e: any) {
-      setError(e?.response?.data?.error || 'Failed to update training');
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const handleDelete = async (training: TrainingRow) => {
-    if (!window.confirm(`Delete ${training.name}? This cannot be undone.`)) return;
-    try {
-      setBusyId(training.id);
-      await api.delete(`/admin/courses/${training.id}`);
-      setTrainings((current) => current.filter((item) => item.id !== training.id));
-      setError(null);
-    } catch (e: any) {
-      setError(e?.response?.data?.error || 'Failed to delete training');
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [deletingTraining, setDeletingTraining] = useState<TrainingRow | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
-        // all=true lets admin view both published/unpublished
-        const res = await api.get('/courses', { params: { all: true, limit: 100 } });
-        setTrainings(res.data.courses || []);
+        const response = await api.get('/courses', { params: { all: true, limit: 100 } });
+        setTrainings(response.data.courses || []);
       } catch (e: any) {
         setError(e?.response?.data?.error || 'Failed to load trainings');
       } finally {
@@ -85,123 +52,213 @@ export default function TrainingManagement() {
     load();
   }, []);
 
-  const filteredTrainings = trainings.filter(t => {
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && t.published) ||
-      (statusFilter === 'pending' && !t.published);
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.provider?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', closeMenu);
+    return () => document.removeEventListener('mousedown', closeMenu);
+  }, []);
+
+  const visibleTrainings = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return trainings
+      .filter((training) => {
+        const statusMatches = statusFilter === 'all' ||
+          (statusFilter === 'active' && training.published) ||
+          (statusFilter === 'pending' && !training.published);
+        const searchMatches = !query ||
+          training.name.toLowerCase().includes(query) ||
+          training.provider?.name?.toLowerCase().includes(query) ||
+          training.category?.toLowerCase().includes(query);
+        return statusMatches && searchMatches;
+      })
+      .sort((a, b) => (sortAscending ? 1 : -1) * a.name.localeCompare(b.name));
+  }, [trainings, statusFilter, searchQuery, sortAscending]);
+
+  const handleExport = () => {
+    const rows = visibleTrainings.map((training) => [
+      training.name,
+      training.provider?.name || 'Institutional Provider',
+      training.category || 'Professional',
+      training._count?.userCertifications || 0,
+      training.published ? 'Live' : 'Draft',
+    ]);
+    const csv = [['Program', 'Provider', 'Category', 'Certified', 'Status'], ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'training-programs-export.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    setMenuOpen(false);
+  };
+
+  const handleDelete = async (training: TrainingRow) => {
+    try {
+      setBusyId(training.id);
+      await api.delete(`/courses/admin/${training.id}`);
+      setTrainings((current) => current.filter((item) => item.id !== training.id));
+      setDeletingTraining(null);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to delete training');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  };
+
+  const allVisibleSelected = visibleTrainings.length > 0 && visibleTrainings.every((training) => selectedIds.includes(training.id));
+
+  const toggleAllVisible = () => {
+    const visibleIds = visibleTrainings.map((training) => training.id);
+    setSelectedIds((current) => {
+      if (allVisibleSelected) return current.filter((id) => !visibleIds.includes(id));
+      return Array.from(new Set([...current, ...visibleIds]));
+    });
+  };
+
+  const updateSelectedStatus = async (published: boolean) => {
+    if (selectedIds.length === 0) return;
+    try {
+      setBulkUpdating(true);
+      setError(null);
+      await Promise.all(selectedIds.map((id) => api.put(`/courses/admin/${id}`, { published })));
+      setTrainings((current) => current.map((training) => selectedIds.includes(training.id) ? { ...training, published } : training));
+      setSelectedIds([]);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || `Failed to ${published ? 'publish' : 'move'} selected training programs`);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const activeLabel = filters.find((filter) => filter.id === statusFilter)?.label || 'All Programs';
 
   return (
-    <div className="space-y-8">
-      {/* Top Controls */}
-      <div className="flex flex-col xl:flex-row gap-6 items-center justify-between">
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
-          {[
-            { id: 'all', label: 'ALL PROGRAMS', icon: BookOpen },
-            { id: 'active', label: 'ACTIVE', icon: CheckCircle2 },
-            { id: 'pending', label: 'PENDING', icon: Clock },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id as any)}
-              className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all duration-300 ${statusFilter === tab.id
-                  ? 'border border-blue-50 bg-white text-blue-600 shadow-sm dark:border-violet-500/40 dark:bg-violet-600 dark:text-white'
-                  : 'text-slate-400 hover:text-slate-600 dark:text-slate-300 dark:hover:text-white'
-                }`}
-            >
-              <tab.icon className={`h-3.5 w-3.5 ${statusFilter === tab.id ? 'text-blue-500' : 'opacity-40'}`} />
-              {tab.label}
-            </button>
-          ))}
+    <div className="flex h-full flex-col overflow-hidden rounded-none bg-transparent">
+      <div className="mb-3 flex flex-col gap-3 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative">
+          <button type="button" onClick={() => setDropdownOpen((open) => !open)} className="inline-flex items-center gap-2 text-3xl font-black tracking-tight text-slate-900">
+            {activeLabel}
+            <ChevronDown className="h-6 w-6 text-blue-600" />
+          </button>
+          <p className="mt-0.5 text-sm font-semibold text-slate-500">{visibleTrainings.length} records</p>
+          {dropdownOpen && (
+            <div className="absolute z-20 mt-3 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+              {filters.map((filter) => (
+                <button key={filter.id} type="button" onClick={() => { setStatusFilter(filter.id); setDropdownOpen(false); }} className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold ${filter.id === statusFilter ? 'bg-slate-100 text-blue-700' : 'text-slate-700 hover:bg-slate-50'}`}>
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-4 w-full xl:w-auto">
-          <div className="relative flex-1 xl:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-            <input
-              type="text"
-              placeholder="Filter courses or providers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 w-full rounded-xl border border-slate-100 bg-slate-50 pl-11 pr-4 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-medium placeholder:text-slate-300 focus:border-blue-100 focus:bg-white dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
-            />
+        <div className="flex items-center gap-3">
+          <div className="relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search programs..." className="h-10 w-64 rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500" />
           </div>
-          <Link href="/admin/trainings/new" aria-label="Create training" className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xl shadow-slate-200 transition-all hover:bg-slate-800 active:scale-95 dark:bg-violet-600 dark:shadow-none dark:hover:bg-violet-500">
-            <Plus size={20} />
+          <Link href="/admin/trainings/new" className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700">
+            <Plus className="h-5 w-5" /> New
           </Link>
+          <div className="relative" ref={menuRef}>
+            <button type="button" onClick={() => setMenuOpen((open) => !open)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50">
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                <button type="button" onClick={() => { setSortAscending((value) => !value); setMenuOpen(false); }} className="flex w-full items-center justify-between bg-blue-500 px-4 py-3 text-white hover:bg-blue-600">
+                  <span className="inline-flex items-center gap-3 font-semibold"><ArrowUpDown className="h-4 w-4" />Sort by name</span><ChevronRight className="h-4 w-4" />
+                </button>
+                <button type="button" onClick={handleExport} className="flex w-full items-center justify-between border-t border-slate-100 px-4 py-3 text-slate-700 hover:bg-slate-50">
+                  <span className="inline-flex items-center gap-3 font-medium"><Upload className="h-4 w-4 text-blue-500" />Export</span><ChevronRight className="h-4 w-4 text-blue-500" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="relative md:hidden">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search programs..." className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500" />
         </div>
       </div>
 
-      {/* Main Table Container */}
-      <div className="overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                <th className="px-10 py-5">Curriculum & Provider</th>
-                <th className="px-8 py-5">Category</th>
-                <th className="px-8 py-5">Engagement</th>
-                <th className="px-8 py-5">Status</th>
-                <th className="px-10 py-5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {loading ? (
-                <tr><td colSpan={5} className="px-10 py-20 text-center text-sm font-bold text-slate-300">Cataloging educational assets...</td></tr>
-              ) : filteredTrainings.length === 0 ? (
-                <tr><td colSpan={5} className="px-10 py-20 text-center text-sm font-bold text-slate-300">No matching training programs found.</td></tr>
-              ) : (
-                filteredTrainings.map((t) => (
-                  <tr key={t.id} className="group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/70">
-                    <td className="px-10 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
-                          <BookOpen size={20} />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">{t.name}</span>
-                          <span className="text-xs font-bold text-slate-400 dark:text-slate-300">{t.provider?.name || 'Institutional Provider'}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="inline-flex rounded-lg border border-slate-100 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
-                        {t.category || 'Professional'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
-                        <Users size={14} className="text-slate-300" />
-                        <span className="text-sm font-black text-slate-900 dark:text-white">{t._count?.userCertifications || 0}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Certified</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-[10px] font-black tracking-widest uppercase transition-all ${t.published
-                          ? 'border-emerald-100 bg-emerald-50 text-emerald-600'
-                          : 'border-amber-100 bg-amber-50 text-amber-600'
-                        }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${t.published ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                        {t.published ? 'Live' : 'Draft'}
-                      </span>
-                    </td>
-                    <td className="px-10 py-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/training/${t.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"><Eye size={16} /></Link>
-                        <button type="button" title="Edit" disabled={busyId === t.id} onClick={() => handleEdit(t)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"><Pencil size={16} /></button>
-                        <button type="button" title="Delete" disabled={busyId === t.id} onClick={() => handleDelete(t)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {selectedIds.length > 0 && (
+        <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <p className="text-sm font-semibold text-blue-900">{selectedIds.length} program{selectedIds.length === 1 ? '' : 's'} selected</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={bulkUpdating} onClick={() => updateSelectedStatus(true)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">{bulkUpdating ? 'Updating…' : 'Publish selected'}</button>
+            <button type="button" disabled={bulkUpdating} onClick={() => updateSelectedStatus(false)} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50">{bulkUpdating ? 'Updating…' : 'Move to draft'}</button>
+            <button type="button" disabled={bulkUpdating} onClick={() => setSelectedIds([])} className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Clear</button>
+          </div>
         </div>
+      )}
+
+      <div className="min-h-0 flex-1 overflow-auto">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="sticky top-0 z-10 border-y border-slate-200 bg-slate-100 text-left text-xs font-bold uppercase text-slate-600">
+              <th className="w-12 px-4 py-4"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="Select all visible training programs" className="h-4 w-4 rounded border-slate-300 accent-blue-600" /></th>
+              <th className="px-4 py-4"><span className="inline-flex items-center gap-1">PROGRAM <ArrowUpDown className="h-4 w-4" /></span></th>
+              <th className="px-4 py-4">PROVIDER</th>
+              <th className="px-4 py-4">CATEGORY</th>
+              <th className="px-4 py-4">ENGAGEMENT</th>
+              <th className="px-4 py-4">STATUS</th>
+              <th className="px-4 py-4 text-right">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">Loading training programs...</td></tr>
+            ) : visibleTrainings.length === 0 ? (
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">No training programs found.</td></tr>
+            ) : visibleTrainings.map((training) => (
+              <tr key={training.id} className={`border-b border-slate-200 hover:bg-slate-50/60 ${selectedIds.includes(training.id) ? 'bg-blue-50/60' : ''}`}>
+                <td className="w-12 px-4 py-5"><input type="checkbox" checked={selectedIds.includes(training.id)} onChange={() => toggleSelection(training.id)} aria-label={`Select ${training.name}`} className="h-4 w-4 rounded border-slate-300 accent-blue-600" /></td>
+                <td className="px-4 py-5">
+                  <div className="flex min-w-[280px] items-center gap-3">
+                    <span className="inline-flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
+                      {training.imageUrl ? <img src={training.imageUrl} alt="" className="h-full w-full object-cover" /> : <BookOpen size={18} />}
+                    </span>
+                    <span className="text-lg font-semibold text-blue-700">{training.name}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-5 text-base text-slate-700">{training.provider?.name || 'Institutional Provider'}</td>
+                <td className="px-4 py-5 text-base text-slate-700">{training.category || 'Professional'}</td>
+                <td className="px-4 py-5 text-base text-slate-700"><span className="inline-flex items-center gap-2"><Users size={16} className="text-slate-400" />{training._count?.userCertifications || 0} certified</span></td>
+                <td className="px-4 py-5 text-base"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${training.published ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{training.published ? 'Live' : 'Draft'}</span></td>
+                <td className="px-4 py-5"><div className="flex justify-end gap-2">
+                  <Link href={`/training/${training.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
+                  <Link href={`/admin/trainings/new?id=${training.id}`} title="Edit" className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></Link>
+                  <button type="button" title="Delete" disabled={busyId === training.id} onClick={() => setDeletingTraining(training)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={16} /></button>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {error && <p className="px-6 py-4 text-sm font-semibold text-red-600">{error}</p>}
+      {deletingTraining && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/55 p-4" onClick={() => busyId === null && setDeletingTraining(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-training-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600"><Trash2 size={22} /></div>
+            <h2 id="delete-training-title" className="text-xl font-black text-slate-900">Delete training program?</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">You are about to permanently delete <strong>{deletingTraining.name}</strong>. This action cannot be undone.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" disabled={busyId !== null} onClick={() => setDeletingTraining(null)} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={busyId !== null} onClick={() => handleDelete(deletingTraining)} className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">{busyId ? 'Deleting…' : 'Delete training'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

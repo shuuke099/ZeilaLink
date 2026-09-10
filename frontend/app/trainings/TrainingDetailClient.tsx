@@ -27,6 +27,27 @@ export interface TrainingDetail {
 type Props = { initialTraining: TrainingDetail; publicPath: string };
 const panel = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
 const valueMaps: Record<string, string> = { Beginner: 'Bilow', Intermediate: 'Dhexdhexaad', Advanced: 'Sare', Technology: 'Tiknoolajiyad', Business: 'Ganacsi', Health: 'Caafimaad', Trades: 'Farsamooyin', Language: 'Luqado', Languages: 'Luqado', Arts: 'Farshaxan', General: 'Guud', Online: 'Onlayn', 'In Person': 'Goob joog', Hybrid: 'Isku dhafan', 'All levels': 'Dhammaan heerarka' };
+const courseContentSo: Record<string, string> = {
+  'Use medical terminology in administrative work': 'U adeegso eray-bixinta caafimaadka shaqada maamulka',
+  'Understand patient-information privacy and professional ethics': 'Faham asturnaanta macluumaadka bukaanka iyo anshaxa xirfadeed',
+  'Practice medical office procedures': 'Ku tababar habraacyada xafiiska caafimaadka',
+  'Understand insurance, billing, and coding basics': 'Faham aasaaska caymiska, biilasha iyo koodhaynta caafimaadka',
+  'Use office software and professional communication': 'Adeegso barnaamijyada xafiiska iyo isgaarsiinta xirfadeed',
+  'Be at least 18 years old': 'Da’daadu ha ahaato ugu yaraan 18 sano',
+  'Have a high-school diploma or GED': 'Hayso shahaadada dugsiga sare ama GED',
+  'Provide valid government-issued identification': 'Soo bandhig aqoonsi dowladeed oo ansax ah',
+  'Meet Summit’s placement-test requirements': 'Buuxi shuruudaha imtixaanka meelaynta ee Summit',
+  'Complete required admissions, FAFSA, and financial-aid steps': 'Dhammaystir tallaabooyinka gelitaanka, FAFSA iyo kaalmada dhaqaale ee loo baahan yahay',
+  'Confirm current eligibility, cohort location, dates, and seat availability directly with Summit': 'Si toos ah Summit uga xaqiiji u-qalmitaanka hadda, goobta kooxda, taariikhaha iyo kuraasta bannaan',
+  'Practical, job-ready knowledge': 'Aqoon wax ku ool ah oo shaqo diyaar u ah',
+  'Industry-standard tools and workflows': 'Qalabka iyo habraacyada heerka warshadaha',
+  'Hands-on exercises and guided practice': 'Layli gacanta ah iyo tababar hagitaan leh',
+  'Confidence to apply your new skills': 'Kalsooni aad xirfadahaaga cusub ku adeegsan karto',
+  'No prior professional experience required': 'Khibrad xirfadeed oo hore looma baahna',
+  'Basic computer skills recommended': 'Xirfadaha kombiyuutarka aasaasiga ah waa lagu talinayaa',
+  'Reliable internet access for online sessions': 'Internet la isku halayn karo ayaa looga baahan yahay casharrada onlaynka ah',
+  'Commitment to complete course activities': 'Ballanqaad dhammaystirka hawlaha koorsada',
+};
 
 export default function TrainingDetailClient({ initialTraining: training, publicPath }: Props) {
   const [activeImage, setActiveImage] = React.useState<number | null>(null);
@@ -36,14 +57,23 @@ export default function TrainingDetailClient({ initialTraining: training, public
   const translatedValue = (value: string) => so ? valueMaps[value] || value : value;
   // The course title intentionally remains canonical in both interface languages.
   const name = training.name;
-  const description = so && training.descriptionSo?.trim() ? training.descriptionSo : training.description;
+  const description = so
+    ? training.descriptionSo?.trim() || 'Faahfaahinta tababarkan oo Af-Soomaali ah weli lama gelin.'
+    : training.description;
   const duration = so && training.durationSo?.trim() ? training.durationSo : training.duration;
   const schedule = so && training.scheduleSo?.trim() ? training.scheduleSo : training.schedule;
   const providerName = so && training.provider.nameSo?.trim() ? training.provider.nameSo : training.provider.name;
   const providerDescription = so && training.provider.descriptionSo?.trim() ? training.provider.descriptionSo : training.provider.description;
   const rawFormat = (training.deliveryMode || 'in_person').replace('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
   const format = translatedValue(rawFormat);
-  const location = training.deliveryMode === 'online' ? t('Online', 'Onlayn') : [training.address, training.city, training.state, training.postalCode].filter(Boolean).join(', ') || t('Provided during registration', 'Waxaa la bixinayaa marka la isdiiwaangelinayo');
+  const physicalAddress = [training.address, training.city, training.state, training.postalCode, training.country].filter(Boolean).join(', ');
+  const location = training.deliveryMode === 'online' ? t('Online', 'Onlayn') : physicalAddress || t('Provided during registration', 'Waxaa la bixinayaa marka la isdiiwaangelinayo');
+  const mapUrl = training.deliveryMode !== 'online' && physicalAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(physicalAddress)}`
+    : null;
+  const mapEmbedUrl = mapUrl
+    ? `https://www.google.com/maps?q=${encodeURIComponent(physicalAddress)}&output=embed`
+    : null;
   const price = training.cost === 0 ? t('Free', 'Bilaash') : new Intl.NumberFormat(so ? 'so-SO' : 'en-US', { style: 'currency', currency: training.currency || 'USD', maximumFractionDigits: 0 }).format(training.cost);
   const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat(so ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : t('Flexible', 'Dabacsan');
   const enrollUrl = getSafeStoredUrl(training.enrollmentUrl) || getSafeStoredUrl(training.onlineUrl);
@@ -53,6 +83,8 @@ export default function TrainingDetailClient({ initialTraining: training, public
   const gallery = Array.from(new Set([training.imageUrl, ...(training.gallery || [])].filter((item): item is string => Boolean(item))));
   const outcomes = training.learningOutcomes?.length ? training.learningOutcomes : so ? ['Aqoon wax ku ool ah oo shaqo diyaar u ah', 'Qalabka iyo habraacyada heerka warshadaha', 'Layli gacanta ah iyo hagitaan', 'Kalsooni aad xirfadahaaga cusub ku adeegsan karto'] : ['Practical, job-ready knowledge', 'Industry-standard tools and workflows', 'Hands-on exercises and guided practice', 'Confidence to apply your new skills'];
   const requirements = training.requirements?.length ? training.requirements : so ? ['Khibrad xirfadeed oo hore looma baahna', 'Xirfadaha kombiyuutarka aasaasiga ah waa lagu talinayaa', 'Internet la isku halayn karo ayaa looga baahan yahay casharrada onlaynka ah', 'Ballanqaad dhammaystirka hawlaha koorsada'] : ['No prior professional experience required', 'Basic computer skills recommended', 'Reliable internet access for online sessions', 'Commitment to complete course activities'];
+  const localizedOutcomes = so ? outcomes.map((item) => courseContentSo[item] || item) : outcomes;
+  const localizedRequirements = so ? requirements.map((item) => courseContentSo[item] || item) : requirements;
   const registerButton = enrollUrl ? <a href={enrollUrl} target="_blank" rel="noopener noreferrer" className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[11px] font-bold text-white">{t('Visit Registration Page', 'Fur Bogga Isdiiwaangelinta')} <ExternalLink size={13} /></a> : <span className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 px-4 text-[11px] font-bold text-slate-500 dark:bg-slate-800">{t('Registration link coming soon', 'Xiriirka isdiiwaangelinta dhowaan ayuu imanayaa')}</span>;
 
   return <div className="detail-readable min-h-screen bg-[#fafafe] text-slate-900 dark:bg-slate-950 dark:text-slate-100"><Navbar /><main className="mx-auto max-w-[1440px] px-4 pb-14 pt-20 sm:px-6 lg:px-8"><div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -61,15 +93,15 @@ export default function TrainingDetailClient({ initialTraining: training, public
       <section className="rounded-xl border border-primary/20 bg-primary/5 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[12px] font-bold">{t('This training is offered by an external provider.', 'Tababarkan waxaa bixiya bixiye dibadeed.')}</p><p className="mt-1 text-[11px] text-slate-500">{t('Registration and course delivery are managed by the provider.', 'Isdiiwaangelinta iyo bixinta koorsada waxaa maamula bixiyaha.')}</p></div><div className="w-full sm:w-56">{registerButton}</div></div></section>
       <Panel title={t('About this training', 'Ku saabsan tababarkan')}><p className="whitespace-pre-line text-[12px] leading-6 text-slate-600">{description}</p></Panel>
       {gallery.length > 1 && <Panel title={t('Gallery', 'Sawirrada')} action={`${gallery.length} ${t('photos', 'sawir')}`}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0, 6).map((image, index) => <button key={image} onClick={() => setActiveImage(index)} className="h-24 overflow-hidden rounded-lg sm:h-32"><img src={image} alt="" className="h-full w-full object-cover" /></button>)}</div></Panel>}
-      <Panel title={t('What you will learn', 'Waxaad baran doontaa')}><div className="grid gap-2 sm:grid-cols-2">{outcomes.map(outcome => <p key={outcome} className="flex gap-2 text-[11px] leading-5 text-slate-600"><CheckCircle2 size={13} className="mt-1 shrink-0 text-primary" />{outcome}</p>)}</div></Panel>
+      <Panel title={t('What you will learn', 'Waxaad baran doontaa')}><div className="grid gap-2 sm:grid-cols-2">{localizedOutcomes.map(outcome => <p key={outcome} className="flex gap-2 text-[11px] leading-5 text-slate-600"><CheckCircle2 size={13} className="mt-1 shrink-0 text-primary" />{outcome}</p>)}</div></Panel>
       <Panel title={t('Schedule', 'Jadwalka')}><div className="grid gap-4 text-[11px] sm:grid-cols-2 lg:grid-cols-4"><Info label={t('Start date', 'Taariikhda bilowga')} value={formatDate(training.startDate)} /><Info label={t('End date', 'Taariikhda dhammaadka')} value={formatDate(training.endDate)} /><Info label={t('Time', 'Waqtiga')} value={schedule || t('Contact provider', 'La xiriir bixiyaha')} /><Info label={t('Duration', 'Muddada')} value={duration} /></div></Panel>
     </div>
     <aside className="space-y-3 lg:sticky lg:top-20">
-      <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold">{t('At a glance', 'Dulmar kooban')}</h2><div className="mt-3 divide-y"><Row icon={GraduationCap} label={t('Level', 'Heerka')} value={translatedValue(training.level || 'All levels')} /><Row icon={Clock3} label={t('Duration', 'Muddada')} value={duration} /><Row icon={BookOpen} label={t('Category', 'Qaybta')} value={translatedValue(training.category || 'General')} /><Row icon={Monitor} label={t('Format', 'Habka')} value={format} /><Row icon={Languages} label={t('Language', 'Luqadda')} value={so ? 'Soomaali' : 'English'} /><Row icon={Award} label={t('Certificate', 'Shahaado')} value={training.providesCertificate ? t('Yes', 'Haa') : t('No', 'Maya')} /><Row icon={DollarSign} label={t('Price', 'Qiimaha')} value={price} /></div></section>
+      <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold">{t('At a glance', 'Dulmar kooban')}</h2><div className="mt-3 divide-y"><Row icon={GraduationCap} label={t('Level', 'Heerka')} value={translatedValue(training.level || 'All levels')} /><Row icon={Clock3} label={t('Duration', 'Muddada')} value={duration} /><Row icon={BookOpen} label={t('Category', 'Qaybta')} value={translatedValue(training.category || 'General')} /><Row icon={Monitor} label={t('Format', 'Habka')} value={format} /><Row icon={Languages} label={t('Language', 'Luqadda')} value="English" /><Row icon={Award} label={t('Certificate', 'Shahaado')} value={training.providesCertificate ? t('Yes', 'Haa') : t('No', 'Maya')} /><Row icon={DollarSign} label={t('Price', 'Qiimaha')} value={price} /></div></section>
       <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold">{t('Training provider', 'Bixiyaha tababarka')}</h2><div className="mt-3 flex gap-3">{training.provider.logoUrl ? <img src={training.provider.logoUrl} alt={providerName} className="h-12 w-12 rounded-lg object-cover" /> : <div className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 font-bold text-primary">{providerName.charAt(0)}</div>}<div><p className="text-[12px] font-bold">{providerName}</p><p className="mt-1 text-[10px] leading-4 text-slate-500">{providerDescription || t('Trusted training provider.', 'Bixiye tababar oo lagu kalsoon yahay.')}</p></div></div><div className="mt-3 space-y-2 text-[10px]">{websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer"><Globe2 size={12} className="mr-2 inline" />{t('Visit website', 'Fur bogga')}</a>}{phoneUrl && <a href={phoneUrl} className="block"><Phone size={12} className="mr-2 inline" />{training.provider.phone}</a>}{emailUrl && <a href={emailUrl} className="block"><Mail size={12} className="mr-2 inline" />{training.provider.email}</a>}</div>{training.provider.slug && <Link href={`/businesses/${training.provider.slug}`} className="mt-4 flex h-9 items-center justify-center rounded-lg border border-primary/30 text-[10px] font-bold text-primary">{t('View provider profile', 'Eeg xogta bixiyaha')}</Link>}</section>
       <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold">{t('How to join', 'Sida loogu biiro')}</h2><ol className="mt-3 space-y-2">{(so ? ['Guji badhanka isdiiwaangelinta', 'Akoon ka samee bogga bixiyaha', 'Dhammaystir isdiiwaangelinta iyo lacag-bixinta', 'Ka hel xaqiijin bixiyaha'] : ['Click the registration button', 'Create an account on the provider website', 'Complete registration and payment', 'Receive confirmation from the provider']).map((step, index) => <li key={step} className="flex gap-2 text-[10px] leading-4 text-slate-600"><span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">{index + 1}</span>{step}</li>)}</ol><div className="mt-4">{registerButton}</div></section>
-      <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold"><MapPin size={14} className="mr-2 inline text-primary" />{t('Location', 'Goobta')}</h2><p className="mt-2 text-[11px] font-semibold">{location}</p></section>
-      <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold"><FileCheck2 size={14} className="mr-2 inline text-primary" />{t('Eligibility & requirements', 'U-qalmitaanka iyo shuruudaha')}</h2><div className="mt-3 space-y-2">{requirements.map(requirement => <p key={requirement} className="flex gap-2 text-[10px] leading-4 text-slate-600"><Check size={11} className="mt-0.5 shrink-0 text-emerald-600" />{requirement}</p>)}</div></section>
+      {mapEmbedUrl && mapUrl ? <section className={`${panel} overflow-hidden`}><div className="flex items-center justify-between px-4 py-3"><h2 className="text-sm font-extrabold"><MapPin size={14} className="mr-2 inline text-primary" />{t('Location', 'Goobta')}</h2><a href={mapUrl} target="_blank" rel="noopener noreferrer" aria-label={t('Open in Google Maps', 'Ka fur Khariidadaha Google')} className="text-primary transition hover:opacity-70"><ExternalLink size={15} /></a></div><iframe src={mapEmbedUrl} title={t(`Map showing ${location}`, `Khariidadda muujinaysa ${location}`)} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-56 w-full border-0" allowFullScreen /></section> : <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold"><MapPin size={14} className="mr-2 inline text-primary" />{t('Location', 'Goobta')}</h2><p className="mt-2 text-[11px] font-semibold">{location}</p></section>}
+      <section className={`${panel} p-4`}><h2 className="text-sm font-extrabold"><FileCheck2 size={14} className="mr-2 inline text-primary" />{t('Eligibility & requirements', 'U-qalmitaanka iyo shuruudaha')}</h2><div className="mt-3 space-y-2">{localizedRequirements.map(requirement => <p key={requirement} className="flex gap-2 text-[10px] leading-4 text-slate-600"><Check size={11} className="mt-0.5 shrink-0 text-emerald-600" />{requirement}</p>)}</div></section>
       <ShareCard publicPath={publicPath} so={so} />
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-4"><p className="flex gap-2 text-[10px] leading-4 text-slate-600"><ShieldCheck size={15} className="shrink-0 text-primary" />{t('Verify program details directly before registering.', 'Si toos ah u xaqiiji faahfaahinta barnaamijka ka hor isdiiwaangelinta.')}</p></div>
     </aside>

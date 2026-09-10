@@ -35,7 +35,7 @@ router.delete(
 router.get("/", optionalAuthenticate, getCourses);
 router.post("/", authenticate, authorize("provider", "admin"), createCourse);
 
-router.get("/:id", getCourseById);
+router.get("/:id", optionalAuthenticate, getCourseById);
 router.put("/:id", authenticate, authorize("provider"), updateCourse);
 router.delete("/:id", authenticate, authorize("provider"), deleteCourse);
 

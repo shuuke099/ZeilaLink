@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, X } from 'lucide-react';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
@@ -38,11 +38,14 @@ const label = 'text-sm font-bold text-slate-700 dark:text-slate-200';
 
 export default function AdminNewTrainingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
   const [form, setForm] = useState(initial);
   const [providers, setProviders] = useState<ProviderOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [loadingCourse, setLoadingCourse] = useState(Boolean(editId));
 
   const set = <K extends keyof TrainingForm>(key: K, value: TrainingForm[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -52,6 +55,43 @@ export default function AdminNewTrainingPage() {
       .then((response) => setProviders(Array.isArray(response.data) ? response.data : []))
       .catch((err) => setError(err?.response?.data?.error || 'Failed to load training providers'));
   }, []);
+
+  useEffect(() => {
+    if (!editId) {
+      setLoadingCourse(false);
+      return;
+    }
+    const dateValue = (value?: string | null) => value ? value.slice(0, 10) : '';
+    api.get(`/courses/${editId}`)
+      .then((response) => {
+        const course = response.data?.course;
+        if (!course) throw new Error('Training program was not found');
+        setForm({
+          providerId: course.providerId || course.provider?.id || '',
+          name: course.name || '', nameSo: course.nameSo || '',
+          description: course.description || '', descriptionSo: course.descriptionSo || '',
+          category: course.category || '', level: course.level || '',
+          duration: course.duration || '', durationSo: course.durationSo || '',
+          deliveryMode: course.deliveryMode || 'in_person',
+          address: course.address || '', city: course.city || '', state: course.state || '',
+          postalCode: course.postalCode || '', country: course.country || '',
+          timezone: course.timezone || '', onlineUrl: course.onlineUrl || '',
+          startDate: dateValue(course.startDate), endDate: dateValue(course.endDate),
+          registrationDeadline: dateValue(course.registrationDeadline),
+          schedule: course.schedule || '', scheduleSo: course.scheduleSo || '',
+          cost: String(course.cost ?? 0), currency: course.currency || 'USD',
+          enrollmentUrl: course.enrollmentUrl || '', enrollmentOpen: course.enrollmentOpen ?? true,
+          imageUrl: course.imageUrl || '', gallery: Array.isArray(course.gallery) ? course.gallery : [],
+          providesCertificate: Boolean(course.providesCertificate),
+          certificateUrl: course.certificateUrl || '',
+          learningOutcomes: Array.isArray(course.learningOutcomes) ? course.learningOutcomes.join('\n') : '',
+          requirements: Array.isArray(course.requirements) ? course.requirements.join('\n') : '',
+          featured: Boolean(course.featured), published: Boolean(course.published),
+        });
+      })
+      .catch((err) => setError(err?.response?.data?.error || err?.message || 'Failed to load training program'))
+      .finally(() => setLoadingCourse(false));
+  }, [editId]);
 
   const uploadFile = async (file: File) => {
     const data = new FormData();
@@ -94,7 +134,7 @@ export default function AdminNewTrainingPage() {
     setSaving(true);
     setError('');
     try {
-      await api.post('/courses', {
+      const payload = {
         ...form,
         cost: Number(form.cost) || 0,
         startDate: form.startDate || null,
@@ -106,19 +146,22 @@ export default function AdminNewTrainingPage() {
         imageUrl: form.imageUrl || null,
         learningOutcomes: form.learningOutcomes.split('\n').map((item) => item.trim()).filter(Boolean),
         requirements: form.requirements.split('\n').map((item) => item.trim()).filter(Boolean),
-      });
+      };
+      if (editId) await api.put(`/courses/admin/${editId}`, payload);
+      else await api.post('/courses', payload);
       router.push('/admin/providers');
       router.refresh();
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to create training program');
+      setError(err?.response?.data?.error || `Failed to ${editId ? 'update' : 'create'} training program`);
       setSaving(false);
     }
   };
 
   return (
-    <AdminDashboardPage title="New training" description="Create the complete training profile shown on the public detail page.">
+    <AdminDashboardPage title={editId ? 'Edit training' : 'New training'} description={editId ? 'Update this training program and its public details.' : 'Create the complete training profile shown on the public detail page.'}>
       <form onSubmit={submit} className="mx-auto max-w-6xl space-y-6 pb-8">
         {error && <div className="rounded-xl bg-rose-50 p-4 text-sm font-bold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">{error}</div>}
+        {loadingCourse && <div className="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm font-bold text-slate-500">Loading training data…</div>}
 
         <section className={panel}>
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Program and provider</h2>
@@ -182,7 +225,7 @@ export default function AdminNewTrainingPage() {
           {form.gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{form.gallery.map((image, index) => <div key={`${image}-${index}`} className="relative h-24 overflow-hidden rounded-xl"><img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => set('gallery', form.gallery.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950/75 text-white" aria-label={`Remove gallery image ${index + 1}`}><X size={13} /></button></div>)}</div>}
         </section>
 
-        <div className="flex justify-end gap-3"><button type="button" onClick={() => router.back()} className="rounded-xl border border-slate-300 px-6 py-3 font-black text-slate-700 dark:border-slate-700 dark:text-slate-200">Cancel</button><button disabled={saving || uploading} className="rounded-xl bg-violet-600 px-7 py-3 font-black text-white hover:bg-violet-700 disabled:opacity-50">{saving ? 'Creating…' : 'Create training'}</button></div>
+        <div className="flex justify-end gap-3"><button type="button" onClick={() => router.back()} className="rounded-xl border border-slate-300 px-6 py-3 font-black text-slate-700 dark:border-slate-700 dark:text-slate-200">Cancel</button><button disabled={saving || uploading || loadingCourse} className="rounded-xl bg-violet-600 px-7 py-3 font-black text-white hover:bg-violet-700 disabled:opacity-50">{saving ? (editId ? 'Saving…' : 'Creating…') : (editId ? 'Save changes' : 'Create training')}</button></div>
       </form>
     </AdminDashboardPage>
   );
