@@ -48,6 +48,19 @@ const courseContentSo: Record<string, string> = {
   'Reliable internet access for online sessions': 'Internet la isku halayn karo ayaa looga baahan yahay casharrada onlaynka ah',
   'Commitment to complete course activities': 'Ballanqaad dhammaystirka hawlaha koorsada',
 };
+const translateDescriptionToSomali = (value: string) => {
+  const translations: Array<[string, string]> = [
+    ['Summit advertises no out-of-pocket cost to students, supported by financial aid and gift funding.', 'Summit waxay sheegaysaa in ardaydu aysan jeebkooda wax lacag ah ka bixin, iyadoo ay taageerayaan kaalmada dhaqaale iyo deeqaha.'],
+    ['Applicants must complete the required admissions and financial-aid process; eligibility is determined by Summit.', 'Codsadayaashu waa inay dhammaystiraan habraaca gelitaanka iyo kaalmada dhaqaale ee loo baahan yahay; u-qalmitaankana Summit ayaa go’aamisa.'],
+    ['Current start dates and available seats are not confirmed.', 'Taariikhaha hadda ee bilowga iyo kuraasta bannaan weli lama xaqiijin.'],
+    ['Check the official program page before applying.', 'Ka hubi bogga rasmiga ah ee barnaamijka ka hor intaadan codsan.'],
+    ['Program information researched', 'Macluumaadka barnaamijka waxaa la baaray'],
+    ['Cover image: AI-generated illustration, not a photograph of Summit’s campus or students.', 'Sawirka daboolka: waa sawir ay samaysay AI, mana aha sawir laga qaaday xarunta Summit ama ardaydeeda.'],
+    ['Develop practical customer service, professional communication, conflict resolution, and workplace service skills.', 'Horumari xirfadaha wax-ku-oolka ah ee adeegga macaamiisha, isgaarsiinta xirfadeed, xalinta khilaafaadka iyo adeegga goobta shaqada.'],
+    ['Learn the foundations of modern web development including HTML, CSS, JavaScript, responsive design, and frontend development.', 'Baro aasaaska horumarinta webka casriga ah oo ay ku jiraan HTML, CSS, JavaScript, naqshadda la qabsanaysa shaashadaha iyo horumarinta frontend-ka.'],
+  ];
+  return translations.reduce((text, [english, somali]) => text.replaceAll(english, somali), value);
+};
 
 export default function TrainingDetailClient({ initialTraining: training, publicPath }: Props) {
   const [activeImage, setActiveImage] = React.useState<number | null>(null);
@@ -58,7 +71,7 @@ export default function TrainingDetailClient({ initialTraining: training, public
   // The course title intentionally remains canonical in both interface languages.
   const name = training.name;
   const description = so
-    ? training.descriptionSo?.trim() || 'Faahfaahinta tababarkan oo Af-Soomaali ah weli lama gelin.'
+    ? training.descriptionSo?.trim() || translateDescriptionToSomali(training.description)
     : training.description;
   const duration = so && training.durationSo?.trim() ? training.durationSo : training.duration;
   const schedule = so && training.scheduleSo?.trim() ? training.scheduleSo : training.schedule;
@@ -91,7 +104,7 @@ export default function TrainingDetailClient({ initialTraining: training, public
     <div className="min-w-0 space-y-4">
       <section className={`${panel} overflow-hidden`}><button type="button" onClick={() => training.imageUrl && setActiveImage(0)} disabled={!training.imageUrl} aria-label={t(`Preview ${name} image`, `Eeg sawirka ${name}`)} className="relative block h-[230px] w-full bg-gradient-to-br from-violet-100 to-slate-200 sm:h-[330px] lg:h-[390px]">{training.imageUrl ? <img src={training.imageUrl} alt={name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-primary"><GraduationCap size={72} /></div>}{training.featured && <span className="absolute left-3 top-3 rounded bg-primary px-2 py-1 text-[9px] font-bold uppercase text-white">{t('Featured', 'La soo bandhigay')}</span>}</button><div className="p-4 sm:p-5"><div className="flex items-start justify-between gap-4"><div><h1 className="text-[23px] font-extrabold leading-tight text-slate-950 dark:text-white sm:text-[28px]">{name}</h1><p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-slate-500">{t('Offered by', 'Waxaa bixiya')} <span>{providerName}</span>{training.provider.verified && <CheckCircle2 size={14} className="fill-emerald-500 text-white" />}</p></div><button aria-label={t('Save course', 'Keydi koorsada')} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200"><Heart size={17} /></button></div><div className="mt-3 flex gap-5 text-[11px] text-slate-600">{training.provider.rating ? <span className="flex items-center gap-1"><Star size={12} />{training.provider.rating.toFixed(1)} {t('rating', 'qiimeyn')}</span> : null}<span className="flex items-center gap-1"><UsersRound size={12} />{t('Open enrollment', 'Isdiiwaangelintu way furan tahay')}</span></div><div className="mt-4 grid gap-2 border-t pt-4 text-[11px] sm:grid-cols-2 xl:grid-cols-4"><span><CalendarDays size={13} className="mr-2 inline text-primary" />{formatDate(training.startDate)} – {formatDate(training.endDate)}</span><span><Clock3 size={13} className="mr-2 inline text-primary" />{schedule || duration}</span><span><MapPin size={13} className="mr-2 inline text-primary" />{location}</span><span><UserRound size={13} className="mr-2 inline text-primary" />{translatedValue(training.level || 'All levels')}</span></div></div></section>
       <section className="rounded-xl border border-primary/20 bg-primary/5 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[12px] font-bold">{t('This training is offered by an external provider.', 'Tababarkan waxaa bixiya bixiye dibadeed.')}</p><p className="mt-1 text-[11px] text-slate-500">{t('Registration and course delivery are managed by the provider.', 'Isdiiwaangelinta iyo bixinta koorsada waxaa maamula bixiyaha.')}</p></div><div className="w-full sm:w-56">{registerButton}</div></div></section>
-      <Panel title={t('About this training', 'Ku saabsan tababarkan')}><p className="whitespace-pre-line text-[12px] leading-6 text-slate-600">{description}</p></Panel>
+      <Panel title={t('About this training', 'Ku saabsan tababarkan')}><p className="whitespace-pre-line text-[14px] leading-7 text-slate-600">{description}</p></Panel>
       {gallery.length > 1 && <Panel title={t('Gallery', 'Sawirrada')} action={`${gallery.length} ${t('photos', 'sawir')}`}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0, 6).map((image, index) => <button key={image} onClick={() => setActiveImage(index)} className="h-24 overflow-hidden rounded-lg sm:h-32"><img src={image} alt="" className="h-full w-full object-cover" /></button>)}</div></Panel>}
       <Panel title={t('What you will learn', 'Waxaad baran doontaa')}><div className="grid gap-2 sm:grid-cols-2">{localizedOutcomes.map(outcome => <p key={outcome} className="flex gap-2 text-[11px] leading-5 text-slate-600"><CheckCircle2 size={13} className="mt-1 shrink-0 text-primary" />{outcome}</p>)}</div></Panel>
       <Panel title={t('Schedule', 'Jadwalka')}><div className="grid gap-4 text-[11px] sm:grid-cols-2 lg:grid-cols-4"><Info label={t('Start date', 'Taariikhda bilowga')} value={formatDate(training.startDate)} /><Info label={t('End date', 'Taariikhda dhammaadka')} value={formatDate(training.endDate)} /><Info label={t('Time', 'Waqtiga')} value={schedule || t('Contact provider', 'La xiriir bixiyaha')} /><Info label={t('Duration', 'Muddada')} value={duration} /></div></Panel>

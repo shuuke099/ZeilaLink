@@ -25,7 +25,7 @@ async function main() {
 
   if (!safariRestaurant || !abdiAutoRepair || !amanTransportation) {
     const [abdiHassan, mohamedAbdi, ibrahimAden, safariBusiness, autoBusiness, transportationBusiness] = await Promise.all([
-      prisma.user.findUnique({ where: { email: "abdi.hassan@example.com" }, select: { id: true } }),
+      prisma.user.findUnique({ where: { email: "abdi.huseen@example.com" }, select: { id: true } }),
       prisma.user.findUnique({ where: { email: "mohamed.abdi@example.com" }, select: { id: true } }),
       prisma.user.findUnique({ where: { email: "ibrahim.aden@example.com" }, select: { id: true } }),
       prisma.business.findUnique({ where: { id: "seed-business-safari-restaurant" }, select: { id: true } }),
