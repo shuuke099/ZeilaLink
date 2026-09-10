@@ -439,10 +439,10 @@ export const getCourseById = async (req: AuthRequest, res: Response) => {
 
     if (!course) return res.status(404).json({ error: "Course not found" });
 
-    const publiclyVisible =
-      course.published &&
-      course.provider.verified &&
-      providerAccountIsEligible(course.provider);
+    // Keep detail visibility consistent with the public catalog and the admin
+    // "Live" status: a published course is publicly viewable. Provider-created
+    // courses still require an approved provider before creation/publishing.
+    const publiclyVisible = course.published;
 
     if (!publiclyVisible) {
       const canViewDraft =
@@ -452,7 +452,7 @@ export const getCourseById = async (req: AuthRequest, res: Response) => {
 
       if (!canViewDraft) {
         recordCourseEvent(req, "course.read", id, "denied", {
-          reason: "published_approved_provider_or_ownership_required",
+          reason: "published_or_ownership_required",
         });
 
         return res.status(404).json({ error: "Course not found" });
