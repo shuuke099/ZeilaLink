@@ -145,7 +145,10 @@ export const AuthProvider: React.FC<{
    * User must verify email first.
    */
   const register = useCallback(async (data: any) => {
-    const response = await api.post("/auth/register", data);
+    // Registration includes password hashing, database writes, and verification
+    // email delivery. Wait for the backend's definitive success/failure response
+    // instead of aborting at the shared 10-second API timeout.
+    const response = await api.post("/auth/register", data, { timeout: 0 });
     return response.data;
   }, []);
 

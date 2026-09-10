@@ -26,7 +26,7 @@ export async function seedUsers(prisma: PrismaClient) {
       id: "seed-user-admin",
       slug: "admin-user",
       name: "Admin User",
-      email: "abduladimabdullahi95@gmail.com",
+      email: "admin@ZeilaLink@gmail.com",
       passwordHash,
       role: UserRole.admin,
       phone: null,

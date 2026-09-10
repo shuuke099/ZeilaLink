@@ -365,7 +365,7 @@ export const register = async (req: Request, res: Response) => {
     }
 
     res.status(202).json({
-      message: 'If this address can be registered, a verification email will arrive shortly.',
+      message: 'Account created. A verification email has been sent.',
     });
   } catch (error: any) {
     const databaseCode = typeof error?.code === 'string' ? error.code : undefined;
