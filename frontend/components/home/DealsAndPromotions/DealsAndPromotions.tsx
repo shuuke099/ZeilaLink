@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type DealBusiness = {
   id: string;
@@ -48,6 +49,7 @@ const formatExpirationDate = (value: string | null) => {
 };
 
 export default function DealsAndPromotions() {
+  const { language } = useLanguage();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -140,7 +142,7 @@ export default function DealsAndPromotions() {
             href="/deals"
             className="flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 transition hover:text-violet-900 sm:text-sm"
           >
-            View all deals
+            {language === "so" ? "Arag dhamaan qiimo-dhimisyada" : "View all deals"}
             <ChevronRight size={15} />
           </Link>
         </div>

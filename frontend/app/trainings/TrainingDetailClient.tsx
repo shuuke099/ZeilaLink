@@ -26,7 +26,7 @@ export interface TrainingDetail {
 
 type Props = { initialTraining: TrainingDetail; publicPath: string };
 const panel = 'rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900';
-const valueMaps: Record<string, string> = { Beginner: 'Bilow', Intermediate: 'Dhexdhexaad', Advanced: 'Sare', Technology: 'Tiknoolajiyad', Business: 'Ganacsi', Health: 'Caafimaad', Trades: 'Farsamooyin', Language: 'Luqado', Languages: 'Luqado', Arts: 'Farshaxan', General: 'Guud', Online: 'Onlayn', 'In Person': 'Goob joog', Hybrid: 'Isku dhafan', 'All levels': 'Dhammaan heerarka' };
+const valueMaps: Record<string, string> = { Beginner: 'Bilow', Intermediate: 'Dhexdhexaad', Advanced: 'Sare', Technology: 'Tiknoolajiyad', Business: 'Ganacsi', Health: 'Caafimaad', Trades: 'Farsamooyin', Language: 'Luqado', Languages: 'Luqado', Arts: 'Farshaxan', General: 'Guud', Online: 'Onlayn', 'In Person': 'Goob joog', Hybrid: 'Isku dhafan', 'All levels': 'Heerkasta' };
 const courseContentSo: Record<string, string> = {
   'Use medical terminology in administrative work': 'U adeegso eray-bixinta caafimaadka shaqada maamulka',
   'Understand patient-information privacy and professional ethics': 'Faham asturnaanta macluumaadka bukaanka iyo anshaxa xirfadeed',
@@ -88,7 +88,7 @@ export default function TrainingDetailClient({ initialTraining: training, public
     ? `https://www.google.com/maps?q=${encodeURIComponent(physicalAddress)}&output=embed`
     : null;
   const price = training.cost === 0 ? t('Free', 'Bilaash') : new Intl.NumberFormat(so ? 'so-SO' : 'en-US', { style: 'currency', currency: training.currency || 'USD', maximumFractionDigits: 0 }).format(training.cost);
-  const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat(so ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : t('Flexible', 'Dabacsan');
+  const formatDate = (value?: string | null) => value ? new Intl.DateTimeFormat(so ? 'so-SO' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value)) : t('Flexible', 'Xilligaa Rabto');
   const enrollUrl = getSafeStoredUrl(training.enrollmentUrl) || getSafeStoredUrl(training.onlineUrl);
   const websiteUrl = getSafeStoredUrl(training.provider.website);
   const emailUrl = getSafeMailtoUrl(training.provider.email || undefined);

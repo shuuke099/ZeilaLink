@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Star } from "lucide-react";
 import api from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* ============================================================
    TYPES
@@ -67,6 +68,10 @@ const FALLBACK_IMAGE = "/images/service-placeholder.jpg";
 ============================================================ */
 
 function ServiceCard({ service }: { service: Service }) {
+  const { language } = useLanguage();
+  const so = language === "so";
+  const title = so ? service.titleSo?.trim() || service.title : service.title;
+  const priceLabel = service.priceLabel?.trim();
   const serviceUrl = `/services/${service.slug || service.id}`;
   const image = service.image || FALLBACK_IMAGE;
 
@@ -77,7 +82,7 @@ function ServiceCard({ service }: { service: Service }) {
         <div className="relative h-[125px] w-full overflow-hidden bg-gray-100 sm:h-[140px] md:h-[145px]">
           <img
             src={image}
-            alt={service.title}
+            alt={title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(event) => {
@@ -89,11 +94,13 @@ function ServiceCard({ service }: { service: Service }) {
         {/* Information */}
         <div className="p-3">
           <h3 className="truncate text-sm font-bold text-slate-950 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
-            {service.title}
+            {title}
           </h3>
 
           <p className="mt-1 truncate text-sm font-bold text-violet-700">
-            {service.priceLabel || "Contact for pricing"}
+            {!priceLabel || priceLabel.toLowerCase() === "contact for pricing"
+              ? so ? "La xiriir si aad qiimaha u ogaato" : "Contact for pricing"
+              : priceLabel}
           </p>
 
           {service.rating > 0 && (
@@ -164,6 +171,8 @@ function LoadingSkeleton() {
 ============================================================ */
 
 export default function PopularServices() {
+  const { language } = useLanguage();
+  const t = (en: string, somali: string) => language === "so" ? somali : en;
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -228,7 +237,7 @@ export default function PopularServices() {
       <section className="w-full bg-white py-8 dark:bg-background md:py-10">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm text-red-600">{t(error, "Lama soo bandhigi karin adeegyada caanka ah.")}</p>
           </div>
         </div>
       </section>
@@ -250,11 +259,11 @@ export default function PopularServices() {
         <div className="mb-5 flex items-end justify-between md:mb-6">
           <div>
             <h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
-              Popular Services
+              {t("Popular Services", "Adeegyada ogu cansan")}
             </h2>
 
             <p className="mt-1 hidden text-[9px] text-slate-500 sm:text-[10px] md:block">
-              Book trusted professionals for your everyday needs.
+              {t("Book trusted professionals for your everyday needs.", "Ballan ka qabso xirfadlayaal lagu kalsoon yahay si ay kaaga caawiyaan baahiyahaaga maalinlaha ah.")}
             </p>
           </div>
 
@@ -262,8 +271,8 @@ export default function PopularServices() {
             href="/services"
             className="flex items-center gap-1 whitespace-nowrap text-sm font-semibold text-violet-700 transition hover:text-violet-900"
           >
-            <span className="md:hidden">View all</span>
-            <span className="hidden md:inline">View all services</span>
+            <span className="md:hidden">{t("View all", "Arag dhamaan adeegyada")}</span>
+            <span className="hidden md:inline">{t("View all services", "Arag dhamaan adeegyada")}</span>
             <ChevronRight size={17} />
           </Link>
         </div>

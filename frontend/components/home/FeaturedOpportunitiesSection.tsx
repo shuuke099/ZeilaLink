@@ -149,7 +149,7 @@ export default function FeaturedOpportunitiesSection({
               href="/jobs"
               className="group relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-400/10 px-5 py-3.5 text-sm font-black text-sky-200 transition-all hover:border-sky-300/40 hover:bg-sky-500 hover:text-white"
             >
-              {isEn ? "Explore all jobs" : "Eeg dhammaan shaqooyinka"}
+              {isEn ? "Explore all jobs" : "Arag dhamaan shaqooyinka"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </article>

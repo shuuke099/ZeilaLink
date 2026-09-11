@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Briefcase, ChevronRight, MapPin } from "lucide-react";
 import api from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Job = {
   id: string;
@@ -25,14 +26,16 @@ type JobsResponse = {
   jobs: Job[];
 };
 
-const formatEmploymentType = (value: string) => {
+const formatEmploymentType = (value: string, so: boolean) => {
+  const labels: Record<string, string> = { FULL_TIME: "Waqti buuxa", PART_TIME: "Waqti dhiman", CONTRACT: "Qandaraas", INTERNSHIP: "Shaqo-barasho", TEMPORARY: "Ku meel gaar", FREELANCE: "Shaqo madaxbannaan", VOLUNTEER: "Tabaruc" };
+  if (so && labels[value.toUpperCase()]) return labels[value.toUpperCase()];
   return value
     .replace(/_/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
-const formatPostedTime = (createdAt: string) => {
+const formatPostedTime = (createdAt: string, so: boolean) => {
   const created = new Date(createdAt);
 
   if (Number.isNaN(created.getTime())) return "";
@@ -40,25 +43,28 @@ const formatPostedTime = (createdAt: string) => {
   const difference = Date.now() - created.getTime();
   const minutes = Math.floor(difference / 60000);
 
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return so ? "Hadda" : "Just now";
+  if (minutes < 60) return so ? `${minutes} daqiiqo ka hor` : `${minutes}m ago`;
 
   const hours = Math.floor(minutes / 60);
 
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return so ? `${hours} saacadood ka hor` : `${hours}h ago`;
 
   const days = Math.floor(hours / 24);
 
-  if (days === 1) return "1d ago";
-  if (days < 7) return `${days}d ago`;
+  if (days === 1) return so ? "1 maalin ka hor" : "1d ago";
+  if (days < 7) return so ? `${days} maalmood ka hor` : `${days}d ago`;
 
-  return created.toLocaleDateString("en-US", {
+  return created.toLocaleDateString(so ? "so-SO" : "en-US", {
     month: "short",
     day: "numeric",
   });
 };
 
 export default function JobsNearYou() {
+  const { language } = useLanguage();
+  const so = language === "so";
+  const t = (en: string, somali: string) => so ? somali : en;
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -92,14 +98,14 @@ export default function JobsNearYou() {
     <section className="w-full bg-white dark:bg-background">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div><h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
-          Jobs Near You
-        </h2><p className="mt-1 text-sm text-slate-500">Discover fresh opportunities from trusted employers.</p></div>
+          {t("Jobs Near You", "Shaqooyinka kuu dhow")}
+        </h2><p className="mt-1 text-sm text-slate-500">{t("Discover fresh opportunities from trusted employers.", "Soo hel fursado cusub oo ka socda shaqo-bixiyeyaal lagu kalsoon yahay.")}</p></div>
 
         <Link
           href="/jobs"
           className="flex items-center gap-1 text-xs font-semibold text-violet-700 transition hover:text-violet-900 sm:text-sm"
         >
-          View all jobs
+          {t("View all jobs", "Arag dhamaan shaqooyinka")}
           <ChevronRight size={16} />
         </Link>
       </div>
@@ -117,7 +123,7 @@ export default function JobsNearYou() {
 
       {!loading && error && (
         <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-center">
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-red-500">{t(error, "Lama soo bandhigi karin shaqooyinka.")}</p>
         </div>
       )}
 
@@ -126,14 +132,14 @@ export default function JobsNearYou() {
           <Briefcase className="mb-3 h-8 w-8 text-violet-500" />
 
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            No jobs available right now.
+            {t("No jobs available right now.", "Hadda ma jiraan shaqooyin la heli karo.")}
           </p>
 
           <Link
             href="/jobs"
             className="mt-2 text-sm font-semibold text-violet-700 hover:text-violet-900"
           >
-            Browse all jobs
+            {t("Browse all jobs", "Arag dhamaan shaqooyinka")}
           </Link>
         </div>
       )}
@@ -142,7 +148,7 @@ export default function JobsNearYou() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
           {jobs.map((job) => {
             const jobUrl = job.slug || job.id;
-            const posted = formatPostedTime(job.createdAt);
+            const posted = formatPostedTime(job.createdAt, so);
 
             return (
               <Link
@@ -175,12 +181,12 @@ export default function JobsNearYou() {
                     <MapPin size={11} className="shrink-0" />
 
                     <span className="truncate">
-                      {job.remote ? `${job.location} · Remote` : job.location}
+                      {job.remote ? `${job.location} · ${t("Remote", "Meel fog")}` : job.location}
                     </span>
                   </div>
 
                   <p className="mt-1 text-[9px] font-semibold text-primary">
-                    {formatEmploymentType(job.employmentType)}
+                    {formatEmploymentType(job.employmentType, so)}
                   </p>
                 </div>
 

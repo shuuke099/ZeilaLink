@@ -80,7 +80,13 @@ export const directUploadResponse = async (req: AuthRequest, res: Response) => {
       mediaType: "image",
     });
     return res.status(201).json({ publicUrl, url: publicUrl });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[Upload] Image finalization failed", {
+      errorType: error?.name || "Error",
+      code: error?.code || "UNKNOWN",
+      storageStatus: error?.$metadata?.httpStatusCode,
+      storageRequestId: error?.$metadata?.requestId,
+    });
     await removeStoredUpload(key).catch(() => undefined);
     throw error;
   }

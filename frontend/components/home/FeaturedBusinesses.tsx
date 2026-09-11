@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MapPin, Navigation, Phone, Star, ChevronRight } from "lucide-react";
 
 import api from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type BusinessStatus = "OPEN" | "CLOSING_SOON" | "CLOSED" | "HOURS_UNAVAILABLE";
 
@@ -88,6 +89,9 @@ const getStatusClasses = (status: BusinessStatus) => {
 };
 
 export default function FeaturedBusinesses() {
+  const { language } = useLanguage();
+  const so = language === "so";
+  const t = (en: string, somali: string) => so ? somali : en;
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -169,7 +173,7 @@ export default function FeaturedBusinesses() {
       <section className="w-full bg-white py-10 dark:bg-background">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-8 xl:px-12">
           <div className="rounded-xl border border-red-100 bg-red-50 p-5">
-            <p className="text-sm font-medium text-red-600">{error}</p>
+            <p className="text-sm font-medium text-red-600">{t(error, "Lama soo bandhigi karin ganacsiyada.")}</p>
           </div>
         </div>
       </section>
@@ -183,11 +187,11 @@ export default function FeaturedBusinesses() {
         <div className="mb-6 flex items-end justify-between gap-4">
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
-              Featured Businesses
+              {t("Featured Businesses", "Ganacsiyo Xul ah")}
             </h2>
 
             <p className="mt-1 text-[9px] text-slate-500 sm:text-[10px]">
-              Discover top-rated businesses in your community.
+              {t("Discover top-rated businesses in your community.", "Soo hel ganacsiyada sida wanaagsan loo qiimeeyay ee bulshadaada.")}
             </p>
           </div>
 
@@ -195,9 +199,9 @@ export default function FeaturedBusinesses() {
             href="/businesses"
             className="flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 transition hover:text-violet-900 sm:gap-2 sm:text-sm"
           >
-            <span className="hidden xs:inline">View all businesses</span>
+            <span className="hidden xs:inline">{t("View all businesses", "Arag dhamaan ganacsiyada")}</span>
 
-            <span className="xs:hidden">View all</span>
+            <span className="xs:hidden">{t("View all", "Arag dhamaan ganacsiyada")}</span>
 
             <ChevronRight size={17} />
           </Link>
@@ -205,8 +209,8 @@ export default function FeaturedBusinesses() {
 
         {businesses.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
-            <p className="text-sm font-semibold text-slate-600">Businesses will appear here as soon as they are published.</p>
-            <Link href="/businesses" className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">Browse the business directory</Link>
+            <p className="text-sm font-semibold text-slate-600">{t("Businesses will appear here as soon as they are published.", "Ganacsiyadu waxay halkan ka muuqan doonaan marka la daabaco.")}</p>
+            <Link href="/businesses" className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">{t("Browse the business directory", "Eeg diiwaanka ganacsiyada")}</Link>
           </div>
         ) : (
         /* Business cards */
@@ -237,11 +241,11 @@ export default function FeaturedBusinesses() {
                   </Link>
                   <Link href={`/businesses/${businessUrl}`} className="block p-2.5 sm:p-3">
                     <h3 className="truncate text-[11px] font-extrabold text-slate-950 transition group-hover:text-primary dark:text-white dark:group-hover:text-violet-300 sm:text-[13px]">{business.name}</h3>
-                    <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2 text-[9px] font-medium text-slate-500 sm:text-[10px]"><p className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || "Online"}</span></p><span className="flex shrink-0 items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{Number(business.rating || 0).toFixed(1)}</span></div>
+                    <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2 text-[9px] font-medium text-slate-500 sm:text-[10px]"><p className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || t("Online", "Onlayn")}</span></p><span className="flex shrink-0 items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{Number(business.rating || 0).toFixed(1)}</span></div>
                   </Link>
                   <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 py-2 text-[8px] font-semibold text-slate-600 dark:divide-slate-800 dark:border-slate-800 sm:text-[9px]">
-                    {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Phone size={11} />Call</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />Call</span>}
-                    {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Navigation size={11} />Directions</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />Directions</span>}
+                    {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Phone size={11} />{t("Call", "Wac")}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />{t("Call", "Wac")}</span>}
+                    {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Navigation size={11} />{t("Directions", "Tilmaamaha jidka")}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />{t("Directions", "Tilmaamaha jidka")}</span>}
                   </div>
                 </article>
               );

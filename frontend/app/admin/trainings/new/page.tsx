@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, X } from 'lucide-react';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
+import { trainingCategories } from '@/lib/training-categories';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ProviderOption = { id: string; name: string; verified?: boolean };
 
@@ -37,6 +39,7 @@ const input = 'mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3
 const label = 'text-sm font-bold text-slate-700 dark:text-slate-200';
 
 export default function AdminNewTrainingPage() {
+  const { language } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
@@ -167,7 +170,7 @@ export default function AdminNewTrainingPage() {
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Program and provider</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <Field label="Training provider *"><select required className={input} value={form.providerId} onChange={(e) => set('providerId', e.target.value)}><option value="">Select provider</option>{providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}{provider.verified ? ' — verified' : ''}</option>)}</select></Field>
-            <Field label="Category"><input className={input} value={form.category} onChange={(e) => set('category', e.target.value)} placeholder="Technology, Business, Health…" /></Field>
+            <Field label={language === 'en' ? 'Category' : 'Qaybta'}><select className={input} value={form.category} onChange={(e) => set('category', e.target.value)}><option value="">{language === 'en' ? 'Select category' : 'Dooro qaybta'}</option>{form.category && !trainingCategories.some((item) => item.value === form.category) && <option value={form.category}>{form.category}</option>}{trainingCategories.map((category) => <option key={category.value} value={category.value}>{language === 'en' ? category.label : category.labelSo}</option>)}</select></Field>
             <Field label="Training title (English) *"><input required className={input} value={form.name} onChange={(e) => set('name', e.target.value)} /></Field>
             <Field label="Training title (Somali)"><input lang="so" className={input} value={form.nameSo} onChange={(e) => set('nameSo', e.target.value)} /></Field>
             <Field label="Description (English) *" wide><textarea required rows={5} className={input} value={form.description} onChange={(e) => set('description', e.target.value)} /></Field>

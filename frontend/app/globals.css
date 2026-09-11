@@ -130,34 +130,34 @@
      intentionally larger for readability on both phone and desktop. */
   a[href^="/training/"] > .flex.flex-1.flex-col > p,
   a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
-    font-size: 10px !important;
-    line-height: 1rem !important;
+    font-size: 12px !important;
+    line-height: 1.25rem !important;
   }
 
   a[href^="/training/"] > .flex.flex-1.flex-col > div span {
-    font-size: 9px !important;
+    font-size: 11px !important;
   }
 
   a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
-    font-size: 13px !important;
+    font-size: 15px !important;
   }
 
   a[href^="/training/"] > .flex.flex-1.flex-col > div:nth-of-type(2) > span {
-    font-size: 9px !important;
+    font-size: 11px !important;
   }
 
   @media (min-width: 640px) {
     a[href^="/training/"] > .flex.flex-1.flex-col > p,
     a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
-      font-size: 11px !important;
+      font-size: 13px !important;
     }
 
     a[href^="/training/"] > .flex.flex-1.flex-col > div span {
-      font-size: 10px !important;
+      font-size: 12px !important;
     }
 
     a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
-      font-size: 14px !important;
+      font-size: 16px !important;
     }
   }
 
@@ -273,30 +273,30 @@
    metadata defaults; the course title keeps its existing responsive scale. */
 @layer components {
   a[href^="/training/"] > .flex.flex-1.flex-col > p {
-    font-size: 10px !important;
+    font-size: 12px !important;
   }
 
   a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
-    font-size: 10px !important;
-    line-height: 1rem !important;
+    font-size: 12px !important;
+    line-height: 1.25rem !important;
   }
 
   a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
-    font-size: 13px !important;
+    font-size: 15px !important;
   }
 
   @media (min-width: 640px) {
     a[href^="/training/"] > .flex.flex-1.flex-col > p,
     a[href^="/training/"] > .flex.flex-1.flex-col > div:not(:last-child) {
-      font-size: 11px !important;
+      font-size: 13px !important;
     }
 
     a[href^="/training/"] > .flex.flex-1.flex-col > div:last-child strong {
-      font-size: 14px !important;
+      font-size: 16px !important;
     }
 
     a[href^="/training/"] > .flex.flex-1.flex-col > div:nth-of-type(2) > span {
-      font-size: 10px !important;
+      font-size: 12px !important;
     }
   }
 }

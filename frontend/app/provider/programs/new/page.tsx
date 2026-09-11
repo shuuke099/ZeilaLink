@@ -1,5 +1,7 @@
 'use client';
 
+import { trainingCategories } from '@/lib/training-categories';
+
 import React from 'react';
 import ProviderDashboardPage from '@/components/provider/ProviderDashboardPage';
 import api from '@/lib/api';
@@ -119,20 +121,20 @@ export default function ProviderNewProgramPage() {
 
   const uploadImage = async (file: File) => {
     try {
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
         setFeedback(language === 'en' 
-          ? 'File size too large. Maximum size is 10MB.' 
-          : 'Cabbirka faylka aad u weyn yahay. Cabbirka ugu badan waa 10MB.');
+          ? 'File size too large. Maximum size is 5MB.' 
+          : 'Cabbirka faylka aad u weyn yahay. Cabbirka ugu badan waa 5MB.');
         return;
       }
 
       // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp'];
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         setFeedback(language === 'en' 
-          ? 'Invalid file type. Please upload an image (JPG, PNG, GIF, WEBP, SVG, or BMP).' 
-          : 'Nooca faylka ma sax ahayn. Fadlan soo geli sawir (JPG, PNG, GIF, WEBP, SVG, ama BMP).');
+          ? 'Invalid file type. Please upload an image (JPG, PNG, or WEBP).' 
+          : 'Nooca faylka ma sax ahayn. Fadlan soo geli sawir (JPG, PNG, ama WEBP).');
         return;
       }
 
@@ -294,11 +296,7 @@ export default function ProviderNewProgramPage() {
                 required
               >
                 <option value="">{language === 'en' ? 'Select category' : 'Dooro qaybta'}</option>
-                <option value="Technology">Technology</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Trades">Trades</option>
-                <option value="Business">Business</option>
-                <option value="Education">Education</option>
+                {trainingCategories.map((category) => <option key={category.value} value={category.value}>{language === 'en' ? category.label : category.labelSo}</option>)}
               </select>
             </div>
             <div>
@@ -509,13 +507,13 @@ export default function ProviderNewProgramPage() {
               />
             ) : (
               <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-primary/30 text-sm text-primary">
-                Click to upload or drag and drop
+                {language === 'en' ? 'Choose a JPEG, PNG, or WEBP image (maximum 5MB).' : 'Dooro sawir JPEG, PNG, ama WEBP ah (ugu badnaan 5MB).'}
               </div>
             )}
             <label className="btn-secondary cursor-pointer inline-flex items-center">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
@@ -523,7 +521,7 @@ export default function ProviderNewProgramPage() {
                 }}
               />
               <Upload className="mr-2 h-4 w-4" />
-              Upload image
+              {language === 'en' ? 'Upload image' : 'Soo geli sawir'}
             </label>
           </div>
         </div>

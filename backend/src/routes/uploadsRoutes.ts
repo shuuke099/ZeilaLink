@@ -31,6 +31,13 @@ const handleUpload = (
     upload(req, res, (error: any) => {
       if (error) {
         const status = error.status || (error instanceof multer.MulterError ? 400 : 500);
+        if (status >= 500) {
+          console.error("[Upload] File storage failed", {
+            errorType: error.name || "Error",
+            code: error.code || "UNKNOWN",
+            syscall: error.syscall,
+          });
+        }
         const message =
           status === 413 && !(error instanceof multer.MulterError)
             ? "Upload storage quota exceeded. Delete unused files before uploading again."
