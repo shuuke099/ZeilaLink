@@ -12,6 +12,8 @@ const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'zeilalink-image-tes
 process.env.NODE_ENV = 'test';
 process.env.STORAGE_PROVIDER = 'local';
 process.env.UPLOADS_ROOT = temporaryRoot;
+process.env.UPLOAD_MAX_PUBLIC_FILES = '40';
+process.env.UPLOAD_MAX_PUBLIC_MB = '250';
 const storage = require('../src/config/aws');
 let server;
 let origin;
@@ -139,8 +141,13 @@ test('normalization does not bypass the per-user public file quota', async () =>
     await fs.promises.writeFile(path.join(directory, `quota-${index}.webp`), sample);
   }
   const original = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#888' } }).png().toBuffer();
+  const overOldLimit = await upload(original);
+  assert.equal(overOldLimit.status, 200, 'The former 25-image limit must no longer block uploads.');
+  for (let index = 26; index < 40; index++) {
+    await fs.promises.writeFile(path.join(directory, `quota-${index}.webp`), sample);
+  }
   const result = await upload(original);
   assert.equal(result.status, 413);
   assert.match(result.body.error, /quota/i);
-  assert.equal((await fs.promises.readdir(directory)).length, 25);
+  assert.equal((await fs.promises.readdir(directory)).length, 40);
 });

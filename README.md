@@ -115,6 +115,9 @@ New public image uploads are normalized on the backend before being published:
 - Output is a static WEBP, at most **500KiB**, with EXIF orientation applied and
   metadata stripped. Proportions are preserved using centered padding (white
   for listings, transparent for square images); small originals are enlarged.
+- Public image storage defaults to 500 files / 250MiB per account, configurable
+  with `UPLOAD_MAX_PUBLIC_FILES` and `UPLOAD_MAX_PUBLIC_MB`. Private document
+  limits remain 50 files / 75MiB. Quotas include pending uploads.
 - Database records store the resulting URL. Existing images are not rewritten.
 - Private PDFs retain their existing 5MiB limit and are never resized.
 

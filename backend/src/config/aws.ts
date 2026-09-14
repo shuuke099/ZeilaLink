@@ -10,12 +10,21 @@ import { normalizeImage, MAX_IMAGE_INPUT_BYTES, MAX_IMAGE_OUTPUT_BYTES, type Ima
 type UploadPurpose = "public-image" | "resume" | "private-document";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const MAX_USER_TOTAL_BYTES = 100 * 1024 * 1024;
-const MAX_USER_PUBLIC_BYTES = 25 * 1024 * 1024;
+const quotaSetting = (name: string, fallback: number, maximum: number): number => {
+  const value = process.env[name]?.trim();
+  if (!value) return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > maximum) {
+    throw new Error(`${name} must be an integer between 1 and ${maximum}`);
+  }
+  return parsed;
+};
+const MAX_USER_PUBLIC_BYTES = quotaSetting("UPLOAD_MAX_PUBLIC_MB", 250, 10240) * 1024 * 1024;
 const MAX_USER_PRIVATE_BYTES = 75 * 1024 * 1024;
-const MAX_USER_PUBLIC_FILES = 25;
+const MAX_USER_TOTAL_BYTES = MAX_USER_PUBLIC_BYTES + MAX_USER_PRIVATE_BYTES;
+const MAX_USER_PUBLIC_FILES = quotaSetting("UPLOAD_MAX_PUBLIC_FILES", 500, 10000);
 const MAX_USER_PRIVATE_FILES = 50;
-const MAX_ACCOUNTED_FILES_PER_BUCKET = 256;
+const MAX_ACCOUNTED_FILES_PER_BUCKET = Math.max(256, MAX_USER_PUBLIC_FILES + 1);
 const QUOTA_RESERVATION_TTL_MS = 15 * 60 * 1000;
 
 const spacesEnabled = process.env.STORAGE_PROVIDER?.trim().toLowerCase() === "spaces";
@@ -68,7 +77,8 @@ const httpError = (message: string, status: number) => {
   return error;
 };
 
-const quotaError = () => httpError("Upload storage quota exceeded", 413);
+const quotaError = (message = "Upload storage quota needs review. Contact your administrator.") =>
+  Object.assign(httpError(message, 413), { code: "UPLOAD_QUOTA_EXCEEDED" });
 
 const assertSafeUserId = (userId: string): string => {
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(userId)) {
@@ -219,14 +229,18 @@ const assertWithinQuota = (
 
   const publicBytes = usage.publicBytes + reservedPublicBytes;
   const privateBytes = usage.privateBytes + reservedPrivateBytes;
+  if (usage.publicFiles + reservedPublicFiles > MAX_USER_PUBLIC_FILES) {
+    throw quotaError(`Public image quota reached (${MAX_USER_PUBLIC_FILES} images). Ask your administrator to increase the upload quota or remove unused images.`);
+  }
+  if (publicBytes > MAX_USER_PUBLIC_BYTES) {
+    throw quotaError(`Public image storage quota reached (${MAX_USER_PUBLIC_BYTES / 1024 / 1024}MB). Ask your administrator to increase the upload quota or remove unused images.`);
+  }
   if (
-    publicBytes > MAX_USER_PUBLIC_BYTES ||
     privateBytes > MAX_USER_PRIVATE_BYTES ||
     publicBytes + privateBytes > MAX_USER_TOTAL_BYTES ||
-    usage.publicFiles + reservedPublicFiles > MAX_USER_PUBLIC_FILES ||
     usage.privateFiles + reservedPrivateFiles > MAX_USER_PRIVATE_FILES
   ) {
-    throw quotaError();
+    throw quotaError("Private document storage quota reached. Remove unused documents or contact your administrator.");
   }
 };
 

@@ -93,6 +93,7 @@ export const directUploadResponse = async (req: AuthRequest, res: Response) => {
       storageRequestId: error?.$metadata?.requestId,
     });
     await removeStoredUpload(key).catch(() => undefined);
+    if (error?.code === "UPLOAD_QUOTA_EXCEEDED") return res.status(413).json({ error: error.message });
     if (error?.status === 400) return res.status(400).json({ error: error.message });
     throw error;
   }
