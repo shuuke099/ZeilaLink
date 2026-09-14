@@ -1416,7 +1416,7 @@ export const uploadAvatar = async (req: AuthRequest, res: Response) => {
     }
 
     key = getUploadKey(req, req.file);
-    if (!(await validateStoredFile(req.file.path, 'public-image', req.file.mimetype))) {
+    if (!(await validateStoredFile(req.file.path, 'public-image', req.file.mimetype, 'square'))) {
       await removeStoredUpload(key);
       return res.status(400).json({ error: 'The image content is invalid' });
     }
@@ -1469,11 +1469,11 @@ export const uploadAvatar = async (req: AuthRequest, res: Response) => {
     if (key) await removeStoredUpload(key).catch(() => undefined);
     console.error('Upload avatar failed', {
       errorType: typeof error?.name === 'string' ? error.name : 'Error',
-      status: error?.status === 413 ? 413 : 500,
+      status: error?.status === 400 ? 400 : error?.status === 413 ? 413 : 500,
     });
-    const status = error?.status === 413 ? 413 : 500;
+    const status = error?.status === 400 ? 400 : error?.status === 413 ? 413 : 500;
     res.status(status).json({
-      error: status === 413 ? 'Upload storage quota exceeded' : 'Failed to upload avatar',
+      error: status === 400 ? error.message : status === 413 ? 'Upload storage quota exceeded' : 'Failed to upload avatar',
     });
   }
 };

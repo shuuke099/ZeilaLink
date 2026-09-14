@@ -18,7 +18,8 @@
     "prisma:seed:jobs": "ts-node prisma/seed-jobs.ts",
     "db:studio": "prisma studio",
     "email:test": "node test-email.js",
-    "security:check-passwords": "node scripts/check-password-security.js"
+    "security:check-passwords": "node scripts/check-password-security.js",
+    "test:images": "node --require ts-node/register --test tests/imageUploads.test.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",
@@ -33,7 +34,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^8.0.4",
-    "twilio": "^4.23.0"
+    "twilio": "^4.23.0",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

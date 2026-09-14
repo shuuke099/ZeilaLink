@@ -207,8 +207,8 @@ export default function EmployerSettingsPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setFeedback("❌ File size must be less than 5MB");
+      if (file.size > 20 * 1024 * 1024) {
+        setFeedback("❌ File size must be less than 20MB");
         return;
       }
       if (!file.type.startsWith("image/")) {
@@ -618,7 +618,7 @@ export default function EmployerSettingsPage() {
               </div>
 
               <p className="text-xs text-gray-500 mt-2">
-                Max size: 5MB • Formats: JPG, PNG, GIF
+                Max size: 20MB • Formats: JPG, PNG, WEBP
               </p>
             </div>
           </form>
@@ -717,7 +717,7 @@ export default function EmployerSettingsPage() {
               )}
 
               <p className="text-xs text-[#8b8b8b]">
-                Max size: 5MB • Formats: JPG, PNG, GIF
+                Max size: 20MB • Formats: JPG, PNG, WEBP
               </p>
             </div>
           </div>

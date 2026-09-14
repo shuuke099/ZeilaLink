@@ -520,7 +520,7 @@ function ProfileImageModal({ onClose }: { onClose: () => void }) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) return setError('Max 5MB allowed');
+      if (file.size > 20 * 1024 * 1024) return setError('Max 20MB allowed');
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result as string);

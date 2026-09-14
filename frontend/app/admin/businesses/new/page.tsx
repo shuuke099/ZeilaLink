@@ -47,8 +47,9 @@ export default function NewBusinessPage() {
   const set = <K extends keyof BusinessForm>(key: K, value: BusinessForm[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, imagePreset: 'listing' | 'square' = 'listing') => {
     const data = new FormData();
+    data.append('imagePreset', imagePreset);
     data.append('file', file);
     const response = await api.post('/uploads', data);
     return response.data.url as string;
@@ -59,7 +60,7 @@ export default function NewBusinessPage() {
     if (!file) return;
     try {
       setUploading(true);
-      set(key, await uploadFile(file));
+      set(key, await uploadFile(file, key === 'logoUrl' ? 'square' : 'listing'));
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Image upload failed');
     } finally {
@@ -73,7 +74,7 @@ export default function NewBusinessPage() {
     if (!files.length) return;
     try {
       setUploading(true);
-      const urls = await Promise.all(files.map(uploadFile));
+      const urls = await Promise.all(files.map((file) => uploadFile(file)));
       set('gallery', [...form.gallery, ...urls]);
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Gallery upload failed');
@@ -143,6 +144,7 @@ export default function NewBusinessPage() {
 
         <section className={panelClass}>
           <h2 className="text-xl font-black dark:text-white">Contact, hours and media</h2>
+          <p className="mt-2 text-sm text-slate-500">Images up to 20MB are resized automatically: covers and gallery 1200 x 800, logos 512 x 512.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label className={labelClass}>Phone<input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={`${inputClass} mt-2`} /></label>
             <label className={labelClass}>Public email<input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={`${inputClass} mt-2`} /></label>

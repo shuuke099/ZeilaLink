@@ -5,6 +5,7 @@ import type { Request } from "express";
 import multer from "multer";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import "./env";
+import { normalizeImage, MAX_IMAGE_INPUT_BYTES, MAX_IMAGE_OUTPUT_BYTES, type ImagePreset } from "../utils/normalizeImage";
 
 type UploadPurpose = "public-image" | "resume" | "private-document";
 
@@ -135,7 +136,7 @@ const withUserQuotaLock = async <T>(
   }
 };
 
-const bucketUsage = async (directory: string): Promise<{ bytes: number; files: number }> => {
+const bucketUsage = async (directory: string, finalizingKey?: string): Promise<{ bytes: number; files: number }> => {
   let entries: fs.Dirent[];
   try {
     entries = await fs.promises.readdir(directory, { withFileTypes: true });
@@ -155,6 +156,11 @@ const bucketUsage = async (directory: string): Promise<{ bytes: number; files: n
     const entryPath = path.join(directory, entry.name);
     const stat = await fs.promises.lstat(entryPath);
     if (!stat.isFile()) throw quotaError();
+    // Pending images are accounted for by their normalized-size reservation,
+    // not by the large original still waiting to be resized.
+    const pendingKey = path.relative(uploadsRoot, entryPath).split(path.sep).join("/");
+    const pending = quotaReservations.get(pendingKey);
+    if (pending?.visibility === "public" && pending.expiresAt > Date.now() && pendingKey !== finalizingKey) continue;
     bytes += stat.size;
     files += 1;
     if (!Number.isSafeInteger(bytes) || bytes > MAX_USER_TOTAL_BYTES) {
@@ -164,10 +170,10 @@ const bucketUsage = async (directory: string): Promise<{ bytes: number; files: n
   return { bytes, files };
 };
 
-const storageUsageForUser = async (userId: string): Promise<StorageUsage> => {
+const storageUsageForUser = async (userId: string, finalizingKey?: string): Promise<StorageUsage> => {
   const safeUserId = assertSafeUserId(userId);
   const [publicUsage, resumeUsage, documentUsage] = await Promise.all([
-    bucketUsage(safeStoredPath(`public/users/${safeUserId}`)),
+    bucketUsage(safeStoredPath(`public/users/${safeUserId}`), finalizingKey),
     bucketUsage(safeStoredPath(`private/resumes/${safeUserId}`)),
     bucketUsage(safeStoredPath(`private/documents/${safeUserId}`)),
   ]);
@@ -231,7 +237,7 @@ const reserveUploadQuota = async (
 ): Promise<void> => {
   const userId = userIdForUpload(req);
   const declaredRequestBytes = Number(req.get("content-length"));
-  const reservedBytes =
+  const reservedBytes = purpose === "public-image" ? MAX_IMAGE_OUTPUT_BYTES :
     Number.isSafeInteger(declaredRequestBytes) && declaredRequestBytes > 0
       ? Math.min(declaredRequestBytes, MAX_UPLOAD_BYTES)
       : MAX_UPLOAD_BYTES;
@@ -241,8 +247,8 @@ const reserveUploadQuota = async (
       key,
       userId,
       visibility: purpose === "public-image" ? "public" : "private",
-      // Multipart Content-Length is an upper bound for its single file. If it
-      // is unavailable, reserve the entire per-file limit and fail closed.
+      // Images reserve their enforced output cap. Documents reserve their
+      // input size, or the full limit when Content-Length is unavailable.
       bytes: reservedBytes,
       expiresAt: Date.now() + QUOTA_RESERVATION_TTL_MS,
     };
@@ -303,7 +309,7 @@ const assertStoredFileWithinQuota = async (
   const { userId } = ownerForStoredKey(key, purpose);
   await withUserQuotaLock(userId, async () => {
     try {
-      const usage = await storageUsageForUser(userId);
+      const usage = await storageUsageForUser(userId, key);
       assertWithinQuota(usage, activeReservationsForUser(userId, key));
     } finally {
       releaseQuotaReservation(key);
@@ -322,7 +328,7 @@ const keyForUpload = (
   if (purpose === "public-image") {
     const extension = publicImageTypes[file.mimetype];
     if (!extension) throw httpError("Unsupported image type", 400);
-    return `public/users/${userId}/${id}${extension}`;
+    return `public/users/${userId}/${id}.webp`;
   }
 
   const folder = purpose === "resume" ? "resumes" : "documents";
@@ -399,7 +405,7 @@ const pdfFilter: multer.Options["fileFilter"] = (_req, file, callback) => {
 
 export const publicImageUpload = multer({
   storage: makeStorage("public-image"),
-  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
+  limits: { fileSize: MAX_IMAGE_INPUT_BYTES, files: 1 },
   fileFilter: publicImageFilter,
 });
 
@@ -429,6 +435,7 @@ export const validateStoredFile = async (
   filePath: string,
   purpose: UploadPurpose,
   declaredMimeType?: string,
+  imagePreset: ImagePreset = "listing",
 ): Promise<boolean> => {
   const storedKey = storedKeyForPath(filePath);
   const handle = await fs.promises.open(filePath, "r");
@@ -459,6 +466,10 @@ export const validateStoredFile = async (
 
   try {
     if (isValid) {
+      if (purpose === "public-image") {
+        const normalized = await normalizeImage(await fs.promises.readFile(filePath), imagePreset);
+        await fs.promises.writeFile(filePath, normalized);
+      }
       await assertStoredFileWithinQuota(filePath, purpose);
       if (purpose === "public-image" && spacesClient) {
         const body = await fs.promises.readFile(filePath);
@@ -466,7 +477,7 @@ export const validateStoredFile = async (
           Bucket: spacesBucket,
           Key: storedKey,
           Body: body,
-          ContentType: declaredMimeType,
+          ContentType: "image/webp",
           CacheControl: "public, max-age=31536000, immutable",
           ACL: "public-read",
         }));

@@ -137,6 +137,7 @@ export default function EmployerCompanyPage() {
   const uploadAsset = async (file: File, key: 'logoUrl' | 'bannerUrl') => {
     try {
       const data = new FormData();
+      data.append('imagePreset', key === 'logoUrl' ? 'square' : 'listing');
       data.append('file', file);
       const response = await api.post('/uploads', data);
       const uploadedUrl = response.data.url ?? response.data.publicUrl;

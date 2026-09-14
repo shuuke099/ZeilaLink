@@ -61,6 +61,9 @@ if (process.env.NODE_ENV !== "production" && debugApi) {
 // automatically by the server-owned HttpOnly session cookie.
 api.interceptors.request.use((config) => {
   if (config.data instanceof FormData) {
+    if (/^\/(?:uploads(?:\/direct)?|auth\/upload-avatar)$/.test(config.url || '')) {
+      config.timeout = Math.max(config.timeout || 0, 60000);
+    }
     // Let the browser set proper multipart boundaries
     if (config.headers?.set) {
       config.headers.set("Content-Type", undefined as any);

@@ -101,7 +101,7 @@ export default function AdminNewTrainingPage() {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       throw new Error('Choose a JPEG, PNG, or WEBP image.');
     }
-    if (file.size > 5 * 1024 * 1024) throw new Error('Maximum image size is 5MB.');
+    if (file.size > 20 * 1024 * 1024) throw new Error('Maximum image size is 20MB.');
     const data = new FormData();
     data.append('file', file);
     const response = await api.post('/uploads', data, { timeout: 30000 });
@@ -231,6 +231,7 @@ export default function AdminNewTrainingPage() {
 
         <section className={panel}>
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Images</h2>
+          <p className="mt-2 text-sm text-slate-500">JPEG, PNG or WEBP up to 20MB. Images are automatically resized to 1200 ? 800 and compressed.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <ImageUploadButton onChange={uploadHero} disabled={uploading} previewUrl={form.imageUrl} text={uploading ? 'Uploading...' : form.imageUrl ? 'Replace cover image' : 'Upload cover image'} />
             <ImageUploadButton multiple onChange={uploadGallery} disabled={uploading || form.gallery.length >= 6} text={uploading ? 'Uploading...' : `Upload gallery (${form.gallery.length}/6)`} />

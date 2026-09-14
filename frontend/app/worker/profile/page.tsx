@@ -316,7 +316,8 @@ export default function WorkerProfilePage() {
     try {
       if (key === 'profilePhoto') {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('imagePreset', 'square');
+      formData.append('file', file);
         const response = await api.post('/uploads', formData);
         const uploadedUrl = response.data.url ?? response.data.publicUrl;
         if (!uploadedUrl) throw new Error('Upload response missing URL');

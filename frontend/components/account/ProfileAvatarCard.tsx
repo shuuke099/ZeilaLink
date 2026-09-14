@@ -24,7 +24,8 @@ async function uploadToStorage(file: File) {
   if (data.directUpload) {
     const formData = new FormData();
     if (data.key) formData.append('key', data.key);
-    formData.append('file', file);
+    formData.append('imagePreset', 'square');
+      formData.append('file', file);
     const uploadResponse = await fetch(data.uploadUrl, {
       method: 'POST',
       body: formData,

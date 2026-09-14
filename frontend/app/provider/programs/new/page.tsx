@@ -121,11 +121,11 @@ export default function ProviderNewProgramPage() {
 
   const uploadImage = async (file: File) => {
     try {
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
+      // Validate file size (20MB max)
+      if (file.size > 20 * 1024 * 1024) {
         setFeedback(language === 'en' 
-          ? 'File size too large. Maximum size is 5MB.' 
-          : 'Cabbirka faylka aad u weyn yahay. Cabbirka ugu badan waa 5MB.');
+          ? 'File size too large. Maximum size is 20MB.' 
+          : 'Cabbirka faylka aad u weyn yahay. Cabbirka ugu badan waa 20MB.');
         return;
       }
 
@@ -507,7 +507,7 @@ export default function ProviderNewProgramPage() {
               />
             ) : (
               <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-primary/30 text-sm text-primary">
-                {language === 'en' ? 'Choose a JPEG, PNG, or WEBP image (maximum 5MB).' : 'Dooro sawir JPEG, PNG, ama WEBP ah (ugu badnaan 5MB).'}
+                {language === 'en' ? 'Choose a JPEG, PNG, or WEBP image (maximum 20MB).' : 'Dooro sawir JPEG, PNG, ama WEBP ah (ugu badnaan 20MB).'}
               </div>
             )}
             <label className="btn-secondary cursor-pointer inline-flex items-center">

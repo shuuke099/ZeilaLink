@@ -42,7 +42,7 @@ const handleUpload = (
           status === 413 && !(error instanceof multer.MulterError)
             ? "Upload storage quota exceeded. Delete unused files before uploading again."
             : error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE"
-            ? "File is too large. Maximum size is 5MB."
+            ? req.path === "/private" ? "File is too large. Maximum size is 5MB." : "Image is too large. Maximum size is 20MB."
             : status >= 500
               ? "Upload failed"
               : "Only approved image or PDF files are allowed";

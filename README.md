@@ -108,6 +108,21 @@ See `.env.example` for all keys. Important groups:
 
 ## Upload/storage behavior
 
+New public image uploads are normalized on the backend before being published:
+- Covers and galleries: **1200 ? 800 pixels** (default `imagePreset=listing`).
+- Logos and avatars: **512 ? 512 pixels** (`imagePreset=square`).
+- JPEG, PNG and WEBP originals up to **20MiB / 40 megapixels** are accepted.
+- Output is a static WEBP, at most **500KiB**, with EXIF orientation applied and
+  metadata stripped. Proportions are preserved using centered padding (white
+  for listings, transparent for square images); small originals are enlarged.
+- Database records store the resulting URL. Existing images are not rewritten.
+- Private PDFs retain their existing 5MiB limit and are never resized.
+
+Deployment: install backend dependencies (including `sharp`) and rebuild/restart
+backend and frontend. The reverse proxy must allow at least 21MiB request bodies
+for `/api/uploads` and `/api/auth/upload-avatar` (e.g. nginx `client_max_body_size 21m;`).
+
+
 Public account images use `backend/uploads/public`; resumes and documents use
 private storage and are returned only through authenticated, ownership-checked
 download routes. Production `UPLOADS_ROOT` must be an absolute path on encrypted,
@@ -130,6 +145,7 @@ persistent storage. Add malware scanning/CDR before accepting production documen
 - `npm run prisma:migrate`
 - `npm run prisma:seed`
 - `npm run db:studio`
+- `npm run test:images` - image normalization and upload-storage regression tests
 - `npm run security:check-passwords` - read-only hash-format and legacy-password audit
 
 ### Frontend (`frontend/package.json`)

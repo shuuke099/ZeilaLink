@@ -63,11 +63,16 @@ export const directUploadResponse = async (req: AuthRequest, res: Response) => {
 
   const key = getUploadKey(req, req.file);
   try {
+    const preset = req.body?.imagePreset || "listing";
+    if (preset !== "listing" && preset !== "square") {
+      throw Object.assign(new Error("Invalid image preset"), { status: 400 });
+    }
     if (
       !(await validateStoredFile(
         req.file.path,
         "public-image",
         req.file.mimetype,
+        preset,
       ))
     ) {
       await removeStoredUpload(key);
@@ -88,6 +93,7 @@ export const directUploadResponse = async (req: AuthRequest, res: Response) => {
       storageRequestId: error?.$metadata?.requestId,
     });
     await removeStoredUpload(key).catch(() => undefined);
+    if (error?.status === 400) return res.status(400).json({ error: error.message });
     throw error;
   }
 };

@@ -115,7 +115,9 @@ const uploadAvatar = (req: Request, res: Response, next: NextFunction) => {
     const status = error.status || 400;
     return res.status(status).json({
       error:
-        status === 413
+        error?.code === 'LIMIT_FILE_SIZE'
+          ? 'Image is too large. Maximum size is 20MB.'
+          : status === 413
           ? 'Upload storage quota exceeded. Delete unused files before uploading again.'
           : status >= 500
             ? 'Avatar upload failed'

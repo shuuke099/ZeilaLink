@@ -366,9 +366,10 @@ export default function AdminServiceNewPage() {
                 </div>
 
                 <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                  <input ref={heroInputRef} type="file" accept="image/*" className="hidden" onChange={onHeroFileSelected} />
+                  <input ref={heroInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onHeroFileSelected} />
                   <ImagePlus className="mx-auto h-12 w-12 text-slate-400" />
                   <p className="mt-4 text-base text-slate-500">Drag image(s) here or</p>
+                  <p className="mt-2 text-xs text-slate-500">JPEG, PNG or WEBP up to 20MB. Automatically resized to 1200 x 800 and compressed.</p>
                   <button
                     type="button"
                     onClick={() => heroInputRef.current?.click()}
@@ -454,7 +455,7 @@ export default function AdminServiceNewPage() {
             <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
               <h2 className="mb-5 text-2xl font-black text-slate-900 dark:text-white">Gallery and attachments</h2>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-5 text-center text-sm font-semibold dark:border-slate-700">{galleryUploading ? 'Uploading gallery…' : `Upload gallery images (${form.gallery.length}/5)`}<input type="file" multiple accept="image/*" className="sr-only" onChange={onGalleryFilesSelected} disabled={galleryUploading || form.gallery.length >= 5} /></label>
+                <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-5 text-center text-sm font-semibold dark:border-slate-700">{galleryUploading ? 'Uploading gallery…' : `Upload gallery images (${form.gallery.length}/5)`}<input type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={onGalleryFilesSelected} disabled={galleryUploading || form.gallery.length >= 5} /></label>
                 <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-5 text-center text-sm font-semibold dark:border-slate-700">{attachmentsUploading ? 'Uploading attachments…' : `Upload attachments (${form.attachments.length})`}<input type="file" multiple className="sr-only" onChange={onAttachmentFilesSelected} disabled={attachmentsUploading} /></label>
               </div>
               {form.gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">{form.gallery.map((image, index) => <div key={`${image}-${index}`} className="relative h-24 overflow-hidden rounded-lg"><img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => setForm((prev) => ({ ...prev, gallery: prev.gallery.filter((_, itemIndex) => itemIndex !== index) }))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950/70 text-white" aria-label={`Remove gallery image ${index + 1}`}><X size={13} /></button></div>)}</div>}
