@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, X } from 'lucide-react';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
@@ -47,6 +47,7 @@ export default function AdminNewTrainingPage() {
   const [providers, setProviders] = useState<ProviderOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [error, setError] = useState('');
   const [loadingCourse, setLoadingCourse] = useState(Boolean(editId));
 
@@ -97,20 +98,27 @@ export default function AdminNewTrainingPage() {
   }, [editId]);
 
   const uploadFile = async (file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      throw new Error('Choose a JPEG, PNG, or WEBP image.');
+    }
+    if (file.size > 5 * 1024 * 1024) throw new Error('Maximum image size is 5MB.');
     const data = new FormData();
     data.append('file', file);
-    const response = await api.post('/uploads', data);
-    return (response.data?.url || response.data?.publicUrl) as string;
+    const response = await api.post('/uploads', data, { timeout: 30000 });
+    const url = response.data?.url || response.data?.publicUrl;
+    if (typeof url !== 'string' || !url) throw new Error('Upload response is missing the image URL.');
+    return url;
   };
 
   const uploadHero = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
+      setUploadError('');
       setUploading(true);
       set('imageUrl', await uploadFile(file));
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Image upload failed');
+      setUploadError(err?.response?.data?.error || err?.message || 'Image upload failed');
     } finally {
       setUploading(false);
       event.target.value = '';
@@ -121,11 +129,12 @@ export default function AdminNewTrainingPage() {
     const files = Array.from(event.target.files || []).slice(0, Math.max(0, 6 - form.gallery.length));
     if (!files.length) return;
     try {
+      setUploadError('');
       setUploading(true);
       const urls = await Promise.all(files.map(uploadFile));
       set('gallery', [...form.gallery, ...urls]);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Gallery upload failed');
+      setUploadError(err?.response?.data?.error || err?.message || 'Gallery upload failed');
     } finally {
       setUploading(false);
       event.target.value = '';
@@ -134,6 +143,7 @@ export default function AdminNewTrainingPage() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (uploading || saving || loadingCourse) return;
     setSaving(true);
     setError('');
     try {
@@ -222,13 +232,14 @@ export default function AdminNewTrainingPage() {
         <section className={panel}>
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Images</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-6 text-center font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200"><ImagePlus className="mx-auto mb-2 text-violet-500" />{uploading ? 'Uploading…' : form.imageUrl ? 'Replace cover image' : 'Upload cover image'}<input type="file" accept="image/*" className="sr-only" onChange={uploadHero} disabled={uploading} /></label>
-            <label className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 p-6 text-center font-bold text-slate-700 dark:border-slate-700 dark:text-slate-200"><ImagePlus className="mx-auto mb-2 text-violet-500" />{uploading ? 'Uploading…' : `Upload gallery (${form.gallery.length}/6)`}<input type="file" multiple accept="image/*" className="sr-only" onChange={uploadGallery} disabled={uploading || form.gallery.length >= 6} /></label>
+            <ImageUploadButton onChange={uploadHero} disabled={uploading} previewUrl={form.imageUrl} text={uploading ? 'Uploading...' : form.imageUrl ? 'Replace cover image' : 'Upload cover image'} />
+            <ImageUploadButton multiple onChange={uploadGallery} disabled={uploading || form.gallery.length >= 6} text={uploading ? 'Uploading...' : `Upload gallery (${form.gallery.length}/6)`} />
           </div>
+          {uploadError && <p role="alert" className="mt-4 text-sm font-semibold text-rose-600 dark:text-rose-300">{uploadError}</p>}
           {form.gallery.length > 0 && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{form.gallery.map((image, index) => <div key={`${image}-${index}`} className="relative h-24 overflow-hidden rounded-xl"><img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => set('gallery', form.gallery.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950/75 text-white" aria-label={`Remove gallery image ${index + 1}`}><X size={13} /></button></div>)}</div>}
         </section>
 
-        <div className="flex justify-end gap-3"><button type="button" onClick={() => router.back()} className="rounded-xl border border-slate-300 px-6 py-3 font-black text-slate-700 dark:border-slate-700 dark:text-slate-200">Cancel</button><button disabled={saving || uploading || loadingCourse} className="rounded-xl bg-violet-600 px-7 py-3 font-black text-white hover:bg-violet-700 disabled:opacity-50">{saving ? (editId ? 'Saving…' : 'Creating…') : (editId ? 'Save changes' : 'Create training')}</button></div>
+        <div className="flex justify-end gap-3"><button type="button" onClick={() => router.back()} className="rounded-xl border border-slate-300 px-6 py-3 font-black text-slate-700 dark:border-slate-700 dark:text-slate-200">Cancel</button><button type="submit" disabled={saving || uploading || loadingCourse} className="rounded-xl bg-violet-600 px-7 py-3 font-black text-white hover:bg-violet-700 disabled:opacity-50">{saving ? (editId ? 'Saving…' : 'Creating…') : (editId ? 'Save changes' : 'Create training')}</button></div>
       </form>
     </AdminDashboardPage>
   );
@@ -240,4 +251,41 @@ function Field({ label: text, wide = false, children }: { label: string; wide?: 
 
 function Check({ label: text, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
   return <label className={`${label} flex items-center gap-2`}><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />{text}</label>;
+}
+
+// A display:none input avoids offscreen focus scrolling on mobile browsers.
+function ImageUploadButton({ text, disabled, multiple = false, onChange, previewUrl }: {
+  text: string; disabled: boolean; multiple?: boolean; previewUrl?: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+}) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const position = useRef<{ panel: HTMLElement | null; top: number; left: number; x: number; y: number } | null>(null);
+  const restorePosition = useCallback(() => {
+    const saved = position.current;
+    position.current = null;
+    button.current?.focus({ preventScroll: true });
+    if (!saved) return;
+    if (saved.panel?.isConnected) saved.panel.scrollTo({ top: saved.top, left: saved.left, behavior: 'instant' });
+    window.scrollTo({ top: saved.y, left: saved.x, behavior: 'instant' });
+  }, []);
+  useEffect(() => {
+    const element = fileInput.current;
+    element?.addEventListener('cancel', restorePosition);
+    return () => element?.removeEventListener('cancel', restorePosition);
+  }, [restorePosition]);
+  return <div>
+    <button ref={button} type="button" disabled={disabled} onClick={() => {
+      const panel = button.current?.closest('main') || null;
+      position.current = { panel, top: panel?.scrollTop || 0, left: panel?.scrollLeft || 0, x: window.scrollX, y: window.scrollY };
+      fileInput.current?.click();
+    }} className="h-full w-full rounded-xl border-2 border-dashed border-slate-300 p-6 text-center font-bold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:text-slate-200">
+      {previewUrl
+        ? <img src={previewUrl} alt="Training cover image" className="mb-3 h-40 w-full rounded-lg bg-slate-50 object-contain dark:bg-slate-950 sm:h-48" />
+        : <ImagePlus className="mx-auto mb-2 text-violet-500" />}
+      {text}
+    </button>
+    <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp" multiple={multiple} disabled={disabled}
+      onChange={(event) => { restorePosition(); void onChange(event); }} />
+  </div>;
 }

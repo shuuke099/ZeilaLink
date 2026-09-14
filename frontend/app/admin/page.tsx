@@ -161,7 +161,7 @@ export default function AdminOverviewPage() {
           api.get('/admin/jobs', { params: { page: 1, limit: 30 } }),
           api.get('/admin/users', { params: { role: 'worker', page: 1, limit: 20 } }),
           api.get('/admin/services'),
-          api.get('/trainings', { params: { all: true, page: 1, limit: 12 } }),
+          api.get('/courses', { params: { all: true, page: 1, limit: 12 } }),
           api.get('/admin/users', {
             params: { status: 'pending_approval', page: 1, limit: 5 },
           }),
@@ -172,7 +172,7 @@ export default function AdminOverviewPage() {
         setJobs(jobsRes.data?.jobs || []);
         setWorkers(workersRes.data?.users || []);
         setServices(servicesRes.data?.services || []);
-        setTrainings(trainingsRes.data?.trainings || []);
+        setTrainings(trainingsRes.data?.courses || []);
         setPendingApprovals(approvalsRes.data?.users || []);
         setPendingApprovalTotal(
           approvalsRes.data?.pagination?.total || approvalsRes.data?.users?.length || 0,

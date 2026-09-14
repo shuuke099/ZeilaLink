@@ -186,7 +186,7 @@ export default function DashboardShell({
   return (
     <div
       data-dashboard-shell
-      className={`fixed inset-0 flex h-dvh overflow-hidden text-[#1f2a2e] dark:text-slate-100 ${isSimpleLayout ? 'bg-[#f8fafc] dark:bg-slate-950' : 'bg-[#f3f6f4] dark:bg-slate-950'}`}
+      className={`relative flex h-dvh overflow-hidden text-[#1f2a2e] dark:text-slate-100 ${isSimpleLayout ? 'bg-[#f8fafc] dark:bg-slate-950' : 'bg-[#f3f6f4] dark:bg-slate-950'}`}
     >
       <aside
         className={`relative hidden h-full min-h-0 shrink-0 overflow-hidden lg:flex ${isSimpleLayout
