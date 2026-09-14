@@ -440,6 +440,13 @@
   }
 }
 
+/* Dashboard panels own scrolling; the document stays fixed while mounted. */
+html:has([data-dashboard-shell]),
+body:has([data-dashboard-shell]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* Keep static homepage content in Safari's immediate paint path. */
 
 @media (max-width: 767px) {

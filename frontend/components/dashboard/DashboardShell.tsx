@@ -185,10 +185,11 @@ export default function DashboardShell({
 
   return (
     <div
-      className={`flex h-screen overflow-hidden text-[#1f2a2e] dark:text-slate-100 ${isSimpleLayout ? 'bg-[#f8fafc] dark:bg-slate-950' : 'bg-[#f3f6f4] dark:bg-slate-950'}`}
+      data-dashboard-shell
+      className={`fixed inset-0 flex h-dvh overflow-hidden text-[#1f2a2e] dark:text-slate-100 ${isSimpleLayout ? 'bg-[#f8fafc] dark:bg-slate-950' : 'bg-[#f3f6f4] dark:bg-slate-950'}`}
     >
       <aside
-        className={`relative hidden shrink-0 lg:flex h-screen sticky top-0 overflow-hidden ${isSimpleLayout
+        className={`relative hidden h-full min-h-0 shrink-0 overflow-hidden lg:flex ${isSimpleLayout
           ? 'w-72 border-r border-[#275ad1] bg-[#2f67ea] dark:border-slate-800 dark:bg-[#090d1d]'
           : 'w-80 rounded-r-[48px] bg-[#1f3b2d] shadow-[40px_0_90px_rgba(15,36,28,0.35)]'
           } z-50 transition-all duration-300`}
@@ -240,7 +241,7 @@ export default function DashboardShell({
             </Link>
           )}
 
-          <div className="flex-1 overflow-y-auto no-scrollbar py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar py-4">
             <div className="space-y-1">
               {navItems.map(item => renderNavLink(item, false))}
             </div>
@@ -262,7 +263,7 @@ export default function DashboardShell({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* Mobile Header */}
         <header className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 transition-colors dark:border-slate-800 dark:bg-slate-950 lg:hidden shrink-0 z-40">
           <div className="flex items-center gap-3">
@@ -381,7 +382,7 @@ export default function DashboardShell({
           </div>
         </header>
 
-        <main className={`flex-1 bg-[#f8fafc]/50 no-scrollbar transition-colors dark:bg-slate-950 ${isAdminWideTablePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main className={`min-h-0 min-w-0 flex-1 overscroll-contain bg-[#f8fafc]/50 no-scrollbar transition-colors dark:bg-slate-950 ${isAdminWideTablePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           <div className={`${isAdminWideTablePage ? 'h-full w-full px-4 py-6 lg:px-6 lg:py-6' : 'max-w-[1600px] mx-auto px-10 py-12'}`}>
             {children}
           </div>
