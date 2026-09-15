@@ -83,7 +83,9 @@ jobs:
               service_url="$2"
 
               for attempt in $(seq 1 12); do
-                if curl -fsS "$service_url" > /dev/null; then
+                # Match HTTPS forwarding from the trusted local reverse proxy.
+                # curl -f alone also accepts redirects, which are not health.
+                if service_status=$(curl -sS --max-time 10 -H 'X-Forwarded-Proto: https' -o /dev/null -w '%{http_code}' "$service_url") && [ "$service_status" = "200" ]; then
                   echo "$service_name is healthy."
                   return 0
                 fi
@@ -105,8 +107,13 @@ jobs:
             # This read-only request must reach the updated upload router.
             echo "Verify deployed upload handler and ZeilaMart page..."
             for origin in "http://127.0.0.1:7000" "http://127.0.0.1:3000" "${NEXT_PUBLIC_SITE_URL}"; do
-              if ! curl -sS --max-time 15 -D - -o /dev/null "$origin/api/uploads" | grep -qi '^X-ZeilaLink-Upload-Policy: normalized-images-v2'; then
+              if ! upload_headers=$(curl -sS --max-time 15 -H 'X-Forwarded-Proto: https' -D - -o /dev/null "$origin/api/uploads"); then
+                echo "Could not reach upload handler at $origin."
+                exit 1
+              fi
+              if ! printf '%s\n' "$upload_headers" | grep -qi '^X-ZeilaLink-Upload-Policy: normalized-images-v2'; then
                 echo "Upload handler verification failed at $origin. Check the deployed build and proxy target."
+                printf '%s\n' "$upload_headers" | grep -iE '^(HTTP/|Location:)' || true
                 exit 1
               fi
             done
