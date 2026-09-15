@@ -41,13 +41,15 @@ jobs:
             export NEXT_PUBLIC_BING_SITE_VERIFICATION="${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}"
             export NEXT_PUBLIC_GA_MEASUREMENT_ID="${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}"
 
-            # Server-side installs may have changed the tracked lockfile.
-            # Preserve only that file in Git's stash before updating. Do not
-            # reapply it: production must install the committed dependencies.
-            if ! git diff --quiet -- pnpm-lock.yaml || ! git diff --cached --quiet -- pnpm-lock.yaml; then
-              echo "Backing up the server's pnpm-lock.yaml changes..."
-              git stash push -m "deployment-lockfile-backup-$(date -u +%Y%m%dT%H%M%SZ)" -- pnpm-lock.yaml
-              echo "Lockfile backup saved in git stash. Other server files were left unchanged."
+            # Back up manifests and lockfiles together: server-side installs
+            # can modify both. Restoring only the lockfile leaves a mismatched
+            # dependency set. Do not reapply the backup during deployment.
+            # Explicit paths leave .env, uploads, and other server edits alone.
+            set -- package.json frontend/package.json backend/package.json pnpm-lock.yaml package-lock.json pnpm-workspace.yaml
+            if ! git diff --quiet -- "$@" || ! git diff --cached --quiet -- "$@"; then
+              echo "Backing up server dependency edits..."
+              git stash push -m "deployment-dependencies-backup-$(date -u +%Y%m%dT%H%M%SZ)" -- "$@"
+              echo "Dependency backup saved in git stash. Other server files were left unchanged."
             fi
 
             echo "Pull latest code..."
