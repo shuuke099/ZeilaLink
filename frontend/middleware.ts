@@ -45,11 +45,10 @@ export function middleware(request: NextRequest) {
     "https://images.unsplash.com",
     "https://zeilalink-uploads.sfo2.cdn.digitaloceanspaces.com",
     "https://zeilalink-uploads.sfo2.digitaloceanspaces.com",
+    "https://zeilalink-prod-uploads.nyc3.cdn.digitaloceanspaces.com",
+    "https://zeilalink-prod-uploads.nyc3.digitaloceanspaces.com",
     ...(analyticsEnabled
-      ? [
-          "https://www.google-analytics.com",
-          "https://*.google-analytics.com",
-        ]
+      ? ["https://www.google-analytics.com", "https://*.google-analytics.com"]
       : []),
   ];
   const policy = [

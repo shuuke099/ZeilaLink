@@ -20,7 +20,9 @@ const parseHttpOrigin = (value, variableName) => {
     parsed.search ||
     parsed.hash
   ) {
-    throw new Error(`${variableName} must be a plain http(s) origin without credentials or a path.`);
+    throw new Error(
+      `${variableName} must be a plain http(s) origin without credentials or a path.`,
+    );
   }
 
   return parsed.origin;
@@ -67,7 +69,7 @@ const remotePatterns = [
     hostname: "images.unsplash.com",
   },
 
-  // DigitalOcean Spaces CDN and origin
+  // DigitalOcean development Spaces CDN and origin
   {
     protocol: "https",
     hostname: "zeilalink-uploads.sfo2.cdn.digitaloceanspaces.com",
@@ -76,6 +78,18 @@ const remotePatterns = [
   {
     protocol: "https",
     hostname: "zeilalink-uploads.sfo2.digitaloceanspaces.com",
+    pathname: "/**",
+  },
+
+  // DigitalOcean production Spaces CDN and origin
+  {
+    protocol: "https",
+    hostname: "zeilalink-prod-uploads.nyc3.cdn.digitaloceanspaces.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "zeilalink-prod-uploads.nyc3.digitaloceanspaces.com",
     pathname: "/**",
   },
 ];
@@ -106,8 +120,7 @@ module.exports = (phase) => {
     },
     {
       key: "Permissions-Policy",
-      value:
-        "camera=(), microphone=(), geolocation=(self), browsing-topics=()",
+      value: "camera=(), microphone=(), geolocation=(self), browsing-topics=()",
     },
     {
       key: "Cross-Origin-Opener-Policy",
