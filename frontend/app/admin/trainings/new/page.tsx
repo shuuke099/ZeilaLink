@@ -7,6 +7,7 @@ import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
 import { trainingCategories } from '@/lib/training-categories';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 type ProviderOption = { id: string; name: string; verified?: boolean };
 
@@ -40,6 +41,8 @@ const label = 'text-sm font-bold text-slate-700 dark:text-slate-200';
 
 export default function AdminNewTrainingPage() {
   const { language } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const canLoad = !authLoading && user?.role?.toLowerCase() === 'admin';
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get('id');
@@ -55,12 +58,14 @@ export default function AdminNewTrainingPage() {
     setForm((current) => ({ ...current, [key]: value }));
 
   useEffect(() => {
+    if (!canLoad) return;
     api.get('/providers')
       .then((response) => setProviders(Array.isArray(response.data) ? response.data : []))
       .catch((err) => setError(err?.response?.data?.error || 'Failed to load training providers'));
-  }, []);
+  }, [canLoad]);
 
   useEffect(() => {
+    if (!canLoad) return;
     if (!editId) {
       setLoadingCourse(false);
       return;
@@ -95,7 +100,7 @@ export default function AdminNewTrainingPage() {
       })
       .catch((err) => setError(err?.response?.data?.error || err?.message || 'Failed to load training program'))
       .finally(() => setLoadingCourse(false));
-  }, [editId]);
+  }, [editId, canLoad]);
 
   const uploadFile = async (file: File) => {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {

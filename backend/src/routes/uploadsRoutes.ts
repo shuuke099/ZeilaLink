@@ -14,6 +14,13 @@ import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
+// Lets deployment checks distinguish the current upload handler from an old
+// process. It exposes no account data and runs before authentication failures.
+router.use((_req, res, next) => {
+  res.setHeader("X-ZeilaLink-Upload-Policy", "normalized-images-v2");
+  next();
+});
+
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -46,7 +53,7 @@ const handleUpload = (
             : status >= 500
               ? "Upload failed"
               : "Only approved image or PDF files are allowed";
-        return res.status(status).json({ error: message });
+        return res.status(status).json({ error: message, code: error.code || "UPLOAD_FAILED" });
       }
       Promise.resolve(handler(req, res)).catch(next);
     });

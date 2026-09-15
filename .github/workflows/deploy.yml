@@ -1,6 +1,7 @@
 name: Deploy ZeilaLink
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -88,6 +89,17 @@ jobs:
 
             wait_for_service "zeilalink-backend" "http://127.0.0.1:7000/health"
             wait_for_service "zeilalink-frontend" "http://127.0.0.1:3000/"
+
+            # A healthy homepage alone can still be served by an old process.
+            # This read-only request must reach the updated upload router.
+            echo "Verify deployed upload handler and ZeilaMart page..."
+            for origin in "http://127.0.0.1:7000" "http://127.0.0.1:3000" "${NEXT_PUBLIC_SITE_URL}"; do
+              if ! curl -sS --max-time 15 -D - -o /dev/null "$origin/api/uploads" | grep -qi '^X-ZeilaLink-Upload-Policy: normalized-images-v2'; then
+                echo "Upload handler verification failed at $origin. Check the deployed build and proxy target."
+                exit 1
+              fi
+            done
+            curl -fsS --max-time 15 "${NEXT_PUBLIC_SITE_URL}/zeilamart" > /dev/null
 
             echo "Check public SEO endpoints..."
             for public_path in "/" "/robots.txt" "/sitemap.xml"; do
