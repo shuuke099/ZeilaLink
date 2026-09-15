@@ -41,8 +41,17 @@ jobs:
             export NEXT_PUBLIC_BING_SITE_VERIFICATION="${{ vars.NEXT_PUBLIC_BING_SITE_VERIFICATION }}"
             export NEXT_PUBLIC_GA_MEASUREMENT_ID="${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}"
 
+            # Server-side installs may have changed the tracked lockfile.
+            # Preserve only that file in Git's stash before updating. Do not
+            # reapply it: production must install the committed dependencies.
+            if ! git diff --quiet -- pnpm-lock.yaml || ! git diff --cached --quiet -- pnpm-lock.yaml; then
+              echo "Backing up the server's pnpm-lock.yaml changes..."
+              git stash push -m "deployment-lockfile-backup-$(date -u +%Y%m%dT%H%M%SZ)" -- pnpm-lock.yaml
+              echo "Lockfile backup saved in git stash. Other server files were left unchanged."
+            fi
+
             echo "Pull latest code..."
-            git pull origin main
+            git pull --ff-only origin main
 
             echo "Install dependencies..."
             pnpm install --frozen-lockfile
