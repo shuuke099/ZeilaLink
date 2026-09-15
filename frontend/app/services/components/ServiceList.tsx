@@ -213,8 +213,8 @@ export default function ServiceList({
 
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <div className={`order-2 ${view === 'grid' ? 'grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4' : 'grid gap-3'}`}>
+        <div className="grid items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+        <div className={`order-2 min-w-0 ${view === 'grid' ? 'grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5' : 'grid gap-3'}`}>
           {filteredServices.map((item) => {
             // Titles and provider names are canonical listing data. The selected
             // language changes descriptive and interface copy only.
@@ -258,7 +258,7 @@ export default function ServiceList({
             );
           })}
         </div>
-        <aside className="order-1 hidden space-y-3 lg:block">
+        <aside className="order-1 hidden space-y-3 xl:block">
           <div className="rounded-xl border border-border bg-surface p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.3)]">
             <h3 className="flex items-center gap-2 text-[12px] font-extrabold text-heading dark:text-white"><Grid2X2 size={14} className="text-primary" />{isEn ? 'Categories' : 'Qaybaha'}</h3>
             <div className="mt-3 space-y-1">{categories.map((category) => { const count = category === 'All Services' ? services.length : services.filter((service) => service.category === category).length; return <button key={category} onClick={() => setActiveCategory(category)} className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[9px] ${activeCategory === category ? 'bg-primary/10 font-bold text-primary dark:bg-primary/20' : 'font-medium text-muted hover:bg-surface-muted dark:text-slate-300 dark:hover:bg-slate-800'}`}><span className="truncate">{categoryLabel(category)}</span><span>{count}</span></button>; })}</div>

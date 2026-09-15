@@ -371,8 +371,8 @@ export default async function BusinessesPage({
                 </p>
               </div>
             ) : (
-              <div className="grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-              <div className={`order-2 ${viewMode === "grid" ? "grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" : "grid gap-3"}`}>
+              <div className="grid items-start gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+              <div className={`order-2 min-w-0 ${viewMode === "grid" ? "grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5" : "grid gap-3"}`}>
                 {result.businesses.map((business) => {
                   const localized = getLocalizedBusinessText(
                     business,
@@ -477,7 +477,7 @@ export default async function BusinessesPage({
                   );
                 })}
               </div>
-              <aside className="order-1 hidden space-y-3 lg:block">
+              <aside className="order-1 hidden space-y-3 xl:block">
                 <div className="rounded-xl border border-border bg-surface p-4 shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.28)]"><h3 className="flex items-center gap-2 text-[12px] font-extrabold text-heading"><Building2 size={14} className="text-primary" />{isSomali ? "Qaybaha" : "Categories"}</h3><div className="mt-3 space-y-1"><Link href="/businesses" className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] font-bold ${filterParams.has("category") ? "text-muted hover:bg-surface-muted hover:text-primary" : "bg-primary/10 text-primary"}`}><span>{isSomali ? "Dhammaan qaybaha" : "All Categories"}</span><span>{directoryTotal}</span></Link>{categoryCounts.slice(0, 8).map(([category, count]) => { const selected = filterParams.get("category") === category; return <Link key={category} href={`/businesses?category=${encodeURIComponent(category)}`} className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-[9px] ${selected ? "bg-primary/10 font-bold text-primary" : "font-medium text-muted hover:bg-surface-muted hover:text-primary"}`}><span className="truncate">{getBusinessCategoryLabel(category, isSomali)}</span><span>{count}</span></Link>; })}</div></div>
                 <div className="rounded-xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center dark:border-violet-900/60 dark:from-violet-950/35 dark:to-surface"><Crown className="mx-auto text-primary" size={20}/><h3 className="mt-2 text-[12px] font-extrabold text-heading">{isSomali ? "Noqo ganacsi la xushay" : "Get Featured"}</h3><p className="mt-1 text-[9px] leading-4 text-muted">{isSomali ? "Kordhi muuqaalka ganacsigaaga oo gaadh macaamiil badan." : "Boost your business visibility and reach more customers."}</p><Link href="/contact" className="mt-3 flex h-9 items-center justify-center rounded-lg bg-primary text-[9px] font-bold text-white">{isSomali ? "Noqo mid la xushay" : "Become Featured"}</Link></div>
               </aside>

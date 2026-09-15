@@ -511,7 +511,7 @@ export default function TrainingsClient({
           </div>
         </div>
       </main>
-    </div>
+      </div>
   );
 }
 
