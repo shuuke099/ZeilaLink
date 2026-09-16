@@ -105,6 +105,47 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
     !isEn && service.categorySo?.trim()
       ? service.categorySo
       : service.category;
+  const contactPhone = (service.phone || service.business?.phone || '').trim();
+  const phoneDigits = contactPhone.replace(/\D/g, '');
+  const contactCountry = (service.country || '').trim().toLowerCase();
+  const whatsappNumber = contactPhone.startsWith('+') || contactPhone.startsWith('00')
+    ? phoneDigits.replace(/^00/, '')
+    : /^(somalia|so)$/.test(contactCountry)
+      ? `252${phoneDigits.replace(/^0/, '')}`
+      : /^(united states|usa|us)$/.test(contactCountry) && phoneDigits.length === 10
+        ? `1${phoneDigits}`
+        : phoneDigits;
+  const whatsappHref = whatsappNumber.length >= 7
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        isEn
+          ? `Hello, I am interested in ${serviceTitle} on ZeilaLink.`
+          : `Salaan, waxaan xiiseynayaa adeegga ${serviceTitle} ee ZeilaLink.`,
+      )}`
+    : null;
+  const directionsQuery = [
+    service.address,
+    service.city || service.business?.city,
+    service.state || service.business?.state,
+    service.postalCode,
+    service.country,
+  ].filter((part): part is string => typeof part === 'string' && part.trim().length > 0).join(', ')
+    || (Array.isArray(service.serviceArea) ? service.serviceArea.filter(Boolean).join(', ') : '');
+  const directionsHref = directionsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`
+    : null;
+  const contactEmail = (service.email || service.business?.email || '').trim();
+  const validContactEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) ? contactEmail : null;
+  const emailHref = validContactEmail
+    ? `mailto:${validContactEmail}?subject=${encodeURIComponent(
+        `${serviceTitle} — ZeilaLink`,
+      )}&body=${encodeURIComponent(
+        isEn
+          ? `Hello, I am interested in ${serviceTitle}.`
+          : `Salaan, waxaan xiiseynayaa adeegga ${serviceTitle}.`,
+      )}`
+    : null;
+  const contactActionClass = 'flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-violet-900/70 dark:hover:bg-primary/10';
+  const disabledContactActionClass = `${contactActionClass} cursor-not-allowed opacity-40 hover:bg-transparent dark:hover:bg-transparent`;
 
   useEffect(() => {
     setForm((prev) => ({
@@ -336,7 +377,12 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
             </button>
             <div className="p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div><h1 className="text-[23px] font-extrabold tracking-[-0.035em] text-heading dark:text-white sm:text-[28px]">{serviceTitle}</h1><p className="mt-1 text-[10px] font-semibold text-muted dark:text-slate-400">{serviceProvider} <span className="text-primary">●</span></p><div className="mt-2 flex flex-wrap gap-3 text-[9px]"><span className="flex items-center gap-1 text-amber-500"><Star size={11} className="fill-amber-400"/>{service.rating.toFixed(1)} ({service.reviews} {isEn ? 'reviews' : 'faallo'})</span><span className="text-muted dark:text-slate-400">{isEn ? 'Open' : 'Furan'}</span><span className="text-muted dark:text-slate-400">{service.deliveryTime || (isEn ? 'Flexible scheduling' : 'Jadwal dabacsan')}</span></div></div><div className="shrink-0 text-right"><p className="text-[8px] uppercase text-muted dark:text-slate-500">{isEn ? 'From' : 'Laga bilaabo'}</p><p className="text-lg font-extrabold text-primary">{service.priceLabel}</p></div></div>
               <button type="button" onClick={()=>{setShowBookingForm(true);setBookingMessage(null)}} disabled={service.isDemo} className="mt-4 h-10 w-full rounded-lg bg-primary text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700 dark:disabled:text-slate-400">{service.isDemo ? (isEn ? 'Demo preview' : 'Tusaale') : isEn ? 'Request Service' : 'Dalbo Adeegga'}</button>
-              <div className="mt-3 grid grid-cols-4 gap-2"><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Phone size={13}/>{isEn ? 'Call' : 'Wac'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Navigation size={13}/>{isEn ? 'Directions' : 'Jihada'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><MessageCircle size={13}/>{isEn ? 'Message' : 'Fariin'}</button><button type="button" className="flex h-12 flex-col items-center justify-center gap-1 rounded-lg border border-violet-100 text-[8px] font-semibold text-primary transition hover:bg-primary/5 dark:border-violet-900/70 dark:hover:bg-primary/10"><Bookmark size={13}/>{isEn ? 'Save' : 'Kaydi'}</button></div>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {whatsappHref ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={contactActionClass} aria-label={`${isEn ? 'Contact on WhatsApp' : 'WhatsApp kala xiriir'} ${serviceTitle}`}><Phone size={13}/>{isEn ? 'Call' : 'Wac'}</a> : <span aria-disabled="true" title={isEn ? 'Phone number unavailable' : 'Lambar telefoon lama hayo'} className={disabledContactActionClass}><Phone size={13}/>{isEn ? 'Call' : 'Wac'}</span>}
+                {directionsHref ? <a href={directionsHref} target="_blank" rel="noopener noreferrer" className={contactActionClass} aria-label={`${isEn ? 'Directions to' : 'Jihada'} ${serviceTitle}`}><Navigation size={13}/>{isEn ? 'Directions' : 'Jihada'}</a> : <span aria-disabled="true" title={isEn ? 'Address unavailable' : 'Cinwaan lama hayo'} className={disabledContactActionClass}><Navigation size={13}/>{isEn ? 'Directions' : 'Jihada'}</span>}
+                {emailHref ? <a href={emailHref} className={contactActionClass} aria-label={`${isEn ? 'Email' : 'Iimayl u dir'} ${serviceTitle}`}><MessageCircle size={13}/>{isEn ? 'Message' : 'Fariin'}</a> : <span aria-disabled="true" title={isEn ? 'Email unavailable' : 'Iimayl lama hayo'} className={disabledContactActionClass}><MessageCircle size={13}/>{isEn ? 'Message' : 'Fariin'}</span>}
+                <button type="button" className={contactActionClass}><Bookmark size={13}/>{isEn ? 'Save' : 'Kaydi'}</button>
+              </div>
             </div>
           </section>
 

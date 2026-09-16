@@ -25,6 +25,20 @@ export type ServiceItem = {
   expertName: string;
   expertRole: string;
   expertImage: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  serviceArea?: string[];
+  business?: {
+    phone?: string | null;
+    email?: string | null;
+    city?: string | null;
+    state?: string | null;
+  } | null;
   /** True only for bundled preview content, never for an API-backed listing. */
   isDemo?: boolean;
 };
