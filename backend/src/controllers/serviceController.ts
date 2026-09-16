@@ -1009,6 +1009,26 @@ export const getAdminServices = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getAdminServiceById = async (req: AuthRequest, res: Response) => {
+  try {
+    const service = await prisma.service.findUnique({
+      where: { id: req.params.id },
+      include: {
+        business: {
+          select: { id: true, slug: true, name: true, logoUrl: true },
+        },
+        _count: { select: { bookings: true } },
+      },
+    });
+
+    if (!service) return res.status(404).json({ error: "Service not found" });
+    return res.json({ service });
+  } catch (error) {
+    console.error("getAdminServiceById:", error);
+    return res.status(500).json({ error: "Failed to fetch admin service" });
+  }
+};
+
 /* =========================================================
    ADMIN - CREATE SERVICE
 ========================================================= */

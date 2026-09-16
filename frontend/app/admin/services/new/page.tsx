@@ -1,11 +1,12 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ImagePlus, Plus, X } from 'lucide-react';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
 import { serviceCategories } from '@/app/services/data/services';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AdvancedConfig = {
   propertyType?: 'residential' | 'commercial' | 'industrial';
@@ -114,6 +115,10 @@ const diagnosticOptions = ['Screen', 'Battery', 'Engine Noise', 'Software', 'Har
 
 export default function AdminServiceNewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
+  const { user, loading: authLoading } = useAuth();
+  const canLoad = !authLoading && user?.role?.toLowerCase() === 'admin';
   const heroInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<ServiceForm>(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -126,6 +131,7 @@ export default function AdminServiceNewPage() {
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [attachmentsUploading, setAttachmentsUploading] = useState(false);
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
+  const [loadingService, setLoadingService] = useState(Boolean(editId));
 
   const currentCategory = form.category;
   const categoryOptions = useMemo(
@@ -137,10 +143,77 @@ export default function AdminServiceNewPage() {
   );
 
   useEffect(() => {
+    if (!canLoad) return;
     api.get('/admin/businesses')
       .then((response) => setBusinesses(response.data?.businesses || []))
       .catch(() => setBusinesses([]));
-  }, []);
+  }, [canLoad]);
+
+  useEffect(() => {
+    if (!canLoad) return;
+    if (!editId) {
+      setLoadingService(false);
+      return;
+    }
+
+    let active = true;
+    api.get(`/admin/services/${encodeURIComponent(editId)}`)
+      .then((response) => {
+        if (!active) return;
+        const service = response.data?.service;
+        if (!service) throw new Error('Service was not found');
+        const advancedConfig = service.advancedConfig && typeof service.advancedConfig === 'object'
+          ? service.advancedConfig as AdvancedConfig
+          : {};
+        const category = String(service.category || '');
+        if (category && !baseCategoryOptions.some((option) => option.value === category)) {
+          setCustomCategories([category]);
+        }
+        setForm({
+          title: String(service.title || ''),
+          titleSo: String(service.titleSo || ''),
+          category,
+          subcategory: String(service.subcategory || ''),
+          provider: String(service.provider || ''),
+          businessId: String(service.businessId || ''),
+          priceLabel: String(service.priceLabel || ''),
+          priceFrom: service.priceFrom == null ? '' : String(service.priceFrom),
+          priceType: String(service.priceType || 'fixed'),
+          image: String(service.image || ''),
+          description: String(service.description || ''),
+          descriptionSo: String(service.descriptionSo || ''),
+          availabilityMode: service.availabilityMode === 'request_quote' ? 'request_quote' : 'instant_booking',
+          slaResponse: String(service.slaResponse || ''),
+          gallery: Array.isArray(service.gallery) ? service.gallery : [],
+          attachments: Array.isArray(service.attachments) ? service.attachments : [],
+          phone: String(service.phone || ''),
+          email: String(service.email || ''),
+          website: String(service.website || ''),
+          address: String(service.address || ''),
+          city: String(service.city || ''),
+          state: String(service.state || ''),
+          postalCode: String(service.postalCode || ''),
+          country: String(service.country || 'Somalia'),
+          latitude: service.latitude == null ? '' : String(service.latitude),
+          longitude: service.longitude == null ? '' : String(service.longitude),
+          serviceArea: Array.isArray(service.serviceArea) ? service.serviceArea.join(', ') : '',
+          remoteAvailable: Boolean(service.remoteAvailable),
+          verified: Boolean(service.verified),
+          featured: Boolean(service.featured),
+          active: service.active !== false,
+          advancedConfig: { includes: [], highlights: [], ...advancedConfig },
+        });
+        setTechStackInput(Array.isArray(advancedConfig.techStack) ? advancedConfig.techStack.join(', ') : '');
+      })
+      .catch((err) => {
+        if (active) setError(err?.response?.data?.error || err?.message || 'Failed to load service');
+      })
+      .finally(() => {
+        if (active) setLoadingService(false);
+      });
+
+    return () => { active = false; };
+  }, [canLoad, editId]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -203,7 +276,7 @@ export default function AdminServiceNewPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await api.post('/admin/services', {
+      const payload = {
         ...form,
         priceFrom: form.priceFrom === '' ? null : Number(form.priceFrom),
         latitude: form.latitude === '' ? null : Number(form.latitude),
@@ -213,11 +286,13 @@ export default function AdminServiceNewPage() {
         mode,
         published: mode === 'publish',
         gallery: form.gallery.length ? form.gallery : form.image ? [form.image] : [],
-      });
+      };
+      if (editId) await api.put(`/admin/services/${editId}`, payload);
+      else await api.post('/admin/services', payload);
       router.push('/admin/services');
       router.refresh();
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to create service');
+      setError(err?.response?.data?.error || `Failed to ${editId ? 'update' : 'create'} service`);
     } finally {
       setSubmitting(false);
     }
@@ -256,7 +331,7 @@ export default function AdminServiceNewPage() {
       <div className="h-[calc(100vh-145px)] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <form className="flex h-full min-h-0 flex-col" onSubmit={(event) => handleCreate(event, 'publish')}>
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-            <h1 className="text-4xl font-black text-slate-900">New Service</h1>
+            <h1 className="text-4xl font-black text-slate-900 dark:text-white">{editId ? 'Edit Service' : 'New Service'}</h1>
             <button
               type="button"
               onClick={handleDiscard}
@@ -543,11 +618,11 @@ export default function AdminServiceNewPage() {
           </div>
 
           <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
-            <button type="button" disabled={submitting} onClick={() => void submitService('draft')} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+            <button type="button" disabled={submitting || loadingService} onClick={() => void submitService('draft')} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
               Save as Draft
             </button>
-            <button type="submit" disabled={submitting} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
-              Publish
+            <button type="submit" disabled={submitting || loadingService} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+              {submitting ? 'Saving…' : editId ? 'Update & Publish' : 'Publish'}
             </button>
             <button type="button" onClick={handleDiscard} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
               Cancel / Discard

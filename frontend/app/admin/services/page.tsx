@@ -5,7 +5,7 @@ import Link from 'next/link';
 import AdminDashboardPage from '@/components/admin/AdminDashboardPage';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowUpDown, ChevronRight, Eye, MoreHorizontal, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Eye, ImageIcon, MoreHorizontal, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 
 type AdminService = {
   id: string;
@@ -13,6 +13,7 @@ type AdminService = {
   category: string;
   provider: string;
   priceLabel: string;
+  image?: string | null;
   published: boolean;
   _count?: { bookings: number };
 };
@@ -24,6 +25,8 @@ export default function AdminServicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sortByTitleAsc, setSortByTitleAsc] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const loadServices = async () => {
@@ -65,28 +68,9 @@ export default function AdminServicesPage() {
     try {
       await api.delete(`/admin/services/${id}`);
       setServices((prev) => prev.filter((service) => service.id !== id));
+      setSelectedIds((current) => current.filter((selectedId) => selectedId !== id));
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Failed to delete service');
-    }
-  };
-
-  const handleEdit = async (service: AdminService) => {
-    const title = window.prompt('Service title', service.title);
-    if (title === null || !title.trim()) return;
-    const category = window.prompt('Category', service.category);
-    if (category === null || !category.trim()) return;
-    const priceLabel = window.prompt('Price label', service.priceLabel);
-    if (priceLabel === null || !priceLabel.trim()) return;
-    try {
-      const response = await api.put(`/admin/services/${service.id}`, {
-        title: title.trim(),
-        category: category.trim(),
-        priceLabel: priceLabel.trim(),
-      });
-      setServices((current) => current.map((item) => item.id === service.id ? { ...item, ...response.data } : item));
-      setError(null);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to update service');
     }
   };
 
@@ -101,6 +85,34 @@ export default function AdminServicesPage() {
     });
     return list;
   }, [services, sortByTitleAsc]);
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  };
+
+  const allVisibleSelected = displayServices.length > 0 && displayServices.every((service) => selectedIds.includes(service.id));
+
+  const toggleAllVisible = () => {
+    const visibleIds = displayServices.map((service) => service.id);
+    setSelectedIds((current) => allVisibleSelected
+      ? current.filter((id) => !visibleIds.includes(id))
+      : Array.from(new Set([...current, ...visibleIds])));
+  };
+
+  const updateSelectedStatus = async (published: boolean) => {
+    if (!selectedIds.length) return;
+    try {
+      setBulkUpdating(true);
+      setError(null);
+      await Promise.all(selectedIds.map((id) => api.put(`/admin/services/${id}`, { published })));
+      setServices((current) => current.map((service) => selectedIds.includes(service.id) ? { ...service, published } : service));
+      setSelectedIds([]);
+    } catch (err: any) {
+      setError(err?.response?.data?.error || `Failed to ${published ? 'publish' : 'move'} selected services`);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
 
   const handleExport = () => {
     const headers = ['Title', 'Category', 'Provider', 'Price', 'Bookings', 'Status'];
@@ -183,11 +195,23 @@ export default function AdminServicesPage() {
             </div>
           </div>
 
+          {selectedIds.length > 0 && (
+            <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/40">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">{selectedIds.length} service{selectedIds.length === 1 ? '' : 's'} selected</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" disabled={bulkUpdating} onClick={() => void updateSelectedStatus(true)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">{bulkUpdating ? 'Updating…' : 'Publish selected'}</button>
+                <button type="button" disabled={bulkUpdating} onClick={() => void updateSelectedStatus(false)} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50">{bulkUpdating ? 'Updating…' : 'Move to draft'}</button>
+                <button type="button" disabled={bulkUpdating} onClick={() => setSelectedIds([])} className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Clear</button>
+              </div>
+            </div>
+          )}
+
           <div className="min-h-0 flex-1 overflow-auto">
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="sticky top-0 z-10 border-y border-slate-200 bg-slate-100 text-left text-xs font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  <th className="px-4 py-4">TITLE</th>
+                  <th className="w-12 px-4 py-4"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} aria-label="Select all visible services" className="h-4 w-4 rounded border-slate-300 accent-blue-600" /></th>
+                  <th className="px-4 py-4">SERVICE</th>
                   <th className="px-4 py-4">CATEGORY</th>
                   <th className="px-4 py-4">PROVIDER</th>
                   <th className="px-4 py-4">PRICE</th>
@@ -199,20 +223,28 @@ export default function AdminServicesPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
+                    <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
                       Loading services...
                     </td>
                   </tr>
                 ) : displayServices.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
+                    <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
                       No services found.
                     </td>
                   </tr>
                 ) : (
                   displayServices.map((service) => (
-                    <tr key={service.id} className="border-b border-slate-200 hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-900">
-                      <td className="px-4 py-5 text-base font-semibold text-blue-700 dark:text-blue-300">{service.title}</td>
+                    <tr key={service.id} className={`border-b border-slate-200 hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-900 ${selectedIds.includes(service.id) ? 'bg-blue-50/60 dark:bg-blue-950/20' : ''}`}>
+                      <td className="w-12 px-4 py-5"><input type="checkbox" checked={selectedIds.includes(service.id)} onChange={() => toggleSelection(service.id)} aria-label={`Select ${service.title}`} className="h-4 w-4 rounded border-slate-300 accent-blue-600" /></td>
+                      <td className="px-4 py-5">
+                        <div className="flex min-w-[260px] items-center gap-3">
+                          <span className="inline-flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-blue-100 bg-blue-50 text-blue-600 dark:border-slate-700 dark:bg-slate-800">
+                            {service.image ? <img src={service.image} alt="" className="h-full w-full object-cover" /> : <ImageIcon size={18} />}
+                          </span>
+                          <span className="text-base font-semibold text-blue-700 dark:text-blue-300">{service.title}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.category}</td>
                       <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.provider}</td>
                       <td className="px-4 py-5 text-base text-slate-700 dark:text-slate-200">{service.priceLabel}</td>
@@ -227,7 +259,7 @@ export default function AdminServicesPage() {
                       <td className="px-4 py-5">
                         <div className="flex justify-end gap-2">
                           <Link href={`/services/${service.id}`} title="View" className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-blue-50 hover:text-blue-600"><Eye size={16} /></Link>
-                          <button type="button" title="Edit" onClick={() => handleEdit(service)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></button>
+                          <Link href={`/admin/services/new?id=${service.id}`} title="Edit" className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-amber-50 hover:text-amber-600"><Pencil size={16} /></Link>
                           <button type="button" title="Delete" onClick={() => handleDelete(service.id)} className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"><Trash2 size={16} /></button>
                         </div>
                       </td>

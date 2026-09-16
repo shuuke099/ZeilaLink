@@ -91,6 +91,12 @@ router.get(
   authorize("admin"),
   serviceController.getAdminServices,
 );
+router.get(
+  "/services/:id",
+  authenticate,
+  authorize("admin"),
+  serviceController.getAdminServiceById,
+);
 router.post(
   "/services",
   authenticate,
