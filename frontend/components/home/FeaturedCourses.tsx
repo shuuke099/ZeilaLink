@@ -38,9 +38,9 @@ export default function FeaturedCourses() {
       {!loading && courses.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center dark:border-slate-800 dark:bg-slate-900"><p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("Training programs will appear here as soon as they are published.", "Barnaamijyada tababarku waxay halkan ka muuqan doonaan marka la daabaco.")}</p><Link href="/training" className="mt-3 inline-flex text-sm font-bold text-violet-700">{t("Browse all trainings", "Arag dhamaan tababarada")}</Link></div> :
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
         {(loading ? Array.from({ length: 6 }) : courses).map((item, index) => {
-          if (!item || typeof item !== "object" || !("id" in item)) return <div key={index} className="h-[165px] animate-pulse rounded-lg border border-slate-200 bg-slate-100 sm:h-[195px]" />;
+          if (!item || typeof item !== "object" || !("id" in item)) return <div key={index} className={`${index >= 4 ? "hidden sm:block" : ""} h-[165px] animate-pulse rounded-lg border border-slate-200 bg-slate-100 sm:h-[195px]`} />;
           const course = item as Course;
-          return <Link key={course.id} href={`/training/${course.slug || course.id}`} className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
+          return <Link key={course.id} href={`/training/${course.slug || course.id}`} className={`${index >= 4 ? "hidden sm:block" : ""} group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900`}>
             <div className="relative flex h-[105px] items-center justify-center overflow-hidden bg-slate-100 sm:h-[135px] dark:bg-slate-800">
               {course.imageUrl ? <img src={course.imageUrl} alt={course.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /> : <GraduationCap size={42} className="text-violet-600" />}
             </div>

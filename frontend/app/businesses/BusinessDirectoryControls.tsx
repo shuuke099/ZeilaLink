@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Search, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useRef } from "react";
+import { useDeviceLocation } from "@/contexts/DeviceLocationContext";
 import { getBusinessCategoryLabel } from "./businessUi";
 
 const categories = ["Retail", "Restaurant", "Health", "Education", "Technology", "Construction", "Professional Services", "Transport", "Hospitality", "Other"];
@@ -14,7 +15,7 @@ export default function BusinessDirectoryControls({ isSomali }: { isSomali: bool
   const formRef = useRef<HTMLFormElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const requestedLocation = useRef(false);
+  const { coordinates } = useDeviceLocation();
 
   const applyFilters = useCallback((form = formRef.current) => {
     if (!form) return;
@@ -37,21 +38,14 @@ export default function BusinessDirectoryControls({ isSomali }: { isSomali: bool
   useEffect(() => () => clearTimeout(debounceRef.current), []);
 
   useEffect(() => {
-    if (requestedLocation.current || searchParams.has("lat") || searchParams.has("lng") || !navigator.geolocation) return;
-    requestedLocation.current = true;
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("lat", coords.latitude.toFixed(6));
-        params.set("lng", coords.longitude.toFixed(6));
-        params.set("radius", params.get("radius") || "50");
-        params.delete("page");
-        router.replace(`/businesses?${params.toString()}`, { scroll: false });
-      },
-      () => undefined,
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 },
-    );
-  }, [router, searchParams]);
+    if (!coordinates || searchParams.has("lat") || searchParams.has("lng")) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lat", coordinates.latitude.toFixed(6));
+    params.set("lng", coordinates.longitude.toFixed(6));
+    params.set("radius", params.get("radius") || "50");
+    params.delete("page");
+    router.replace(`/businesses?${params.toString()}`, { scroll: false });
+  }, [coordinates, router, searchParams]);
 
   const clearFilters = () => {
     const params = new URLSearchParams();

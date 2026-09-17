@@ -327,6 +327,24 @@ export default function Navbar() {
                 )}
               </button>
 
+              {/* Saved businesses */}
+              <Link
+                href="/favorites"
+                aria-label={language === "en" ? "Favorites" : "Kuwa aad jeceshahay"}
+                title={language === "en" ? "Favorites" : "Kuwa aad jeceshahay"}
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-lg outline-none transition-colors hover:bg-slate-100/70 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-slate-800 ${
+                  isRouteActive("/favorites")
+                    ? "bg-primary/10 text-primary"
+                    : "text-slate-600 dark:text-slate-300"
+                }`}
+              >
+                <Heart
+                  size={17}
+                  strokeWidth={1.9}
+                  className={isRouteActive("/favorites") ? "fill-primary/20" : ""}
+                />
+              </Link>
+
               {/* ====================================================
                   LOGGED-IN USER
               ==================================================== */}
@@ -528,11 +546,11 @@ export default function Navbar() {
             ====================================================== */}
             <div className="col-start-3 flex min-w-0 items-center justify-self-end gap-0.5 lg:hidden">
               <Link
-                href={user ? "/worker/recommended" : "/login?redirect=%2Fworker%2Frecommended"}
+                href="/favorites"
                 aria-label={language === "en" ? "Favorites" : "Kuwa aad jeceshahay"}
-                className="flex h-9 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-primary dark:text-slate-300 dark:hover:bg-slate-800"
+                className={`flex h-9 w-8 items-center justify-center rounded-lg transition-colors hover:bg-slate-100 hover:text-primary dark:hover:bg-slate-800 ${isRouteActive("/favorites") ? "bg-primary/10 text-primary" : "text-slate-600 dark:text-slate-300"}`}
               >
-                <Heart size={17} strokeWidth={1.8} />
+                <Heart size={17} strokeWidth={1.8} className={isRouteActive("/favorites") ? "fill-primary/20" : ""} />
               </Link>
 
               <Link

@@ -44,6 +44,9 @@ model User {
   workerLanguages     WorkerLanguage[]
   workerPreference    WorkerPreference?
   businesses          Business[]
+  businessReviews     BusinessReview[]
+  serviceReviews      ServiceReview[]
+  courseReviews       CourseReview[]
 
   @@index([role, createdAt])
   @@index([role, isVerified, profilePublic, createdAt])
@@ -149,6 +152,7 @@ model Business {
   employer Employer?
   provider Provider?
   services Service[]
+  reviews  BusinessReview[]
 
   @@index([published, active, createdAt])
   @@index([category])
@@ -354,6 +358,7 @@ model Service {
 
   business Business?        @relation(fields: [businessId], references: [id], onDelete: SetNull)
   bookings ServiceBooking[]
+  reviews  ServiceReview[]
 
   @@index([published, active, createdAt])
   @@index([published, category])
@@ -592,6 +597,9 @@ model Course {
   providesCertificate Boolean @default(false) @map("provides_certificate")
   certificateUrl      String? @map("certificate_url")
 
+  rating       Float @default(0)
+  reviewsCount Int   @default(0) @map("reviews_count")
+
   published     Boolean   @default(false)
   featured      Boolean   @default(false)
   featuredUntil DateTime? @map("featured_until")
@@ -602,6 +610,7 @@ model Course {
   provider           Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
   skills             CourseSkill[]
   userCertifications UserCertification[]
+  reviews            CourseReview[]
 
   @@index([published, createdAt])
   @@index([providerId, createdAt])
@@ -617,6 +626,60 @@ model Course {
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "courses_name_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "courses_description_trgm_idx")
   @@map("courses")
+}
+
+model BusinessReview {
+  id         String   @id @default(cuid())
+  businessId String   @map("business_id")
+  userId     String   @map("user_id")
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+  @@map("business_reviews")
+}
+
+model ServiceReview {
+  id        String   @id @default(cuid())
+  serviceId String   @map("service_id")
+  userId    String   @map("user_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, userId])
+  @@index([serviceId, createdAt])
+  @@index([userId, createdAt])
+  @@map("service_reviews")
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  courseId  String   @map("course_id")
+  userId    String   @map("user_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([courseId, createdAt])
+  @@index([userId, createdAt])
+  @@map("course_reviews")
 }
 
 model CourseSkill {

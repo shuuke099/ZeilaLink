@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 export const PASSWORD_HASH_ROUNDS = 12;
-export const MINIMUM_PASSWORD_LENGTH = 12;
+export const MINIMUM_PASSWORD_LENGTH = 6;
 export const MAXIMUM_PASSWORD_BYTES = 72;
 
 export const validatePassword = (value: unknown): string | null => {

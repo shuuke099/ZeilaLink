@@ -4,6 +4,7 @@ import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { DeviceLocationProvider } from '@/contexts/DeviceLocationContext';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import ChatBot from '@/components/ChatBot';
 import Footer from '@/components/Footer';
@@ -173,14 +174,16 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <LanguageProvider initialLanguage={initialLanguage}>
-              <div className="flex flex-col min-h-screen">
-                <main className="flex-grow">
-                  {children}
-                </main>
-                <Footer />
-                <ChatBot />
-                <ToastProvider />
-              </div>
+              <DeviceLocationProvider>
+                <div className="flex flex-col min-h-screen">
+                  <main className="flex-grow">
+                    {children}
+                  </main>
+                  <Footer />
+                  <ChatBot />
+                  <ToastProvider />
+                </div>
+              </DeviceLocationProvider>
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>

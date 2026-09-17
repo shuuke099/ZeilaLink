@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Grid2X2, List, Search, Sparkles, Star, Wrench } from 'lucide-react';
+import { BadgeCheck, Grid2X2, List, MapPin, Navigation, Phone, Search, Sparkles, Star, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import ScrollableSelect from '@/components/ScrollableSelect';
 import { cachedApiGet } from '@/lib/api-cache';
@@ -14,14 +14,6 @@ type ServiceListProps = {
   initialCategories?: string[];
   loadError?: boolean;
 };
-
-// Keep only the displayed starting amount; never turn missing pricing into $0.
-export function formatServiceCardPrice(label: string): string | null {
-  if (/^free$/i.test(label.trim())) return '$0';
-  const amount = label.match(/\$\s*(\d[\d,]*(?:\.\d{1,2})?)/)?.[1]
-    || label.match(/^(?:from\s+|USD\s+)?(\d[\d,]*(?:\.\d{1,2})?)(?:\s|$|\/)/i)?.[1];
-  return amount ? `$${amount}` : null;
-}
 
 type ViewMode = 'grid' | 'list';
 
@@ -224,37 +216,114 @@ export default function ServiceList({
                 ? item.descriptionSo
                 : item.description;
             const provider = item.provider;
-            const price = formatServiceCardPrice(item.priceLabel);
+            const phone = item.phone || item.business?.phone;
+            const directionsQuery = [
+              item.address,
+              item.city,
+              item.state,
+              item.postalCode,
+              item.country,
+            ]
+              .filter(Boolean)
+              .join(', ') || item.serviceArea?.filter(Boolean).join(', ')
+              || [item.business?.city, item.business?.state].filter(Boolean).join(', ');
+            const location = [item.city, item.state]
+              .filter(Boolean)
+              .join(', ') || item.serviceArea?.[0]
+              || [item.business?.city, item.business?.state].filter(Boolean).join(', ');
+            const servicePath = `/services/${item.slug || item.id}`;
+
+            if (view === 'list') {
+              return (
+                <article
+                  key={item.id}
+                  className="group relative grid min-h-[225px] min-w-0 grid-cols-[138px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,.07)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:grid-cols-[245px_minmax(0,1fr)]"
+                >
+                  <Link href={servicePath} aria-label={`${isEn ? 'View' : 'Eeg'} ${title}`} className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span className="sr-only">{isEn ? 'View' : 'Eeg'} {title}</span></Link>
+                  <div className="relative min-h-[225px] overflow-hidden border-r border-border bg-surface-muted dark:bg-slate-800">
+                    <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+                    {item.badge && <span className="absolute left-2 top-2 max-w-[96px] truncate rounded-md bg-violet-700 px-1.5 py-1 text-[7px] font-extrabold uppercase tracking-wide text-white shadow-sm sm:left-3 sm:top-3 sm:max-w-none sm:px-2 sm:text-[9px]">{!isEn && item.categorySo?.trim() ? item.categorySo : item.badge}</span>}
+                  </div>
+
+                  <div className="flex min-w-0 flex-col p-2.5 sm:p-5">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[8px] font-bold sm:gap-2 sm:text-[10px]">
+                      <span className="rounded-md border border-primary/25 bg-primary/10 px-2 py-1 text-primary">{categoryLabel(item.category)}</span>
+                      <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">● {isEn ? 'Available' : 'La heli karo'}</span>
+                    </div>
+
+                    <h2 className="mt-2 line-clamp-2 text-[13px] font-extrabold leading-tight tracking-[-0.02em] text-heading transition-colors group-hover:text-primary dark:text-white sm:line-clamp-1 sm:text-[19px]">{title}</h2>
+                    <p className="mt-1 truncate text-[10px] font-bold text-primary sm:text-[12px]">{provider}</p>
+                    <p className="mt-1.5 line-clamp-2 text-[9px] font-medium leading-4 text-slate-600 dark:text-slate-300 sm:mt-2 sm:text-[12px] sm:leading-5">{description}</p>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-semibold text-foreground dark:text-slate-200 sm:mt-3 sm:gap-x-4 sm:gap-y-2 sm:text-[11px]">
+                      <span className="inline-flex items-center gap-1"><Star size={13} className="fill-amber-400 text-amber-500" />{item.rating.toFixed(1)} <span className="font-normal text-muted dark:text-slate-400">({item.reviews} {isEn ? 'reviews' : 'faallo'})</span></span>
+                      {location && <span className="inline-flex min-w-0 items-center gap-1 text-muted dark:text-slate-400"><MapPin size={13} className="shrink-0 text-primary" /><span className="truncate">{location}</span></span>}
+                      {item.business?.verified && <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><BadgeCheck size={13} />{isEn ? 'Verified provider' : 'Bixiye la xaqiijiyey'}</span>}
+                    </div>
+
+                    <div className="relative z-20 mt-auto grid grid-cols-2 gap-1.5 border-t border-border pt-2 text-[9px] font-bold sm:flex sm:flex-wrap sm:items-center sm:gap-2 sm:pt-3 sm:text-[11px]">
+                      {phone ? <a href={`tel:${phone}`} className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-foreground transition hover:border-primary/50 hover:text-primary dark:text-slate-200 sm:h-9 sm:min-w-[88px] sm:gap-1.5 sm:px-3"><Phone size={12} />{isEn ? 'Call' : 'Wac'}</a> : <span className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-muted/50 sm:h-9 sm:min-w-[88px] sm:gap-1.5 sm:px-3"><Phone size={12} />{isEn ? 'Call' : 'Wac'}</span>}
+                      {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-1 text-primary transition hover:border-primary hover:bg-primary hover:text-white sm:h-9 sm:min-w-[105px] sm:gap-1.5 sm:px-3"><Navigation size={12} />{isEn ? 'Directions' : 'Tilmaamaha'}</a> : <span className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-muted/50 sm:h-9 sm:min-w-[105px] sm:gap-1.5 sm:px-3"><Navigation size={12} />{isEn ? 'Directions' : 'Tilmaamaha'}</span>}
+                    </div>
+                  </div>
+                </article>
+              );
+            }
 
             return (
-            <Link
+            <article
               key={item.id}
-              href={`/services/${item.slug || item.id}`}
-              className={`group min-w-0 overflow-hidden border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_2px_12px_rgba(0,0,0,.35)] ${view === 'list' ? 'grid min-h-[190px] grid-cols-[140px_minmax(0,1fr)] rounded-xl sm:grid-cols-[260px_minmax(0,1fr)]' : 'flex min-h-[230px] flex-col rounded-lg sm:min-h-[250px]'}`}
+              className="group relative flex min-h-[330px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,.07)] transition duration-200 hover:-translate-y-1 hover:border-primary/35 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:min-h-[355px]"
             >
-              <div className={`relative shrink-0 overflow-hidden bg-surface-muted dark:bg-slate-800 ${view === 'list' ? 'h-[190px] border-r border-border' : 'h-[105px] sm:h-[120px]'}`}>
-                <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+              <Link
+                href={servicePath}
+                aria-label={`${isEn ? 'View' : 'Eeg'} ${title}`}
+                className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <span className="sr-only">{isEn ? 'View' : 'Eeg'} {title}</span>
+              </Link>
+              <div className="relative h-[135px] shrink-0 overflow-hidden bg-surface-muted dark:bg-slate-800 sm:h-[155px]">
+                <img src={item.image} alt={`${title} service`} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
 
               </div>
 
-              <div className={`flex min-h-0 flex-1 flex-col p-2.5 ${view === 'list' ? 'sm:p-5' : 'sm:p-3'}`}>
+              <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
                 <div className="min-h-0 min-w-0">
                   <h2 className="line-clamp-2 text-[13px] font-extrabold leading-[1.25] tracking-[-0.015em] text-heading dark:text-white sm:text-[15px] xl:text-[16px]">{title}</h2>
-                  <p className="mt-1 truncate text-[10px] font-normal leading-4 text-slate-400 dark:text-slate-500 sm:text-[11px]">{provider}</p>
-                  <p className={`mt-2 text-[11px] font-medium leading-5 text-slate-600 dark:text-slate-300 sm:text-[12px] ${view === 'list' ? 'line-clamp-3' : 'line-clamp-2'}`}>{description}</p>
+                  <p className="mt-1.5 truncate text-[10px] font-bold leading-4 text-primary sm:text-[11px]">{provider}</p>
+                  <p className="mt-2.5 line-clamp-3 text-[11px] font-medium leading-[1.55] text-slate-600 dark:text-slate-300 sm:text-[12px]">{description}</p>
                 </div>
 
-                <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-2 text-[13px] text-muted dark:text-slate-400">
-                  <div className="flex items-center gap-1">
-                    <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                    <span className="font-semibold text-foreground dark:text-slate-200">{item.rating.toFixed(1)}</span>
-                  </div>
-                  {price && <p className="shrink-0 whitespace-nowrap text-[15px] font-extrabold leading-tight text-primary sm:text-[16px]">{price}</p>}
+                <div className="relative z-20 mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3 text-[10px] font-bold sm:text-[11px]">
+                  {phone ? (
+                    <a href={`tel:${phone}`} className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 text-primary transition hover:border-primary hover:bg-primary hover:text-white">
+                      <Phone size={13} />{isEn ? 'Call' : 'Wac'}
+                    </a>
+                  ) : (
+                    <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50">
+                      <Phone size={13} />{isEn ? 'Call' : 'Wac'}
+                    </span>
+                  )}
+                  {directionsQuery ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary dark:text-slate-200"
+                    >
+                      <Navigation size={13} />{isEn ? 'Directions' : 'Tilmaamaha'}
+                    </a>
+                  ) : (
+                    <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50">
+                      <Navigation size={13} />{isEn ? 'Directions' : 'Tilmaamaha'}
+                    </span>
+                  )}
                 </div>
 
               </div>
-            </Link>
+            </article>
             );
           })}
         </div>

@@ -159,7 +159,7 @@ export default function FeaturedBusinesses() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="h-[165px] animate-pulse rounded-lg border border-gray-200 bg-gray-100 sm:h-[195px]"
+                className={`${index >= 4 ? "hidden sm:block" : ""} h-[165px] animate-pulse rounded-lg border border-gray-200 bg-gray-100 sm:h-[195px]`}
               />
             ))}
           </div>
@@ -216,7 +216,7 @@ export default function FeaturedBusinesses() {
         /* Business cards */
         <div className="relative">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-            {visibleBusinesses.map((business) => {
+            {visibleBusinesses.map((business, index) => {
               const businessUrl = business.slug || business.id;
 
               const image =
@@ -234,7 +234,7 @@ export default function FeaturedBusinesses() {
               return (
                 <article
                   key={business.id}
-                  className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+                  className={`${index >= 4 ? "hidden sm:block" : ""} group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900`}
                 >
                   <Link href={`/businesses/${businessUrl}`} className="block h-[105px] overflow-hidden bg-slate-100 sm:h-[135px]">
                     <img src={image} alt={business.name} className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.03]" />

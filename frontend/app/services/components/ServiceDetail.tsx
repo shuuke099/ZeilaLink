@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import {
   Bookmark,
   Check,
@@ -22,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { getSafeStripeCheckoutUrl } from '@/lib/safeUrl';
+import ReviewSection from '@/components/reviews/ReviewSection';
 import type { ServiceItem } from '../data/services';
 
 type ServiceDetailProps = {
@@ -101,6 +103,9 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
       ? service.descriptionSo
       : service.description;
   const serviceProvider = service.provider;
+  const businessProfilePath = service.business
+    ? `/businesses/${encodeURIComponent(service.business.slug || service.business.id)}`
+    : null;
   const serviceCategory =
     !isEn && service.categorySo?.trim()
       ? service.categorySo
@@ -389,12 +394,13 @@ export default function ServiceDetail({ service, isEn }: ServiceDetailProps) {
           <DetailPanel title={isEn ? 'About this service' : 'Ku saabsan adeeggan'}><p className="text-[10px] leading-5 text-muted dark:text-slate-300">{serviceDescription}</p><div className="mt-3 grid gap-2 sm:grid-cols-2">{highlights.map(item=><p key={item} className="flex items-start gap-2 text-[9px] text-muted dark:text-slate-300"><Check size={11} className="mt-0.5 shrink-0 text-primary"/>{item}</p>)}</div></DetailPanel>
           <DetailPanel title={isEn ? 'Service details' : 'Faahfaahinta adeegga'}><div className="grid gap-3 text-[9px] sm:grid-cols-2 lg:grid-cols-4"><MiniInfo label={isEn ? 'Price' : 'Qiimaha'} value={service.priceLabel}/><MiniInfo label={isEn ? 'Duration' : 'Muddada'} value={service.deliveryTime || (isEn ? 'Flexible' : 'Dabacsan')}/><MiniInfo label={isEn ? 'Package' : 'Xirmada'} value={service.packageName || (isEn ? 'Standard' : 'Caadi')}/><MiniInfo label={isEn ? 'Support' : 'Taageero'} value={service.support || (isEn ? 'Included' : 'Way ku jirtaa')}/></div></DetailPanel>
           <DetailPanel title={isEn ? 'Gallery' : 'Sawirro'} action={isEn ? 'View all' : 'Dhammaan eeg'}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0,6).map((image,index)=><button type="button" key={`${image}-${index}`} onClick={()=>setActiveGalleryIndex(index)} className="h-24 overflow-hidden rounded-lg ring-primary/70 focus-visible:outline-none focus-visible:ring-2 sm:h-32"><img src={image} alt={`${serviceTitle} gallery ${index+1}`} className="h-full w-full object-cover"/></button>)}</div></DetailPanel>
+          {!service.isDemo && <ReviewSection targetType="service" targetId={service.id} initialRating={service.rating} initialCount={service.reviews} />}
         </div>
 
         <aside className="space-y-3 lg:sticky lg:top-20">
           <DetailPanel title={isEn ? "What's included" : 'Waxa ku jira'}><div className="space-y-2">{includes.map(item=><p key={item} className="flex items-start gap-2 text-[9px] text-muted dark:text-slate-300"><Check size={11} className="mt-0.5 shrink-0 text-primary"/>{item}</p>)}</div></DetailPanel>
           <DetailPanel title={isEn ? 'Service process' : 'Habka adeegga'}><div className="space-y-3">{serviceProcess.map(([title,copy],index)=><div key={title} className="flex gap-2.5"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-primary/10 text-[8px] font-bold text-primary dark:bg-primary/20">{index+1}</span><div><p className="text-[9px] font-bold text-foreground dark:text-slate-200">{title}</p><p className="mt-0.5 text-[8px] leading-4 text-muted dark:text-slate-400">{copy}</p></div></div>)}</div></DetailPanel>
-          <DetailPanel title={`${isEn ? 'About' : 'Ku saabsan'} ${serviceProvider}`}><div className="flex gap-3"><img src={service.expertImage || service.image} alt={serviceProvider} className="h-12 w-12 rounded-full object-cover"/><div><p className="text-[10px] font-bold text-heading dark:text-white">{service.expertName || serviceProvider}</p><p className="mt-1 text-[8px] text-muted dark:text-slate-400">{service.expertRole || serviceCategory}</p><p className="mt-1 flex items-center gap-1 text-[8px] text-amber-500"><Star size={9} className="fill-amber-400"/>{service.rating.toFixed(1)}</p></div></div><button type="button" className="mt-3 h-9 w-full rounded-lg border border-primary/30 text-[9px] font-bold text-primary hover:bg-primary/5 dark:hover:bg-primary/10">{isEn ? 'View Business Profile' : 'Eeg Bogga Ganacsiga'}</button></DetailPanel>
+          <DetailPanel title={`${isEn ? 'About' : 'Ku saabsan'} ${serviceProvider}`}><div className="flex gap-3"><img src={service.expertImage || service.image} alt={serviceProvider} className="h-12 w-12 rounded-full object-cover"/><div><p className="text-[10px] font-bold text-heading dark:text-white">{service.expertName || serviceProvider}</p><p className="mt-1 text-[8px] text-muted dark:text-slate-400">{service.expertRole || serviceCategory}</p><p className="mt-1 flex items-center gap-1 text-[8px] text-amber-500"><Star size={9} className="fill-amber-400"/>{service.rating.toFixed(1)}</p></div></div>{businessProfilePath && <Link href={businessProfilePath} className="mt-3 flex h-9 w-full items-center justify-center rounded-lg border border-primary/30 text-[9px] font-bold text-primary hover:bg-primary/5 dark:hover:bg-primary/10">{isEn ? 'View Business Profile' : 'Eeg Bogga Ganacsiga'}</Link>}</DetailPanel>
           <DetailPanel title={isEn ? 'Reviews' : 'Faallooyin'} action={isEn ? 'View all' : 'Dhammaan eeg'}><div className="flex items-end gap-3"><strong className="text-4xl font-extrabold text-heading dark:text-white">{service.rating.toFixed(1)}</strong><div><div className="flex gap-0.5">{Array.from({length:5}).map((_,index)=><Star key={index} size={10} className={index<Math.round(service.rating)?'fill-amber-400 text-amber-400':'text-slate-200 dark:text-slate-700'}/>)}</div><p className="mt-1 text-[8px] text-muted dark:text-slate-500">{service.reviews} {isEn ? 'reviews' : 'faallo'}</p></div></div></DetailPanel>
           <DetailPanel title={isEn ? 'Share this service' : 'La wadaag adeeggan'}><div className="flex gap-2">{['f','x','in','wa'].map(item=><span key={item} className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-[8px] font-bold text-primary dark:bg-primary/20">{item}</span>)}</div><button type="button" onClick={()=>void navigator.clipboard?.writeText(window.location.href)} className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-primary/30 text-[9px] font-bold text-primary hover:bg-primary/5 dark:hover:bg-primary/10"><Share2 size={12}/>{isEn ? 'Copy link' : 'Koobbi xiriiriyaha'}</button></DetailPanel>
         </aside>

@@ -112,10 +112,10 @@ export default function JobsNearYou() {
 
       {loading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-          {[1, 2, 3, 4, 5, 6].map((item) => (
+          {[1, 2, 3, 4, 5, 6].map((item, index) => (
             <div
               key={item}
-              className="h-[190px] animate-pulse rounded-lg border border-slate-200 bg-slate-100"
+              className={`${index >= 4 ? "hidden sm:block" : ""} h-[190px] animate-pulse rounded-lg border border-slate-200 bg-slate-100`}
             />
           ))}
         </div>
@@ -146,7 +146,7 @@ export default function JobsNearYou() {
 
       {!loading && !error && jobs.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-          {jobs.map((job) => {
+          {jobs.map((job, index) => {
             const jobUrl = job.slug || job.id;
             const posted = formatPostedTime(job.createdAt, so);
 
@@ -154,7 +154,7 @@ export default function JobsNearYou() {
               <Link
                 key={job.id}
                 href={`/jobs/${jobUrl}`}
-                className="group flex h-[190px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+                className={`${index >= 4 ? "hidden sm:flex" : ""} group h-[190px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-3 shadow-[0_2px_8px_rgba(15,23,42,.05)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 ${index < 4 ? "flex" : ""}`}
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
                   {job.employer.logoUrl ? (

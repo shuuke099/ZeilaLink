@@ -278,8 +278,10 @@ export default function PopularServices() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-            {visibleServices.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+            {visibleServices.map((service, index) => (
+              <div key={service.id} className={index >= 4 ? "hidden sm:block" : ""}>
+                <ServiceCard service={service} />
+              </div>
             ))}
         </div>
       </div>

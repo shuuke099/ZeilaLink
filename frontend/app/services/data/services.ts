@@ -34,10 +34,14 @@ export type ServiceItem = {
   country?: string | null;
   serviceArea?: string[];
   business?: {
+    id: string;
+    slug?: string | null;
+    name?: string | null;
     phone?: string | null;
     email?: string | null;
     city?: string | null;
     state?: string | null;
+    verified?: boolean;
   } | null;
   /** True only for bundled preview content, never for an API-backed listing. */
   isDemo?: boolean;

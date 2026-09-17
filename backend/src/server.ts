@@ -33,6 +33,7 @@ import { assertOtpConfiguration } from "./utils/otp";
 import businessRoutes from "./routes/businessRoutes";
 import dealRoutes from "./routes/dealRoutes";
 import courseRoutes from "./routes/courseRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -274,6 +275,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/businesses", businessRoutes);
 app.use("/api/deals", dealRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/reviews", reviewRoutes);
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });

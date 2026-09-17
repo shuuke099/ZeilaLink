@@ -35,6 +35,8 @@ type FormField =
   | "postalCode"
   | "country";
 
+const MINIMUM_PASSWORD_LENGTH = 6;
+
 function RegisterContent() {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -118,8 +120,8 @@ function RegisterContent() {
     if (!formData.email.trim()) errors.email = "Required";
     if (!formData.phone.trim()) errors.phone = "Required";
 
-    if (!formData.password || formData.password.length < 12) {
-      errors.password = "Minimum 12 characters";
+    if (!formData.password || formData.password.length < MINIMUM_PASSWORD_LENGTH) {
+      errors.password = `Minimum ${MINIMUM_PASSWORD_LENGTH} characters`;
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -281,6 +283,7 @@ function RegisterContent() {
                     value={formData.password}
                     onChange={(e) => setFieldValue("password", e.target.value)}
                     placeholder={getT("enterPassword")}
+                    minLength={MINIMUM_PASSWORD_LENGTH}
                   />
                   <button
                     type="button"
@@ -305,6 +308,7 @@ function RegisterContent() {
                     type={showConfirmPassword ? "text" : "password"}
                     className={`${inputClass} pr-11`}
                     value={formData.confirmPassword}
+                    minLength={MINIMUM_PASSWORD_LENGTH}
                     onChange={(e) =>
                       setFieldValue("confirmPassword", e.target.value)
                     }

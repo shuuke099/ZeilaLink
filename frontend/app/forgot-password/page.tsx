@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import api from '@/lib/api';
 import { extractErrorMessage } from '@/lib/error-utils';
 
-const MINIMUM_PASSWORD_LENGTH = 12;
+const MINIMUM_PASSWORD_LENGTH = 6;
 
 function ForgotPasswordContent() {
   const { language } = useLanguage();

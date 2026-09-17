@@ -3,13 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import {
-  ArrowRight,
+  BadgeCheck,
   Briefcase,
   Building2,
   Crown,
   GraduationCap,
   Grid2X2,
-  Heart,
   List,
   MapPin,
   Navigation,
@@ -17,6 +16,7 @@ import {
   Star,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import BusinessFavoriteButton from "@/components/businesses/BusinessFavoriteButton";
 import { serverApiGet } from "@/lib/serverApi";
 import { getSafeStoredUrl } from "@/lib/safeUrl";
 import { SITE_NAME, absoluteUrl } from "@/lib/seo";
@@ -387,37 +387,86 @@ export default async function BusinessesPage({
                     .filter(Boolean)
                     .join(", ");
 
+                  if (viewMode === "list") {
+                    const description = localized.description
+                      ? compactDescription(localized.description, 220)
+                      : isSomali
+                        ? `${displayName} waa urur ku jira hagaha ganacsiyada ${SITE_NAME}.`
+                        : `${displayName} is listed in the ${SITE_NAME} business directory.`;
+
+                    return (
+                      <article
+                        key={`${business.type}-${business.id}`}
+                        className="group relative grid min-h-[225px] min-w-0 grid-cols-[138px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,.07)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:grid-cols-[245px_minmax(0,1fr)]"
+                      >
+                        <Link href={businessPath} aria-label={`${isSomali ? "Eeg" : "View"} ${displayName}`} className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span className="sr-only">{isSomali ? "Eeg" : "View"} {displayName}</span></Link>
+                        <div className="relative min-h-[225px] overflow-hidden border-r border-border bg-surface-muted">
+                          {safeBanner && <img src={safeBanner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
+                          {!safeBanner && safeLogo && <img src={safeLogo} alt="" className="h-full w-full object-contain p-8" />}
+                          {!safeBanner && !safeLogo && <Building2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-muted/40" size={46} />}
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+                          {business.featured && <span className="absolute left-2 top-2 max-w-[66px] truncate rounded-md bg-violet-700 px-1.5 py-1 text-[7px] font-extrabold uppercase tracking-wide text-white shadow-sm sm:left-3 sm:top-3 sm:max-w-none sm:px-2 sm:text-[9px]">{isSomali ? "La xushay" : "Featured"}</span>}
+                          <BusinessFavoriteButton business={business} isSomali={isSomali} className="absolute right-2 top-2 z-20 h-7 w-7 sm:right-3 sm:top-3 sm:h-8 sm:w-8" />
+                        </div>
+
+                        <div className="flex min-w-0 flex-col p-2.5 sm:p-5">
+                          <div className="flex flex-wrap items-center gap-1.5 text-[8px] font-bold sm:gap-2 sm:text-[10px]">
+                            {business.category && <span className="rounded-md border border-primary/25 bg-primary/10 px-2 py-1 text-primary">{getBusinessCategoryLabel(business.category, isSomali)}</span>}
+                            <span className={`rounded-full border px-2 py-1 ${business.statusLabel === "Closed" ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300" : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>● {business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Hadda furan" : "Open now")}</span>
+                          </div>
+
+                          <h3 className="mt-2 line-clamp-2 text-[13px] font-extrabold leading-tight tracking-[-0.02em] text-heading transition-colors group-hover:text-primary sm:line-clamp-1 sm:text-[19px]">{displayName}</h3>
+                          {(business.subcategory || business.category) && <p className="mt-1 truncate text-[10px] font-bold text-primary sm:text-[12px]">{business.subcategory || getBusinessCategoryLabel(business.category || "", isSomali)}</p>}
+                          <p className="mt-1.5 line-clamp-2 text-[9px] font-medium leading-4 text-muted sm:mt-2 sm:text-[12px] sm:leading-5">{description}</p>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-semibold text-foreground sm:mt-3 sm:gap-x-4 sm:gap-y-2 sm:text-[11px]">
+                            {typeof business.rating === "number" && <span className="inline-flex items-center gap-1"><Star size={13} className="fill-amber-400 text-amber-500" />{business.rating.toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0} {isSomali ? "faallo" : "reviews"})</span></span>}
+                            {location && <span className="inline-flex min-w-0 items-center gap-1 text-muted"><MapPin size={13} className="shrink-0 text-primary" /><span className="truncate">{location}</span></span>}
+                            {business.verified && <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><BadgeCheck size={13} />{isSomali ? "La xaqiijiyey" : "Verified"}</span>}
+                          </div>
+
+                          <div className="relative z-20 mt-auto grid grid-cols-2 gap-1.5 border-t border-border pt-2 text-[9px] font-bold sm:flex sm:flex-wrap sm:items-center sm:gap-2 sm:pt-3 sm:text-[11px]">
+                            {business.phone ? <a href={`tel:${business.phone}`} className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-foreground transition hover:border-primary/50 hover:text-primary sm:h-9 sm:min-w-[88px] sm:gap-1.5 sm:px-3"><Phone size={12} />{isSomali ? "Wac" : "Call"}</a> : <span className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-muted/50 sm:h-9 sm:min-w-[88px] sm:gap-1.5 sm:px-3"><Phone size={12} />{isSomali ? "Wac" : "Call"}</span>}
+                            {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-1 text-primary transition hover:border-primary hover:bg-primary hover:text-white sm:h-9 sm:min-w-[105px] sm:gap-1.5 sm:px-3"><Navigation size={12} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg border border-border bg-surface-muted px-1 text-muted/50 sm:h-9 sm:min-w-[105px] sm:gap-1.5 sm:px-3"><Navigation size={12} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  }
+
                   return (
                     <article
                       key={`${business.type}-${business.id}`}
-                      className={`group relative min-w-0 overflow-hidden border border-border bg-surface shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.28)] ${viewMode === "list" ? "grid h-[195px] grid-cols-[140px_minmax(0,1fr)] rounded-xl sm:grid-cols-[260px_minmax(0,1fr)]" : "flex h-[255px] flex-col rounded-lg sm:h-[275px]"}`}
+                      className="group relative flex min-h-[335px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:min-h-[355px]"
                     >
-                      <Link href={businessPath} aria-label={`${isSomali ? "Eeg" : "View"} ${displayName}`} className="absolute inset-0 z-10"><span className="sr-only">{isSomali ? "Eeg" : "View"} {displayName}</span></Link>
-                      <div className={`relative block shrink-0 overflow-hidden bg-surface-muted ${viewMode === "list" ? "h-[195px] border-r border-border" : "h-[108px] sm:h-[125px]"}`}>
+                      <Link href={businessPath} aria-label={`${isSomali ? "Eeg" : "View"} ${displayName}`} className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span className="sr-only">{isSomali ? "Eeg" : "View"} {displayName}</span></Link>
+                      <div className="relative block h-[140px] shrink-0 overflow-hidden bg-surface-muted sm:h-[155px]">
                         {safeBanner && <img src={safeBanner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
                         {!safeBanner && safeLogo && <img src={safeLogo} alt="" className="h-full w-full object-contain p-6" />}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent" />
-                        {business.featured && <span className="absolute left-2 top-2 rounded bg-violet-700 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-white sm:text-[8px]">{isSomali ? "La xushay" : "Featured"}</span>}
-                        <Heart size={16} className="absolute right-2 top-2 text-white drop-shadow" />
+                        {!safeBanner && !safeLogo && <Building2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-muted/40" size={42} />}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+                        {business.featured && <span className="absolute left-2.5 top-2.5 rounded-md bg-violet-700 px-2 py-1 text-[8px] font-extrabold uppercase tracking-wide text-white shadow-sm sm:text-[9px]">{isSomali ? "La xushay" : "Featured"}</span>}
+                        <BusinessFavoriteButton business={business} isSomali={isSomali} className="absolute right-2.5 top-2.5 z-20 h-7 w-7" />
                       </div>
-                      <div className={`flex min-h-0 flex-1 flex-col px-3 pb-3 ${viewMode === "list" ? "sm:px-5 sm:pb-4" : "sm:px-3 sm:pb-3"}`}>
-                      <div className="min-w-0 pt-2.5">
-                        <h3 className={`line-clamp-1 font-extrabold tracking-tight text-heading ${viewMode === "list" ? "text-[13px] sm:text-base" : "text-[11px] sm:text-[13px]"}`}>
+                      <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
+
+                      {(business.category || typeof business.distanceKm === "number") && (
+                        <div className="flex min-w-0 items-center gap-1.5 text-[9px] font-bold sm:text-[10px]">
+                          {business.category && <span className="truncate rounded-md bg-primary/10 px-2 py-1 text-primary">{getBusinessCategoryLabel(business.category, isSomali)}</span>}
+                          {typeof business.distanceKm === "number" && <span className="shrink-0 rounded-md bg-surface-muted px-2 py-1 text-muted">{business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`}</span>}
+                        </div>
+                      )}
+
+                      <div className="mt-2.5 min-w-0">
+                        <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.25] tracking-[-0.015em] text-heading sm:text-[15px] xl:text-[16px]">
                           <span className="transition-colors group-hover:text-primary">
                             {displayName}
                           </span>
                         </h3>
                       </div>
 
-                      {(business.category || typeof business.distanceKm === "number") && (
-                        <div className={`mt-2 flex min-w-0 items-center gap-1 font-bold ${viewMode === "list" ? "text-[9px]" : "text-[8px]"}`}>
-                          {business.category && <span className="truncate rounded bg-primary/10 px-1.5 py-0.5 text-primary">{getBusinessCategoryLabel(business.category, isSomali)}</span>}
-                          {typeof business.distanceKm === "number" && <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 text-muted">{business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`}</span>}
-                        </div>
-                      )}
-
                       {location && (
-                        <p className={`mt-2 flex min-w-0 items-center gap-1.5 font-medium text-muted ${viewMode === "list" ? "text-[10px]" : "text-[8px] sm:text-[9px]"}`}>
+                        <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[10px] font-normal leading-4 text-muted sm:text-[11px]">
                           <MapPin
                             aria-hidden="true"
                             size={12}
@@ -427,9 +476,9 @@ export default async function BusinessesPage({
                         </p>
                       )}
 
-                      <div className={`mt-2 flex items-center justify-between gap-2 ${viewMode === "list" ? "text-[10px]" : "text-[8px] sm:text-[9px]"}`}>
-                        {typeof business.rating === "number" ? <p className="flex items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{business.rating.toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0})</span></p> : <span className="text-muted">{isSomali ? "Qiimeyn ma leh" : "Not rated"}</span>}
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[8px] font-bold ${business.statusLabel === "Closed" ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>{business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Furan" : "Open")}</span>
+                      <div className="mt-3 flex items-center justify-between gap-2 text-[10px] sm:text-[11px]">
+                        {typeof business.rating === "number" ? <p className="flex items-center gap-1 font-bold text-foreground"><Star size={12} className="fill-amber-400 text-amber-500" />{business.rating.toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0})</span></p> : <span className="text-muted">{isSomali ? "Qiimeyn ma leh" : "Not rated"}</span>}
+                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-bold sm:text-[9px] ${business.statusLabel === "Closed" ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300" : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>{business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Furan" : "Open")}</span>
                       </div>
 
                       <p className="hidden">
@@ -468,9 +517,9 @@ export default async function BusinessesPage({
                         )}
                       </dl>}
 
-                      <div className={`relative z-20 mt-auto grid grid-cols-2 divide-x divide-border border-t border-border pt-2 font-semibold text-foreground ${viewMode === "list" ? "text-[10px]" : "text-[8px] sm:text-[9px]"}`}>
-                        {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 hover:text-primary"><Phone size={11} />{isSomali ? "Wac" : "Call"}</a> : <span className="flex items-center justify-center gap-1.5 text-muted/50"><Phone size={11} />{isSomali ? "Wac" : "Call"}</span>}
-                        {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 hover:text-primary"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="flex items-center justify-center gap-1.5 text-muted/50"><Navigation size={11} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
+                      <div className="relative z-20 mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3 text-[10px] font-bold sm:text-[11px]">
+                        {business.phone ? <a href={`tel:${business.phone}`} className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary"><Phone size={13} />{isSomali ? "Wac" : "Call"}</a> : <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50"><Phone size={13} />{isSomali ? "Wac" : "Call"}</span>}
+                        {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary"><Navigation size={13} />{isSomali ? "Tilmaamaha" : "Directions"}</a> : <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50"><Navigation size={13} />{isSomali ? "Tilmaamaha" : "Directions"}</span>}
                       </div>
                       </div>
                     </article>

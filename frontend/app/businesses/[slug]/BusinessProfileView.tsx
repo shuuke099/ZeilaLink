@@ -11,6 +11,7 @@ import { getSafeMailtoUrl, getSafeStoredUrl, getSafeTelUrl } from "@/lib/safeUrl
 import type { DirectoryLanguage, PublicBusiness } from "@/lib/publicDirectoryTypes";
 import { getLocalizedBusinessText } from "@/lib/publicDirectoryTypes";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import ReviewSection from "@/components/reviews/ReviewSection";
 
 const panel = "rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.28)]";
 
@@ -46,6 +47,7 @@ export default function BusinessProfileView({ business, language }: { business: 
         {gallery.length > 0 && <Content title="Gallery" action={`${gallery.length} photos`}><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{gallery.slice(0,6).map((image,index)=><button type="button" key={`${image}-${index}`} onClick={() => setActiveImage(index)} aria-label={`Preview ${text.name} image ${index + 1}`} className="h-24 overflow-hidden rounded-lg sm:h-32"><img src={image} alt={`${text.name} gallery ${index+1}`} className="h-full w-full object-cover"/></button>)}</div></Content>}
 
         <Content title={isSo ? "Saacadaha ganacsiga" : "Business hours"}><div className="grid gap-2 text-[13px] sm:grid-cols-2">{business.openingHours && Object.entries(business.openingHours).length ? Object.entries(business.openingHours).map(([day,hours])=><div key={day} className="flex justify-between rounded-lg bg-surface-muted px-3 py-2"><span className="capitalize text-muted">{day}</span><span className="font-semibold text-foreground">{hours || "Closed"}</span></div>) : <p className="text-muted">Contact the business for opening hours.</p>}</div></Content>
+        <ReviewSection targetType="business" targetId={business.id} initialRating={rating} initialCount={reviews} />
       </div>
 
       <aside className="space-y-3 text-[13px] lg:sticky lg:top-20">
