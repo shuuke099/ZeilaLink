@@ -10,12 +10,12 @@ import {
   Building2,
   ChevronDown,
   GraduationCap,
-  MapPin,
   Search,
   ShoppingBag,
   Tag,
   Users,
 } from "lucide-react";
+import LocationDropdown from "./LocationDropdown";
 
 type HeroSectionProps = {
   heroImage: StaticImageData | string;
@@ -36,7 +36,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
   ];
 
   const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("Minneapolis, MN");
+  const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
@@ -207,67 +207,12 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
 
                 {/* LOCATION / CATEGORY / SEARCH */}
                 <div className="mt-2 grid grid-cols-[1fr_1fr_140px] gap-2">
-                  {/* LOCATION */}
-                  <div
-                    className="
-                      relative
-                      flex
-                      h-[42px]
-                      items-center
-                      rounded-lg
-                      border
-                      border-slate-200
-                      bg-white
-                      dark:border-slate-700
-                      dark:bg-slate-950
-                    "
-                  >
-                    <MapPin
-                      size={16}
-                      strokeWidth={1.8}
-                      className="
-                        pointer-events-none
-                        absolute
-                        left-3
-                        z-10
-                        text-slate-500
-                      "
-                    />
-
-                    <select
-                      value={location}
-                      onChange={(event) => setLocation(event.target.value)}
-                      aria-label={isSomali ? "Goobta" : "Location"}
-                      className="
-                        h-full
-                        w-full
-                        appearance-none
-                        rounded-lg
-                        bg-transparent
-                        pl-9
-                        pr-8
-                        text-[12px]
-                        font-medium
-                        text-slate-700
-                        outline-none
-                        dark:text-slate-200
-                      "
-                    >
-                      <option value="Minneapolis, MN">Minneapolis, MN</option>
-                      <option value="St. Paul, MN">St. Paul, MN</option>
-                      <option value="Bloomington, MN">Bloomington, MN</option>
-                    </select>
-
-                    <ChevronDown
-                      size={14}
-                      className="
-                        pointer-events-none
-                        absolute
-                        right-3
-                        text-slate-400
-                      "
-                    />
-                  </div>
+                  {/* LOCATION DROPDOWN WITH SEARCH AT TOP */}
+                  <LocationDropdown
+                    value={location}
+                    onChange={setLocation}
+                    isSomali={isSomali}
+                  />
 
                   {/* CATEGORY */}
                   <div
@@ -571,11 +516,11 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
             MOBILE SEARCH + QUICK ACTIONS
         ========================================================== */}
         <div className="relative z-20 bg-white px-4 pb-7 dark:bg-slate-950">
-          <form onSubmit={handleSearch} className="-mt-3">
+          <form onSubmit={handleSearch} className="-mt-3 space-y-2">
             <div
               className="
                 flex
-                h-[52px]
+                h-[48px]
                 items-center
                 gap-3
                 rounded-xl
@@ -589,7 +534,7 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
               "
             >
               <Search
-                size={20}
+                size={18}
                 strokeWidth={1.8}
                 className="shrink-0 text-slate-500"
               />
@@ -612,6 +557,20 @@ export default function HeroSection({ heroImage }: HeroSectionProps) {
                   dark:text-white
                 "
               />
+            </div>
+
+            <div className="grid grid-cols-[1fr_90px] gap-2">
+              <LocationDropdown
+                value={location}
+                onChange={setLocation}
+                isSomali={isSomali}
+              />
+              <button
+                type="submit"
+                className="h-[42px] rounded-lg bg-primary text-[12px] font-bold text-white shadow-sm"
+              >
+                {isSomali ? "Raadi" : "Search"}
+              </button>
             </div>
           </form>
 
