@@ -94,6 +94,7 @@ export interface PublicBusiness {
   rating?: number | null;
   reviewsCount?: number | null;
   statusLabel?: string | null;
+  status?: string | null;
   bannerUrl?: string | null;
   gallery?: string[];
   subcategory?: string | null;

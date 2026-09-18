@@ -16,6 +16,7 @@ const clockTime = (value: string): string | null => {
 };
 
 export const parseBusinessHours = (value: string): Omit<BusinessHour, "dayOfWeek"> => {
+  if (!value || !value.trim()) return { openTime: null, closeTime: null, closed: true };
   if (/^closed$/i.test(value.trim())) return { openTime: null, closeTime: null, closed: true };
   if (/^(24\s*\/\s*7|open 24 hours|24 hours)$/i.test(value.trim())) {
     return { openTime: "00:00", closeTime: "00:00", closed: false };
@@ -134,14 +135,26 @@ const parseTime = (time: string): number | null => {
   return hours * 60 + minutes;
 };
 
-const getCurrentBusinessTime = (timezone: string, now: Date) => {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(now);
+const getCurrentBusinessTime = (timezone: string | null, now: Date) => {
+  const targetTz = (timezone && timezone.trim()) || "Africa/Mogadishu";
+  let parts: Intl.DateTimeFormatPart[];
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: targetTz,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+  } catch {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Africa/Mogadishu",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+  }
 
   const weekday = parts.find((part) => part.type === "weekday")?.value;
   const hourValue = parts.find((part) => part.type === "hour")?.value;
@@ -185,7 +198,7 @@ export const getBusinessStatus = (
   now = new Date(),
 ): BusinessStatusResult => {
   hours = normalizeBusinessHours(hours);
-  if (!timezone || hours.length === 0) {
+  if (!hours || hours.length === 0) {
     return {
       status: "HOURS_UNAVAILABLE",
       statusLabel: "Hours unavailable",
@@ -229,16 +242,6 @@ export const getBusinessStatus = (
         previousClose <= previousOpen &&
         currentMinutes < previousClose
       ) {
-        const minutesUntilClosing = previousClose - currentMinutes;
-
-        if (minutesUntilClosing <= 60) {
-          return {
-            status: "CLOSING_SOON",
-            statusLabel: "Closing Soon",
-            closesAt: previousDayHours.closeTime,
-          };
-        }
-
         return {
           status: "OPEN",
           statusLabel: "Open",
@@ -247,10 +250,7 @@ export const getBusinessStatus = (
       }
     }
 
-    if (
-      !todayHours ||
-      todayHours.closed
-    ) {
+    if (!todayHours || todayHours.closed) {
       return {
         status: "CLOSED",
         statusLabel: "Closed",
@@ -269,45 +269,33 @@ export const getBusinessStatus = (
       };
     }
 
-    const isOvernight = closingMinutes <= openingMinutes;
+    if (openingMinutes === 0 && closingMinutes === 0) {
+      return {
+        status: "OPEN",
+        statusLabel: "Open",
+        closesAt: null,
+      };
+    }
+
+    const isOvernight = closingMinutes < openingMinutes;
 
     if (!isOvernight) {
-      if (currentMinutes < openingMinutes || currentMinutes >= closingMinutes) {
+      if (currentMinutes >= openingMinutes && currentMinutes < closingMinutes) {
         return {
-          status: "CLOSED",
-          statusLabel: "Closed",
-          closesAt: null,
-        };
-      }
-
-      const minutesUntilClosing = closingMinutes - currentMinutes;
-
-      if (minutesUntilClosing <= 60) {
-        return {
-          status: "CLOSING_SOON",
-          statusLabel: "Closing Soon",
+          status: "OPEN",
+          statusLabel: "Open",
           closesAt: todayHours.closeTime,
         };
       }
 
       return {
-        status: "OPEN",
-        statusLabel: "Open",
-        closesAt: todayHours.closeTime,
+        status: "CLOSED",
+        statusLabel: "Closed",
+        closesAt: null,
       };
     }
 
-    if (currentMinutes >= openingMinutes) {
-      const minutesUntilClosing = 24 * 60 - currentMinutes + closingMinutes;
-
-      if (minutesUntilClosing <= 60) {
-        return {
-          status: "CLOSING_SOON",
-          statusLabel: "Closing Soon",
-          closesAt: todayHours.closeTime,
-        };
-      }
-
+    if (currentMinutes >= openingMinutes || currentMinutes < closingMinutes) {
       return {
         status: "OPEN",
         statusLabel: "Open",
@@ -330,4 +318,3 @@ export const getBusinessStatus = (
     };
   }
 };
-

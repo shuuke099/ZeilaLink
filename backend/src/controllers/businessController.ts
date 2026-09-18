@@ -380,7 +380,7 @@ const adminData = (body: Record<string, any>) => {
     postalCode: optional("postalCode"),
     latitude: coordinate("latitude", -90, 90),
     longitude: coordinate("longitude", -180, 180),
-    timezone: optional("timezone"),
+    timezone: optional("timezone") || "Africa/Mogadishu",
     hasPhysicalLocation: body.hasPhysicalLocation !== false,
     serviceArea: stringArray("serviceArea"),
     remoteAvailable: body.remoteAvailable === true,

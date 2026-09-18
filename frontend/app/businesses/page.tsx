@@ -42,7 +42,11 @@ const compactDescription = (value: string, maximumLength = 160) => {
   return `${compact.slice(0, Math.max(1, maximumLength - 1)).trimEnd()}…`;
 };
 
-const getStatusBadge = (statusLabel?: string, status?: string, isSomali?: boolean) => {
+const getStatusBadge = (
+  statusLabel?: string | null,
+  status?: string | null,
+  isSomali?: boolean,
+) => {
   const currentStatus =
     status ||
     (statusLabel === "Open"
