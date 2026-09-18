@@ -1,3 +1,4 @@
+import BusinessStatusRefresh from "@/components/businesses/BusinessStatusRefresh";
 import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -39,6 +40,49 @@ const compactDescription = (value: string, maximumLength = 160) => {
   const compact = value.replace(/\s+/g, " ").trim();
   if (compact.length <= maximumLength) return compact;
   return `${compact.slice(0, Math.max(1, maximumLength - 1)).trimEnd()}…`;
+};
+
+const getStatusBadge = (statusLabel?: string, status?: string, isSomali?: boolean) => {
+  const currentStatus =
+    status ||
+    (statusLabel === "Open"
+      ? "OPEN"
+      : statusLabel === "Closing Soon"
+        ? "CLOSING_SOON"
+        : statusLabel === "Closed"
+          ? "CLOSED"
+          : "HOURS_UNAVAILABLE");
+
+  switch (currentStatus) {
+    case "OPEN":
+      return {
+        className:
+          "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
+        label: isSomali ? "Hadda furan" : "Open now",
+        shortLabel: isSomali ? "Furan" : "Open",
+      };
+    case "CLOSING_SOON":
+      return {
+        className:
+          "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+        label: isSomali ? "Dhawaan xirmeysa" : "Closing soon",
+        shortLabel: isSomali ? "Xirmeysa" : "Closing soon",
+      };
+    case "CLOSED":
+      return {
+        className:
+          "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300",
+        label: isSomali ? "Xiran" : "Closed",
+        shortLabel: isSomali ? "Xiran" : "Closed",
+      };
+    default:
+      return {
+        className:
+          "border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400",
+        label: isSomali ? "Saacadaha lama hayo" : "Hours unavailable",
+        shortLabel: isSomali ? "Saacadaha lama hayo" : "Hours unavailable",
+      };
+  }
 };
 
 interface BusinessesPageProps {
@@ -271,6 +315,7 @@ export default async function BusinessesPage({
         }}
       />
       <Navbar />
+      <BusinessStatusRefresh />
 
       <main className="mx-auto max-w-[1440px] px-4 pb-20 pt-20 sm:px-6 lg:px-8">
         <section className="relative mb-4 min-h-[150px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-r from-white via-[#f8f7ff] to-[#eeeaff] px-5 py-7 transition-colors dark:border-violet-900/60 dark:from-[#100d20] dark:via-[#151127] dark:to-[#211641] sm:px-7">
@@ -412,7 +457,14 @@ export default async function BusinessesPage({
                         <div className="flex min-w-0 flex-col p-2.5 sm:p-5">
                           <div className="flex flex-wrap items-center gap-1.5 text-[8px] font-bold sm:gap-2 sm:text-[10px]">
                             {business.category && <span className="rounded-md border border-primary/25 bg-primary/10 px-2 py-1 text-primary">{getBusinessCategoryLabel(business.category, isSomali)}</span>}
-                            <span className={`rounded-full border px-2 py-1 ${business.statusLabel === "Closed" ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300" : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>● {business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Hadda furan" : "Open now")}</span>
+                            {(() => {
+                              const badge = getStatusBadge(business.statusLabel, business.status, isSomali);
+                              return (
+                                <span className={`rounded-full border px-2 py-1 ${badge.className}`}>
+                                  ● {badge.label}
+                                </span>
+                              );
+                            })()}
                           </div>
 
                           <h3 className="mt-2 line-clamp-2 text-[13px] font-extrabold leading-tight tracking-[-0.02em] text-heading transition-colors group-hover:text-primary sm:line-clamp-1 sm:text-[19px]">{displayName}</h3>
@@ -478,7 +530,14 @@ export default async function BusinessesPage({
 
                       <div className="mt-3 flex items-center justify-between gap-2 text-[10px] sm:text-[11px]">
                         {typeof business.rating === "number" ? <p className="flex items-center gap-1 font-bold text-foreground"><Star size={12} className="fill-amber-400 text-amber-500" />{business.rating.toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0})</span></p> : <span className="text-muted">{isSomali ? "Qiimeyn ma leh" : "Not rated"}</span>}
-                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-bold sm:text-[9px] ${business.statusLabel === "Closed" ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300" : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>{business.statusLabel === "Closed" ? (isSomali ? "Xiran" : "Closed") : (isSomali ? "Furan" : "Open")}</span>
+                        {(() => {
+                          const badge = getStatusBadge(business.statusLabel, business.status, isSomali);
+                          return (
+                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-bold sm:text-[9px] ${badge.className}`}>
+                              {badge.shortLabel}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <p className="hidden">

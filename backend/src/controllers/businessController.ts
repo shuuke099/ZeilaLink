@@ -1,3 +1,4 @@
+import { BusinessHour, getBusinessStatus, parseBusinessHours, formatBusinessHours, normalizeBusinessHours } from "../utils/businessHours";
 import { Response } from "express";
 import prisma from "../config/database";
 import { AuthRequest } from "../middleware/auth";
@@ -10,21 +11,6 @@ const toNumber = (value: unknown, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-type BusinessHour = {
-  dayOfWeek: number;
-  openTime: string | null;
-  closeTime: string | null;
-  closed: boolean;
-};
-
-type BusinessStatus = "OPEN" | "CLOSING_SOON" | "CLOSED" | "HOURS_UNAVAILABLE";
-
-type BusinessStatusResult = {
-  status: BusinessStatus;
-  statusLabel: string;
-  closesAt: string | null;
-};
-
 type BusinessWithHours = Record<string, any> & {
   hours: BusinessHour[];
   timezone: string | null;
@@ -34,231 +20,21 @@ type BusinessWithHours = Record<string, any> & {
 // After regenerating Prisma, this still points to the normal Business delegate.
 const businessDb = (prisma as any).business;
 
-const presentDirectoryBusiness = (business: any) => ({
-  type: "business" as const,
-  ...business,
-  region: business.state,
-  location: [business.city, business.state, business.country].filter(Boolean).join(", "),
-  openingHours: {
-    weekdays: business.hours?.find((item: any) => item.dayOfWeek === 1)?.openTime || "",
-    weekends: business.hours?.find((item: any) => item.dayOfWeek === 6)?.openTime || "",
-  },
-  jobCount: 0,
-  trainingCount: 0,
-});
-
-const parseTime = (time: string): number | null => {
-  const [hours, minutes] = time.split(":").map(Number);
-
-  if (
-    !Number.isInteger(hours) ||
-    !Number.isInteger(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-
-  return hours * 60 + minutes;
-};
-
-const getCurrentBusinessTime = (timezone: string) => {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-
-  const weekday = parts.find((part) => part.type === "weekday")?.value;
-  const hourValue = parts.find((part) => part.type === "hour")?.value;
-  const minuteValue = parts.find((part) => part.type === "minute")?.value;
-
-  const dayMap: Record<string, number> = {
-    Sun: 0,
-    Mon: 1,
-    Tue: 2,
-    Wed: 3,
-    Thu: 4,
-    Fri: 5,
-    Sat: 6,
-  };
-
-  if (
-    !weekday ||
-    hourValue === undefined ||
-    minuteValue === undefined ||
-    dayMap[weekday] === undefined
-  ) {
-    return null;
-  }
-
-  const hour = Number(hourValue);
-  const minute = Number(minuteValue);
-
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return null;
-  }
-
+const presentDirectoryBusiness = (business: any) => {
+  const normalizedHours = business.hours ? normalizeBusinessHours(business.hours) : [];
   return {
-    dayOfWeek: dayMap[weekday],
-    currentMinutes: hour * 60 + minute,
+    type: "business" as const,
+    ...business,
+    hours: normalizedHours.length ? normalizedHours : business.hours,
+    region: business.state,
+    location: [business.city, business.state, business.country].filter(Boolean).join(", "),
+    openingHours: {
+      weekdays: formatBusinessHours(normalizedHours.find((item: any) => item.dayOfWeek === 1)),
+      weekends: formatBusinessHours(normalizedHours.find((item: any) => item.dayOfWeek === 6)),
+    },
+    jobCount: 0,
+    trainingCount: 0,
   };
-};
-
-const getBusinessStatus = (
-  hours: BusinessHour[],
-  timezone: string | null,
-): BusinessStatusResult => {
-  if (!timezone || hours.length === 0) {
-    return {
-      status: "HOURS_UNAVAILABLE",
-      statusLabel: "Hours unavailable",
-      closesAt: null,
-    };
-  }
-
-  try {
-    const currentTime = getCurrentBusinessTime(timezone);
-
-    if (!currentTime) {
-      return {
-        status: "HOURS_UNAVAILABLE",
-        statusLabel: "Hours unavailable",
-        closesAt: null,
-      };
-    }
-
-    const { dayOfWeek, currentMinutes } = currentTime;
-
-    const todayHours = hours.find((hour) => hour.dayOfWeek === dayOfWeek);
-
-    const previousDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-    const previousDayHours = hours.find(
-      (hour) => hour.dayOfWeek === previousDay,
-    );
-
-    if (
-      previousDayHours &&
-      !previousDayHours.closed &&
-      previousDayHours.openTime &&
-      previousDayHours.closeTime
-    ) {
-      const previousOpen = parseTime(previousDayHours.openTime);
-      const previousClose = parseTime(previousDayHours.closeTime);
-
-      if (
-        previousOpen !== null &&
-        previousClose !== null &&
-        previousClose <= previousOpen &&
-        currentMinutes < previousClose
-      ) {
-        const minutesUntilClosing = previousClose - currentMinutes;
-
-        if (minutesUntilClosing <= 60) {
-          return {
-            status: "CLOSING_SOON",
-            statusLabel: "Closing Soon",
-            closesAt: previousDayHours.closeTime,
-          };
-        }
-
-        return {
-          status: "OPEN",
-          statusLabel: "Open",
-          closesAt: previousDayHours.closeTime,
-        };
-      }
-    }
-
-    if (
-      !todayHours ||
-      todayHours.closed ||
-      !todayHours.openTime ||
-      !todayHours.closeTime
-    ) {
-      return {
-        status: "CLOSED",
-        statusLabel: "Closed",
-        closesAt: null,
-      };
-    }
-
-    const openingMinutes = parseTime(todayHours.openTime);
-    const closingMinutes = parseTime(todayHours.closeTime);
-
-    if (openingMinutes === null || closingMinutes === null) {
-      return {
-        status: "HOURS_UNAVAILABLE",
-        statusLabel: "Hours unavailable",
-        closesAt: null,
-      };
-    }
-
-    const isOvernight = closingMinutes <= openingMinutes;
-
-    if (!isOvernight) {
-      if (currentMinutes < openingMinutes || currentMinutes >= closingMinutes) {
-        return {
-          status: "CLOSED",
-          statusLabel: "Closed",
-          closesAt: null,
-        };
-      }
-
-      const minutesUntilClosing = closingMinutes - currentMinutes;
-
-      if (minutesUntilClosing <= 60) {
-        return {
-          status: "CLOSING_SOON",
-          statusLabel: "Closing Soon",
-          closesAt: todayHours.closeTime,
-        };
-      }
-
-      return {
-        status: "OPEN",
-        statusLabel: "Open",
-        closesAt: todayHours.closeTime,
-      };
-    }
-
-    if (currentMinutes >= openingMinutes) {
-      const minutesUntilClosing = 24 * 60 - currentMinutes + closingMinutes;
-
-      if (minutesUntilClosing <= 60) {
-        return {
-          status: "CLOSING_SOON",
-          statusLabel: "Closing Soon",
-          closesAt: todayHours.closeTime,
-        };
-      }
-
-      return {
-        status: "OPEN",
-        statusLabel: "Open",
-        closesAt: todayHours.closeTime,
-      };
-    }
-
-    return {
-      status: "CLOSED",
-      statusLabel: "Closed",
-      closesAt: null,
-    };
-  } catch (error) {
-    console.error("Failed to calculate business status:", error);
-
-    return {
-      status: "HOURS_UNAVAILABLE",
-      statusLabel: "Hours unavailable",
-      closesAt: null,
-    };
-  }
 };
 
 export const getBusinesses = async (req: AuthRequest, res: Response) => {
@@ -420,7 +196,7 @@ export const getBusinesses = async (req: AuthRequest, res: Response) => {
       ...getBusinessStatus(business.hours, business.timezone),
     }));
 
-    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    res.set("Cache-Control", "no-store");
 
     res.set("X-Cache", result.hit ? "HIT" : "MISS");
 
@@ -493,7 +269,7 @@ export const getFeaturedBusinesses = async (
       ...getBusinessStatus(business.hours, business.timezone),
     }));
 
-    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    res.set("Cache-Control", "no-store");
 
     res.set("X-Cache", result.hit ? "HIT" : "MISS");
 
@@ -561,7 +337,7 @@ export const getBusinessById = async (req: AuthRequest, res: Response) => {
       ...getBusinessStatus(result.value.hours, result.value.timezone),
     };
 
-    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    res.set("Cache-Control", "no-store");
 
     res.set("X-Cache", result.hit ? "HIT" : "MISS");
 
@@ -615,7 +391,23 @@ const adminData = (body: Record<string, any>) => {
     active: body.active !== false,
   };
 };
-const adminHours = (body: Record<string, any>) => { const value = body.openingHours && typeof body.openingHours === "object" ? body.openingHours : {}; return [{ dayOfWeek: 1, openTime: String(value.weekdays || "").trim() || null, closeTime: null, closed: !value.weekdays }, { dayOfWeek: 6, openTime: String(value.weekends || "").trim() || null, closeTime: null, closed: !value.weekends }]; };
+const adminHours = (body: Record<string, any>) => {
+  const value = body.openingHours || {};
+  const weekdayInput = String(body.weekdayHours || value.weekdays || "");
+  const weekendInput = String(body.weekendHours || value.weekends || "");
+
+  return Array.from({ length: 7 }, (_, dayOfWeek) => {
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const inputString = isWeekend ? weekendInput : weekdayInput;
+    const parsed = parseBusinessHours(inputString);
+    return {
+      dayOfWeek,
+      openTime: parsed.openTime,
+      closeTime: parsed.closeTime,
+      closed: parsed.closed,
+    };
+  });
+};
 
 export const getAdminBusinesses = async (_req: AuthRequest, res: Response) => { const businesses = await businessDb.findMany({ include: { hours: true }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }] }); return res.json({ businesses: businesses.map(presentDirectoryBusiness) }); };
 export const getAdminBusinessById = async (req: AuthRequest, res: Response) => { const business = await businessDb.findUnique({ where: { id: req.params.id }, include: { hours: true } }); if (!business) return res.status(404).json({ error: "Business not found" }); return res.json({ business: presentDirectoryBusiness(business) }); };
