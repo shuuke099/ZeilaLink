@@ -2,7 +2,7 @@ import { BusinessHour, getBusinessStatus, parseBusinessHours, formatBusinessHour
 import { Response } from "express";
 import prisma from "../config/database";
 import { AuthRequest } from "../middleware/auth";
-import { cacheGetOrSet, makeCacheKey } from "../utils/cache";
+import { cacheGetOrSet, invalidateCacheByPrefix, makeCacheKey } from "../utils/cache";
 import { randomUUID } from "crypto";
 import { slugify } from "../utils/slug";
 
@@ -393,8 +393,13 @@ const adminData = (body: Record<string, any>) => {
 };
 const adminHours = (body: Record<string, any>) => {
   const value = body.openingHours || {};
-  const weekdayInput = String(body.weekdayHours || value.weekdays || "");
-  const weekendInput = String(body.weekendHours || value.weekends || "");
+  const weekdayInput = String(body.weekdayHours || value.weekdays || "").trim();
+  let weekendInput = String(body.weekendHours || value.weekends || "").trim();
+
+  // If weekend hours are left blank, fall back to weekday hours unless explicitly closed
+  if (!weekendInput && weekdayInput) {
+    weekendInput = weekdayInput;
+  }
 
   return Array.from({ length: 7 }, (_, dayOfWeek) => {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -411,6 +416,6 @@ const adminHours = (body: Record<string, any>) => {
 
 export const getAdminBusinesses = async (_req: AuthRequest, res: Response) => { const businesses = await businessDb.findMany({ include: { hours: true }, orderBy: [{ featured: "desc" }, { createdAt: "desc" }] }); return res.json({ businesses: businesses.map(presentDirectoryBusiness) }); };
 export const getAdminBusinessById = async (req: AuthRequest, res: Response) => { const business = await businessDb.findUnique({ where: { id: req.params.id }, include: { hours: true } }); if (!business) return res.status(404).json({ error: "Business not found" }); return res.json({ business: presentDirectoryBusiness(business) }); };
-export const createAdminBusiness = async (req: AuthRequest, res: Response) => { try { if (!req.user) return res.status(401).json({ error: "Authentication required" }); const data = adminData(req.body || {}); const business = await businessDb.create({ data: { ...data, userId: req.user.id, slug: `${slugify(data.name, "business")}-${randomUUID()}`, hours: { create: adminHours(req.body || {}) } }, include: { hours: true } }); return res.status(201).json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to create business" }); } };
-export const updateAdminBusiness = async (req: AuthRequest, res: Response) => { try { const existing = await businessDb.findUnique({ where: { id: req.params.id } }); if (!existing) return res.status(404).json({ error: "Business not found" }); const data = adminData({ ...existing, region: existing.state, ...(req.body || {}) }); const business = await businessDb.update({ where: { id: existing.id }, data: { ...data, hours: { deleteMany: {}, create: adminHours(req.body || {}) } }, include: { hours: true } }); return res.json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to update business" }); } };
-export const deleteAdminBusiness = async (req: AuthRequest, res: Response) => { const result = await businessDb.deleteMany({ where: { id: req.params.id } }); if (!result.count) return res.status(404).json({ error: "Business not found" }); return res.json({ message: "Business deleted successfully" }); };
+export const createAdminBusiness = async (req: AuthRequest, res: Response) => { try { if (!req.user) return res.status(401).json({ error: "Authentication required" }); const data = adminData(req.body || {}); const business = await businessDb.create({ data: { ...data, userId: req.user.id, slug: `${slugify(data.name, "business")}-${randomUUID()}`, hours: { create: adminHours(req.body || {}) } }, include: { hours: true } }); await invalidateCacheByPrefix(["businesses:list", "businesses:featured"]); return res.status(201).json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to create business" }); } };
+export const updateAdminBusiness = async (req: AuthRequest, res: Response) => { try { const existing = await businessDb.findUnique({ where: { id: req.params.id } }); if (!existing) return res.status(404).json({ error: "Business not found" }); const data = adminData({ ...existing, region: existing.state, ...(req.body || {}) }); const business = await businessDb.update({ where: { id: existing.id }, data: { ...data, hours: { deleteMany: {}, create: adminHours(req.body || {}) } }, include: { hours: true } }); await invalidateCacheByPrefix(["businesses:list", "businesses:featured"]); return res.json(presentDirectoryBusiness(business)); } catch (error: any) { return res.status(error?.status || 500).json({ error: error?.status ? error.message : "Failed to update business" }); } };
+export const deleteAdminBusiness = async (req: AuthRequest, res: Response) => { const result = await businessDb.deleteMany({ where: { id: req.params.id } }); if (!result.count) return res.status(404).json({ error: "Business not found" }); await invalidateCacheByPrefix(["businesses:list", "businesses:featured"]); return res.json({ message: "Business deleted successfully" }); };
