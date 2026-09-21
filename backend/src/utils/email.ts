@@ -370,12 +370,30 @@ export const sendVerificationEmail = async (
                 </tr>
               </table>
 
-              <p style="margin:0 0 6px;font-size:13px;line-height:20px;color:#64748b;">
-                Didn&apos;t create a ZeilaLink account? You can safely ignore this email &mdash; your address will remain unverified.
-              </p>
-              <p style="margin:0 0 4px;font-size:13px;line-height:20px;color:#64748b;">
-                For your security, never share this code with anyone. ZeilaLink staff will never ask you for it.
-              </p>
+              <!-- Security notes: 2 columns on desktop, stacks on mobile -->
+              <div style="font-size:0;line-height:0;margin:0 0 6px;">
+                <!--[if mso]><table role="presentation" width="100%"><tr><td width="50%" valign="top"><![endif]-->
+                <div class="col" style="display:inline-block;width:100%;max-width:250px;vertical-align:top;font-size:13px;line-height:19px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
+                    <tr>
+                      <td style="background-color:#f8f9fc;border:1px solid #e7e9f2;border-radius:12px;padding:14px;font-family:Arial,Helvetica,sans-serif;">
+                        <p style="margin:0;font-size:12px;line-height:18px;color:#64748b;"><strong style="color:#0b1235;">Didn&apos;t sign up?</strong><br>You can safely ignore this email &mdash; your address will remain unverified.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <!--[if mso]></td><td width="50%" valign="top"><![endif]-->
+                <div class="col" style="display:inline-block;width:100%;max-width:250px;vertical-align:top;font-size:13px;line-height:19px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
+                    <tr>
+                      <td style="background-color:#f8f9fc;border:1px solid #e7e9f2;border-radius:12px;padding:14px;font-family:Arial,Helvetica,sans-serif;">
+                        <p style="margin:0;font-size:12px;line-height:18px;color:#64748b;"><strong style="color:#0b1235;">Keep it private.</strong><br>Never share this code. ZeilaLink staff will never ask you for it.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <!--[if mso]></td></tr></table><![endif]-->
+              </div>
             </td>
           </tr>
 
@@ -436,30 +454,26 @@ export const sendWelcomeEmail = async (email: string, userName: string) => {
     // Keep the canonical production origin for links if config is invalid.
   }
 
-  const featureRow = (
+  const featureCol = (
     icon: string,
     tint: string,
     title: string,
     body: string,
     href: string,
   ) => `
-                <tr>
-                  <td style="padding:10px 0;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td width="46" valign="top" style="width:46px;">
-                          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                            <tr><td align="center" width="42" height="42" style="width:42px;height:42px;background-color:${tint};border-radius:11px;font-size:20px;line-height:42px;">${icon}</td></tr>
-                          </table>
-                        </td>
-                        <td valign="top" style="padding-left:14px;font-family:Arial,Helvetica,sans-serif;">
-                          <a href="${href}" style="font-size:15px;font-weight:bold;color:#0b1235;text-decoration:none;">${title}</a>
-                          <p style="margin:4px 0 0;font-size:13px;line-height:20px;color:#64748b;">${body}</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>`;
+    <div class="col" style="display:inline-block;width:100%;max-width:250px;vertical-align:top;font-size:14px;line-height:20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
+        <tr>
+          <td style="background-color:#f8f9fc;border:1px solid #e7e9f2;border-radius:14px;padding:16px;font-family:Arial,Helvetica,sans-serif;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">
+              <tr><td align="center" width="40" height="40" style="width:40px;height:40px;background-color:${tint};border-radius:10px;font-size:19px;line-height:40px;">${icon}</td></tr>
+            </table>
+            <a href="${href}" style="font-size:14px;font-weight:bold;color:#0b1235;text-decoration:none;">${title}</a>
+            <p style="margin:5px 0 0;font-size:12px;line-height:18px;color:#64748b;">${body}</p>
+          </td>
+        </tr>
+      </table>
+    </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -519,13 +533,18 @@ export const sendWelcomeEmail = async (email: string, userName: string) => {
                 Your account is fully active. ZeilaLink connects Somali communities with opportunities &mdash; here&apos;s everything you can do right now.
               </p>
 
-              <!-- Feature list -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
-                ${featureRow('&#128188;', '#ede9fe', 'Find Jobs &amp; Careers', 'Browse and apply to verified job listings from employers across the region.', `${origin}/jobs`)}
-                ${featureRow('&#128736;&#65039;', '#e0f2fe', 'Book Professional Services', 'Hire trusted local professionals for home, tech, beauty and business needs.', `${origin}/services`)}
-                ${featureRow('&#127891;', '#fef3c7', 'Take Courses &amp; Training', 'Build practical skills with certified providers and earn certificates.', `${origin}/training`)}
-                ${featureRow('&#127970;', '#dcfce7', 'Explore the Business Directory', 'Discover, call and get directions to verified local businesses near you.', `${origin}/businesses`)}
-              </table>
+              <!-- Feature grid: 2 columns on desktop, stacks on mobile -->
+              <div style="font-size:0;line-height:0;margin:0 0 6px;">
+                <!--[if mso]><table role="presentation" width="100%"><tr><td width="50%" valign="top"><![endif]-->
+                ${featureCol('&#128188;', '#ede9fe', 'Find Jobs &amp; Careers', 'Browse and apply to verified job listings from employers across the region.', `${origin}/jobs`)}
+                <!--[if mso]></td><td width="50%" valign="top"><![endif]-->
+                ${featureCol('&#128736;&#65039;', '#e0f2fe', 'Book Professional Services', 'Hire trusted local professionals for home, tech, beauty and business needs.', `${origin}/services`)}
+                <!--[if mso]></td></tr><tr><td width="50%" valign="top"><![endif]-->
+                ${featureCol('&#127891;', '#fef3c7', 'Take Courses &amp; Training', 'Build practical skills with certified providers and earn certificates.', `${origin}/training`)}
+                <!--[if mso]></td><td width="50%" valign="top"><![endif]-->
+                ${featureCol('&#127970;', '#dcfce7', 'Explore the Business Directory', 'Discover, call and get directions to verified local businesses near you.', `${origin}/businesses`)}
+                <!--[if mso]></td></tr></table><![endif]-->
+              </div>
 
               <!-- CTA -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 26px;">
