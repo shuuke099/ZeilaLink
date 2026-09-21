@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Navigation, Phone } from "lucide-react";
 import api from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -60,66 +60,84 @@ type ServicesResponse = {
    CONFIG
 ============================================================ */
 
-const CARDS_PER_PAGE = 6;
+const CARDS_PER_PAGE = 5;
 const FALLBACK_IMAGE = "/images/service-placeholder.jpg";
 
 /* ============================================================
    SERVICE CARD
 ============================================================ */
 
-function ServiceCard({ service }: { service: Service }) {
+function ServiceCard({ service, className }: { service: Service; className?: string }) {
   const { language } = useLanguage();
   const so = language === "so";
   const title = so ? service.titleSo?.trim() || service.title : service.title;
-  const priceLabel = service.priceLabel?.trim();
+  const description = so
+    ? service.descriptionSo?.trim() || service.description
+    : service.description;
   const serviceUrl = `/services/${service.slug || service.id}`;
   const image = service.image || FALLBACK_IMAGE;
+  const directionsQuery =
+    [service.address, service.city, service.state, service.postalCode, service.country]
+      .filter(Boolean)
+      .join(", ") || service.serviceArea?.filter(Boolean).join(", ");
 
   return (
-    <article className="group w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-      <Link href={serviceUrl} className="block">
-        {/* Image */}
-        <div className="relative h-[125px] w-full overflow-hidden bg-gray-100 sm:h-[140px] md:h-[145px]">
-          <img
-            src={image}
-            alt={title}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(event) => {
-              event.currentTarget.src = FALLBACK_IMAGE;
-            }}
-          />
+    <article className={`group relative flex min-h-[330px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,.07)] transition duration-200 hover:-translate-y-1 hover:border-primary/35 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:min-h-[355px] ${className ?? ""}`}>
+      <Link
+        href={serviceUrl}
+        aria-label={`${so ? "Eeg" : "View"} ${title}`}
+        className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      >
+        <span className="sr-only">{so ? "Eeg" : "View"} {title}</span>
+      </Link>
+
+      <div className="relative h-[135px] shrink-0 overflow-hidden bg-surface-muted dark:bg-slate-800 sm:h-[155px]">
+        <img
+          src={image}
+          alt={`${title} service`}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          onError={(event) => {
+            event.currentTarget.src = FALLBACK_IMAGE;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent" />
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
+        <div className="min-h-0 min-w-0">
+          <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.25] tracking-[-0.015em] text-heading dark:text-white sm:text-[15px] xl:text-[16px]">{title}</h3>
+          {service.provider && <p className="mt-1.5 truncate text-[10px] font-bold leading-4 text-primary sm:text-[11px]">{service.provider}</p>}
+          <p className="mt-2.5 line-clamp-3 text-[11px] font-medium leading-[1.55] text-slate-600 dark:text-slate-300 sm:text-[12px]">{description}</p>
         </div>
 
-        {/* Information */}
-        <div className="p-3">
-          <h3 className="truncate text-sm font-bold text-slate-950 transition-colors group-hover:text-violet-700 dark:text-white dark:group-hover:text-violet-300">
-            {title}
-          </h3>
-
-          <p className="mt-1 truncate text-sm font-bold text-violet-700">
-            {!priceLabel || priceLabel.toLowerCase() === "contact for pricing"
-              ? so ? "La xiriir si aad qiimaha u ogaato" : "Contact for pricing"
-              : priceLabel}
-          </p>
-
-          {service.rating > 0 && (
-            <div className="mt-1.5 flex items-center gap-1">
-              <Star size={13} className="fill-amber-400 text-amber-400" />
-
-              <span className="text-xs font-semibold text-slate-700">
-                {Number(service.rating).toFixed(1)}
-              </span>
-
-              {service.reviewsCount > 0 && (
-                <span className="text-xs text-slate-400">
-                  ({service.reviewsCount})
-                </span>
-              )}
-            </div>
+        <div className="relative z-20 mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3 text-[10px] font-bold sm:text-[11px]">
+          {service.phone ? (
+            <a href={`tel:${service.phone}`} className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 text-primary transition hover:border-primary hover:bg-primary hover:text-white">
+              <Phone size={13} />{so ? "Wac" : "Call"}
+            </a>
+          ) : (
+            <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50">
+              <Phone size={13} />{so ? "Wac" : "Call"}
+            </span>
+          )}
+          {directionsQuery ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary dark:text-slate-200"
+            >
+              <Navigation size={13} />{so ? "Tilmaamaha" : "Directions"}
+            </a>
+          ) : (
+            <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50">
+              <Navigation size={13} />{so ? "Tilmaamaha" : "Directions"}
+            </span>
           )}
         </div>
-      </Link>
+      </div>
     </article>
   );
 }
@@ -142,22 +160,12 @@ function LoadingSkeleton() {
           <div className="h-4 w-16 animate-pulse rounded bg-gray-100" />
         </div>
 
-        {/* Mobile */}
-        <div className="grid grid-cols-2 gap-3 md:hidden">
-          {Array.from({ length: 4 }).map((_, index) => (
+        {/* Grid */}
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="h-[205px] animate-pulse rounded-xl bg-gray-100"
-            />
-          ))}
-        </div>
-
-        {/* Desktop */}
-        <div className="hidden grid-cols-6 gap-4 md:grid">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-[220px] animate-pulse rounded-xl bg-gray-100"
+              className={`h-[330px] animate-pulse rounded-2xl bg-surface-muted sm:h-[355px] ${index === 4 ? "hidden sm:block" : ""}`}
             />
           ))}
         </div>
@@ -277,11 +285,9 @@ export default function PopularServices() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             {visibleServices.map((service, index) => (
-              <div key={service.id} className={index >= 4 ? "hidden sm:block" : ""}>
-                <ServiceCard service={service} />
-              </div>
+              <ServiceCard key={service.id} service={service} className={index === 4 ? "hidden sm:flex" : ""} />
             ))}
         </div>
       </div>

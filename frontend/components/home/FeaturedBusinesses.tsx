@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, Navigation, Phone, Star, ChevronRight } from "lucide-react";
+import { MapPin, Navigation, Phone, Star, ChevronRight, Building2, BadgeCheck } from "lucide-react";
 
 import api from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getBusinessCategoryLabel } from "@/app/businesses/businessUi";
 
 type BusinessStatus = "OPEN" | "CLOSING_SOON" | "CLOSED" | "HOURS_UNAVAILABLE";
 
@@ -45,7 +46,7 @@ type FeaturedBusinessesResponse = {
   businesses: Business[];
 };
 
-const CARDS_PER_PAGE = 6;
+const CARDS_PER_PAGE = 5;
 
 const formatBusinessTime = (time: string | null) => {
   if (!time) return null;
@@ -72,19 +73,35 @@ const formatBusinessTime = (time: string | null) => {
   return `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
 };
 
-const getStatusClasses = (status: BusinessStatus) => {
+const getStatusBadge = (status: BusinessStatus, isSomali: boolean) => {
   switch (status) {
     case "OPEN":
-      return "bg-emerald-50 text-emerald-700 ring-emerald-600/20";
+      return {
+        className:
+          "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
+        shortLabel: isSomali ? "Furan" : "Open",
+      };
 
     case "CLOSING_SOON":
-      return "bg-amber-50 text-amber-700 ring-amber-600/20";
+      return {
+        className:
+          "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
+        shortLabel: isSomali ? "Xirmeysa" : "Closing soon",
+      };
 
     case "CLOSED":
-      return "bg-red-50 text-red-700 ring-red-600/20";
+      return {
+        className:
+          "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300",
+        shortLabel: isSomali ? "Xiran" : "Closed",
+      };
 
     default:
-      return "bg-slate-100 text-slate-500 ring-slate-500/20";
+      return {
+        className:
+          "border-slate-300 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400",
+        shortLabel: isSomali ? "Saacadaha lama hayo" : "Hours unavailable",
+      };
   }
 };
 
@@ -155,11 +172,11 @@ export default function FeaturedBusinesses() {
             <div className="mt-2 h-4 w-72 max-w-full animate-pulse rounded bg-gray-100" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, index) => (
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className={`${index >= 4 ? "hidden sm:block" : ""} h-[165px] animate-pulse rounded-lg border border-gray-200 bg-gray-100 sm:h-[195px]`}
+                className={`h-[335px] animate-pulse rounded-2xl border border-border bg-surface-muted sm:h-[355px] ${index === 4 ? "hidden sm:block" : ""}`}
               />
             ))}
           </div>
@@ -215,14 +232,11 @@ export default function FeaturedBusinesses() {
         ) : (
         /* Business cards */
         <div className="relative">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             {visibleBusinesses.map((business, index) => {
               const businessUrl = business.slug || business.id;
-
-              const image =
-                business.bannerUrl ||
-                business.logoUrl ||
-                "/images/business-placeholder.jpg";
+              const banner = business.bannerUrl;
+              const logo = business.logoUrl;
 
               const location = [business.city, business.state]
                 .filter(Boolean)
@@ -230,22 +244,54 @@ export default function FeaturedBusinesses() {
               const directionsQuery = [business.address, business.city, business.state]
                 .filter(Boolean)
                 .join(", ");
+              const badge = getStatusBadge(business.status, so);
 
               return (
                 <article
                   key={business.id}
-                  className={`${index >= 4 ? "hidden sm:block" : ""} group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900`}
+                  className={`group relative flex min-h-[335px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_16px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl dark:bg-surface dark:shadow-[0_8px_24px_rgba(0,0,0,.35)] sm:min-h-[355px] ${index === 4 ? "hidden sm:flex" : ""}`}
                 >
-                  <Link href={`/businesses/${businessUrl}`} className="block h-[105px] overflow-hidden bg-slate-100 sm:h-[135px]">
-                    <img src={image} alt={business.name} className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.03]" />
-                  </Link>
-                  <Link href={`/businesses/${businessUrl}`} className="block p-2.5 sm:p-3">
-                    <h3 className="truncate text-[11px] font-extrabold text-slate-950 transition group-hover:text-primary dark:text-white dark:group-hover:text-violet-300 sm:text-[13px]">{business.name}</h3>
-                    <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2 text-[9px] font-medium text-slate-500 sm:text-[10px]"><p className="flex min-w-0 items-center gap-1"><MapPin size={12} className="shrink-0 text-primary" /><span className="truncate">{location || t("Online", "Onlayn")}</span></p><span className="flex shrink-0 items-center gap-1 font-semibold text-amber-500"><Star size={11} className="fill-amber-400" />{Number(business.rating || 0).toFixed(1)}</span></div>
-                  </Link>
-                  <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 py-2 text-[8px] font-semibold text-slate-600 dark:divide-slate-800 dark:border-slate-800 sm:text-[9px]">
-                    {business.phone ? <a href={`tel:${business.phone}`} className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Phone size={11} />{t("Call", "Wac")}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Phone size={11} />{t("Call", "Wac")}</span>}
-                    {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 transition hover:text-primary"><Navigation size={11} />{t("Directions", "Tilmaamaha jidka")}</a> : <span className="flex items-center justify-center gap-1.5 text-slate-300"><Navigation size={11} />{t("Directions", "Tilmaamaha jidka")}</span>}
+                  <Link href={`/businesses/${businessUrl}`} aria-label={`${t("View", "Eeg")} ${business.name}`} className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"><span className="sr-only">{t("View", "Eeg")} {business.name}</span></Link>
+
+                  <div className="relative block h-[140px] shrink-0 overflow-hidden bg-surface-muted sm:h-[155px]">
+                    {banner && <img src={banner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
+                    {!banner && logo && <img src={logo} alt={business.name} className="h-full w-full object-contain p-6" />}
+                    {!banner && !logo && <Building2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-muted/40" size={42} />}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 via-transparent to-transparent" />
+                    {business.featured && <span className="absolute left-2.5 top-2.5 rounded-md bg-violet-700 px-2 py-1 text-[8px] font-extrabold uppercase tracking-wide text-white shadow-sm sm:text-[9px]">{t("Featured", "La xushay")}</span>}
+                  </div>
+
+                  <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
+                    {(business.category || business.subcategory) && (
+                      <div className="flex min-w-0 items-center gap-1.5 text-[9px] font-bold sm:text-[10px]">
+                        <span className="truncate rounded-md bg-primary/10 px-2 py-1 text-primary">{business.subcategory || getBusinessCategoryLabel(business.category, so)}</span>
+                      </div>
+                    )}
+
+                    <div className="mt-2.5 min-w-0">
+                      <h3 className="line-clamp-2 text-[13px] font-extrabold leading-[1.25] tracking-[-0.015em] text-heading sm:text-[15px] xl:text-[16px]">
+                        <span className="transition-colors group-hover:text-primary">{business.name}</span>
+                      </h3>
+                    </div>
+
+                    <p className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[10px] font-normal leading-4 text-muted sm:text-[11px]">
+                      <MapPin aria-hidden="true" size={12} className="shrink-0 text-primary" />
+                      <span className="truncate">{location || t("Online", "Onlayn")}</span>
+                    </p>
+
+                    <div className="mt-3 flex items-center justify-between gap-2 text-[10px] sm:text-[11px]">
+                      <p className="flex items-center gap-1 font-bold text-foreground"><Star size={12} className="fill-amber-400 text-amber-500" />{Number(business.rating || 0).toFixed(1)} <span className="font-normal text-muted">({business.reviewsCount ?? 0})</span></p>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[8px] font-bold sm:text-[9px] ${badge.className}`}>{badge.shortLabel}</span>
+                    </div>
+
+                    {business.verified && (
+                      <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"><BadgeCheck size={13} />{t("Verified", "La xaqiijiyey")}</p>
+                    )}
+
+                    <div className="relative z-20 mt-auto grid grid-cols-2 gap-2 border-t border-border pt-3 text-[10px] font-bold sm:text-[11px]">
+                      {business.phone ? <a href={`tel:${business.phone}`} className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary"><Phone size={13} />{t("Call", "Wac")}</a> : <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50"><Phone size={13} />{t("Call", "Wac")}</span>}
+                      {directionsQuery ? <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(directionsQuery)}`} target="_blank" rel="noopener noreferrer" className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-foreground transition hover:border-primary/50 hover:text-primary"><Navigation size={13} />{t("Directions", "Tilmaamaha")}</a> : <span className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-muted text-muted/50"><Navigation size={13} />{t("Directions", "Tilmaamaha")}</span>}
+                    </div>
                   </div>
                 </article>
               );

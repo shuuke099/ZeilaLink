@@ -19,9 +19,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection heroImage="/hero.jpeg" />
-      <FeaturedBusinesses />
-      <PopularServices />
       <FeaturedCourses />
+      <PopularServices />
+      <FeaturedBusinesses />
       <DealsAndPromotions />
       <HomeJobsAndPromotions />
       <div className="font-sans">

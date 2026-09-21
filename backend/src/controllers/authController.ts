@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
 import { clearAuthCookie, generateToken, setAuthCookie } from '../utils/jwt';
-import { sendVerificationEmail, sendPasswordResetOtpEmail } from '../utils/email';
+import { sendVerificationEmail, sendPasswordResetOtpEmail, sendWelcomeEmail } from '../utils/email';
 import { AuthRequest } from '../middleware/auth';
 import { generateOtp, hashOtp, verifyOtp } from '../utils/otp';
 import {
@@ -651,6 +651,10 @@ export const verifyEmail = async (req: Request, res: Response) => {
       resourceType: 'user',
       resourceId: user.id,
       meta: { result: 'success', ...requestAuditMeta(req) },
+    });
+
+    void sendWelcomeEmail(user.email, user.name).catch((error) => {
+      console.error('[Auth] Welcome email delivery failed', error);
     });
 
     res.json({ 

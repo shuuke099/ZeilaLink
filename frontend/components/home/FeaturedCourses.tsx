@@ -2,28 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, GraduationCap } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CourseCard, type Training } from "@/app/trainings/TrainingsClient";
 
-type Course = { id: string; slug?: string | null; name: string; duration: string; cost: number; imageUrl?: string | null; providesCertificate?: boolean; provider: { name: string; rating?: number | null } };
+const CARDS_PER_PAGE = 5;
 
 export default function FeaturedCourses() {
   const { language } = useLanguage();
   const so = language === "so";
   const t = (en: string, somali: string) => so ? somali : en;
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<{ courses?: Course[] }>("/courses", { params: { featured: true, limit: 6 } })
+    api.get<{ courses?: Training[] }>("/courses", { params: { featured: true, limit: 12 } })
       .then(async ({ data }) => {
         let items = data.courses || [];
-        if (items.length < 6) {
-          const fallback = await api.get<{ courses?: Course[] }>("/courses", { params: { limit: 12 } });
+        if (items.length < CARDS_PER_PAGE) {
+          const fallback = await api.get<{ courses?: Training[] }>("/courses", { params: { limit: 12 } });
           items = Array.from(new Map([...items, ...(fallback.data.courses || [])].map((course) => [course.id, course])).values());
         }
-        setCourses(items.slice(0, 6));
+        setCourses(items.slice(0, CARDS_PER_PAGE));
       })
       .catch(() => setCourses([]))
       .finally(() => setLoading(false));
@@ -36,16 +37,12 @@ export default function FeaturedCourses() {
         <Link href="/training" className="flex shrink-0 items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900 sm:text-sm">{t("View all trainings", "Arag dhamaan tababarada")} <ChevronRight size={17} /></Link>
       </div>
       {!loading && courses.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center dark:border-slate-800 dark:bg-slate-900"><p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{t("Training programs will appear here as soon as they are published.", "Barnaamijyada tababarku waxay halkan ka muuqan doonaan marka la daabaco.")}</p><Link href="/training" className="mt-3 inline-flex text-sm font-bold text-violet-700">{t("Browse all trainings", "Arag dhamaan tababarada")}</Link></div> :
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-6">
-        {(loading ? Array.from({ length: 6 }) : courses).map((item, index) => {
-          if (!item || typeof item !== "object" || !("id" in item)) return <div key={index} className={`${index >= 4 ? "hidden sm:block" : ""} h-[165px] animate-pulse rounded-lg border border-slate-200 bg-slate-100 sm:h-[195px]`} />;
-          const course = item as Course;
-          return <Link key={course.id} href={`/training/${course.slug || course.id}`} className={`${index >= 4 ? "hidden sm:block" : ""} group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900`}>
-            <div className="relative flex h-[105px] items-center justify-center overflow-hidden bg-slate-100 sm:h-[135px] dark:bg-slate-800">
-              {course.imageUrl ? <img src={course.imageUrl} alt={course.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /> : <GraduationCap size={42} className="text-violet-600" />}
-            </div>
-            <div className="p-2.5 sm:p-3"><h3 className="line-clamp-1 text-[11px] font-extrabold text-slate-950 group-hover:text-violet-700 sm:text-[13px] dark:text-white">{course.name}</h3><p className="mt-1.5 truncate text-[9px] font-medium text-slate-500 sm:text-[10px]">{course.provider.name}</p></div>
-          </Link>;
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+        {(loading ? Array.from({ length: CARDS_PER_PAGE }) : courses).map((item, index) => {
+          const mobileHidden = index === 4 ? "hidden sm:flex" : "";
+          if (!item || typeof item !== "object" || !("id" in item)) return <div key={index} className={`h-[300px] animate-pulse rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900 ${index === 4 ? "hidden sm:block" : ""}`} />;
+          const course = item as Training;
+          return <CourseCard key={course.id} training={course} language={language} list={false} className={mobileHidden} />;
         })}
       </div>
       }
